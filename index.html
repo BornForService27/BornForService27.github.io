@@ -362,7 +362,7 @@ if(!BFS_URL||!BFS_KEY){say("To finish your application, please <a href=\""+waLin
 var btn=af.querySelector("button[type=submit]");btn.disabled=true;say("Sending your application...");
 var ext=(f.name.split(".").pop()||"bin").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,5);
 var id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():Date.now()+"-"+Math.random().toString(36).slice(2);
-var path=id+"."+ext,H={apikey:BFS_KEY,Authorization:"Bearer "+BFS_KEY};
+var path=id+"."+ext,H={apikey:BFS_KEY};if(BFS_KEY.indexOf("eyJ")===0)H.Authorization="Bearer "+BFS_KEY;
 var row={full_name:g("fn"),date_of_birth:g("dob"),gender:g("gd"),marital_status:g("ms"),nationality:nationality(),nrc_number:zam?g("nrcn"):null,passport_number:oth?g("ppn"):null,phone:g("ph"),whatsapp:"+"+wa,email:g("em"),address:g("ad"),district:g("di"),province:g("pr"),location:g("di")+", "+g("pr"),church:g("ch"),education:g("ed"),reason:g("re"),consent:true,nrc_path:path};
 fetch(BFS_URL+"/storage/v1/object/nrc/"+path,{method:"POST",headers:Object.assign({"Content-Type":f.type},H),body:f})
 .then(function(r){if(!r.ok)throw new Error("upload");

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>BFS Admin</title>
+<style>
+:root{--teal:#1AA89E;--head:#0F8F86;--ink:#1B2433;--mute:#5B6475;--alt:#EEF1F6;--line:#D9DEE6}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font:16px/1.55 Inter,"Segoe UI",system-ui,Arial,sans-serif}
+h1,h2,h3{font-family:Lora,Georgia,serif;color:var(--head);margin:0 0 .4em}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px}
+header{background:var(--alt);border-bottom:3px solid var(--teal)}
+header .wrap{display:flex;align-items:center;gap:12px;min-height:60px}
+header b{font:600 1.15rem Lora,Georgia,serif;color:var(--head)}
+button,.b{display:inline-block;padding:9px 14px;border-radius:3px;border:2px solid #2A2626;background:#2A2626;color:#fff;font:500 .92rem inherit;font-family:inherit;cursor:pointer;text-decoration:none}
+button.o,.b.o{background:#fff;color:#2A2626}
+button.wa,.b.wa{background:#128C4B;border-color:#128C4B}
+button:disabled{opacity:.5}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:4px;font:inherit;background:#fff;color:var(--ink)}
+label{display:block;font-weight:600;margin:12px 0 4px}
+.card{border:1px solid var(--teal);border-top:4px solid var(--teal);border-radius:4px;padding:14px;margin:12px 0;background:#fff}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.tabs{display:flex;gap:8px;margin:16px 0;flex-wrap:wrap}
+.tabs button{background:#fff;color:var(--ink);border-color:var(--line)}
+.tabs button.on{background:var(--head);color:#fff;border-color:var(--head)}
+.mute{color:var(--mute);font-size:.88rem}
+.msg{padding:12px;border-left:5px solid var(--teal);background:var(--alt);margin:12px 0}
+.msg.err{border-left-color:#B3261E}
+.pill{display:inline-block;padding:2px 10px;border-radius:12px;background:var(--alt);font-size:.82rem;font-weight:600}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="wrap"><b>Born For Service: Admin</b><span style="flex:1"></span><button class="o" id="out" hidden>Sign out</button></div></header>
+<div class="wrap">
+
+<div id="login" style="max-width:420px;margin:28px auto">
+  <h1>Administrator sign in</h1>
+  <div class="msg" id="lmsg" hidden></div>
+  <form id="lf">
+    <label for="e">Email</label><input id="e" type="email" required autocomplete="username">
+    <label for="p">Password</label><input id="p" type="password" required autocomplete="current-password">
+    <p><button type="submit">Sign in</button></p>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <div class="tabs"><button class="on" data-t="apps">Applications</button><button data-t="rec">Receipts</button></div>
+
+  <section id="apps">
+    <div class="row"><select id="flt" style="width:auto"><option value="">All applications</option><option value="submitted">New</option><option value="under_review">Under review</option><option value="accepted">Accepted</option><option value="declined">Declined</option></select>
+    <input id="q" placeholder="Search by name" style="max-width:240px"><span class="mute" id="count"></span></div>
+    <div id="list"></div>
+  </section>
+
+  <section id="rec" hidden>
+    <h2>Record a payment and send a receipt</h2>
+    <p class="mute">When you have confirmed an Airtel Money payment (the student forwards the Airtel Money receipt on WhatsApp), record it here. Then send the receipt by email or WhatsApp.</p>
+    <form id="rf" class="card">
+      <div class="grid2">
+        <div><label for="ra">Student (accepted applicants)</label><select id="ra" required></select></div>
+        <div><label for="ri">Item</label><select id="ri"><option value="id_card">BFS Identity Card (K100)</option><option value="tshirt">BFS T-shirt (K200)</option></select></div>
+        <div id="szw" hidden><label for="rs">T-shirt size</label><select id="rs"><option value="">Choose</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option></select></div>
+        <div><label for="rr">Airtel Money reference (optional)</label><input id="rr"></div>
+      </div>
+      <p><button type="submit">Record payment</button></p>
+    </form>
+    <div class="msg" id="rmsg" hidden></div>
+    <h3>Receipts</h3>
+    <div id="rlist"></div>
+  </section>
+</div>
+</div>
+
+<script>
+/* BFS settings: paste your Supabase Project URL and anon public key between the quotes. See the setup guide. */
+var BFS_URL="";
+var BFS_KEY="";
+/* Optional: paste the WhatsApp group invite link so the acceptance message includes it. */
+var GROUP_INVITE="";
+var PAY_NUMBER="+260 975 153 242";
+var FEES={id_card:{label:"BFS Identity Card",amount:100},tshirt:{label:"BFS T-shirt",amount:200}};
+
+var sb=null,apps=[],receipts=[];
+
+/* Small built-in connection to Supabase (works with both the new "publishable" key and the older "anon" key). */
+function makeClient(){
+  var SK="bfs_admin_session",SESS=null;
+  try{SESS=JSON.parse(localStorage.getItem(SK)||"null")}catch(e){}
+  function save(){try{if(SESS)localStorage.setItem(SK,JSON.stringify(SESS));else localStorage.removeItem(SK)}catch(e){}}
+  function setSess(d){SESS={access_token:d.access_token,refresh_token:d.refresh_token,expires_at:Date.now()/1000+(d.expires_in||3600)};save()}
+  function raw(path,o){o=o||{};var h={apikey:BFS_KEY},tok=SESS?SESS.access_token:(BFS_KEY.indexOf("eyJ")===0?BFS_KEY:null);if(tok)h.Authorization="Bearer "+tok;
+    for(var k in (o.headers||{}))h[k]=o.headers[k];
+    return fetch(BFS_URL+path,{method:o.method||"GET",headers:h,body:o.body}).then(function(r){return r.text().then(function(t){var j=null;try{j=t?JSON.parse(t):null}catch(e){}
+      if(!r.ok)return{data:null,error:{message:(j&&(j.message||j.msg||j.error_description))||r.statusText,code:j&&j.code,status:r.status}};return{data:j,error:null}})})}
+  function fresh(){if(!SESS||SESS.expires_at-60>Date.now()/1000)return Promise.resolve();
+    return raw("/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({refresh_token:SESS.refresh_token})}).then(function(r){if(r.error){SESS=null;save()}else setSess(r.data)})}
+  function api(path,o){return fresh().then(function(){return raw(path,o)})}
+  var auth={
+    getSession:function(){return fresh().then(function(){return{data:{session:SESS},error:null}})},
+    signInWithPassword:function(c){return raw("/auth/v1/token?grant_type=password",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(c)}).then(function(r){if(r.error)return{data:null,error:r.error};setSess(r.data);return{data:{session:SESS},error:null}})},
+    signOut:function(){SESS=null;save();return Promise.resolve({error:null})}};
+  function from(name){var q={m:"GET",cols:"*",f:[],ord:null,body:null,one:false,rep:false};
+    var b={
+      select:function(c){q.cols=c||"*";if(q.m==="POST"||q.m==="PATCH")q.rep=true;return b},
+      order:function(c,o){q.ord=c+"."+(o&&o.ascending===false?"desc":"asc");return b},
+      eq:function(c,v){q.f.push(c+"=eq."+encodeURIComponent(v));return b},
+      single:function(){q.one=true;return b},
+      insert:function(r){q.m="POST";q.body=r;return b},
+      update:function(r){q.m="PATCH";q.body=r;return b},
+      delete:function(){q.m="DELETE";return b},
+      then:function(ok,no){var p=[];if(q.m==="GET"){p.push("select="+encodeURIComponent(q.cols));if(q.ord)p.push("order="+q.ord)}
+        p=p.concat(q.f);var h={};if(q.body)h["Content-Type"]="application/json";
+        if(q.m==="POST"||q.rep)h.Prefer="return=representation";if(q.one)h.Accept="application/vnd.pgrst.object+json";
+        return api("/rest/v1/"+name+(p.length?"?"+p.join("&"):""),{method:q.m,headers:h,body:q.body?JSON.stringify(q.body):undefined}).then(ok,no)}};
+    return b}
+  var storage={from:function(bucket){return{createSignedUrl:function(path,secs){return api("/storage/v1/object/sign/"+bucket+"/"+path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({expiresIn:secs})}).then(function(r){if(r.error)return r;return{data:{signedUrl:BFS_URL+"/storage/v1"+r.data.signedURL},error:null}})}}}};
+  return{auth:auth,from:from,storage:storage}}
+
+var $=function(i){return document.getElementById(i)};
+function esc(t){return String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function digits(n){return String(n||"").replace(/[^0-9]/g,"")}
+function waUrl(num,text){return "https://wa.me/"+digits(num)+"?text="+encodeURIComponent(text)}
+function mailUrl(to,sub,body){return "mailto:"+encodeURIComponent(to)+"?subject="+encodeURIComponent(sub)+"&body="+encodeURIComponent(body)}
+function fmtDate(d){return new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric",timeZone:"Africa/Lusaka"})}
+
+function acceptText(a){
+  var g=GROUP_INVITE?("1. Join the BFS WhatsApp group, where lessons, assignments and announcements are shared: "+GROUP_INVITE):"1. We are adding your number to the BFS WhatsApp group, where lessons, assignments and announcements are shared.";
+  return "Hello "+a.full_name+",\n\nCongratulations! Your application to Born For Service School of Ministry has been accepted.\n\nNext steps:\n"+g+"\n2. Every admitted student must have a BFS Identity Card (K100) and a BFS T-shirt (K200). Pay by Airtel Money to "+PAY_NUMBER+", then forward your Airtel Money receipt to this number on WhatsApp.\n3. Please send your T-shirt size (S, M, L, XL or XXL) and a passport-style photo for your Identity Card.\n\nBorn For Service School of Ministry";
+}
+function receiptText(r){
+  var it=FEES[r.item]||{label:r.item};
+  return "BFS RECEIPT "+r.receipt_no+"\nName: "+r.student_name+"\nItem: "+it.label+(r.size?" (size "+r.size+")":"")+"\nAmount: K"+r.amount+"\nPaid by: Airtel Money to "+PAY_NUMBER+(r.ref?"\nReference: "+r.ref:"")+"\nDate: "+fmtDate(r.paid_at)+"\n\nThank you.\nBorn For Service School of Ministry";
+}
+
+function show(id,msg,err){var m=$(id);m.hidden=!msg;m.className="msg"+(err?" err":"");m.textContent=msg||""}
+
+function init(){
+  if(!BFS_URL||!BFS_KEY){show("lmsg","This page is not connected yet. Add the Supabase Project URL and anon key at the top of admin.html (see the setup guide).",1);return}
+  sb=makeClient();
+  sb.auth.getSession().then(function(r){if(r.data.session)enter()});
+}
+$("lf").addEventListener("submit",function(e){e.preventDefault();
+  if(!sb){return}
+  sb.auth.signInWithPassword({email:$("e").value.trim(),password:$("p").value}).then(function(r){
+    if(r.error){show("lmsg","Email or password is not correct.",1)}else{show("lmsg","");enter()}
+  })
+});
+$("out").onclick=function(){sb.auth.signOut().then(function(){location.reload()})};
+
+function enter(){
+  $("login").hidden=true;$("app").hidden=false;$("out").hidden=false;
+  loadApps().then(loadReceipts);
+}
+function loadApps(){
+  return sb.from("applications").select("*").order("created_at",{ascending:false}).then(function(r){
+    if(r.error){$("list").innerHTML='<div class="msg err">You do not have access yet. Ask the person who set up BFS to add your account as an administrator.</div>';return}
+    apps=r.data||[];render();fillStudents();
+  })
+}
+function loadReceipts(){
+  return sb.from("receipts").select("*").order("paid_at",{ascending:false}).then(function(r){receipts=r.data||[];renderReceipts()})
+}
+var LABEL={submitted:"New",under_review:"Under review",accepted:"Accepted",declined:"Declined"};
+function render(){
+  var f=$("flt").value,q=$("q").value.toLowerCase(),list=apps.filter(function(a){return(!f||a.status===f)&&(!q||(a.full_name||"").toLowerCase().indexOf(q)>=0)});
+  $("count").textContent=list.length+" of "+apps.length;
+  $("list").innerHTML=list.length?list.map(function(a,i){
+    var wa=a.whatsapp||a.phone||"";
+    return '<div class="card"><div class="row"><h3 style="margin:0;flex:1">'+esc(a.full_name)+'</h3><span class="pill">'+esc(LABEL[a.status]||a.status)+'</span></div>'
+    +'<div class="mute">Applied '+fmtDate(a.created_at)+'</div>'
+    +'<p style="margin:8px 0"><b>WhatsApp:</b> '+(wa?'<a href="'+waUrl(wa,"Hello "+esc(a.full_name)+", this is Born For Service School of Ministry.")+'" target="_blank" rel="noopener">'+esc(wa)+'</a>':'not given')+'<br><b>Phone:</b> '+esc(a.phone||"-")+'<br><b>Email:</b> <a href="mailto:'+esc(a.email)+'">'+esc(a.email)+'</a></p>'
+    +'<p style="margin:8px 0"><b>Date of birth:</b> '+esc(a.date_of_birth||"-")+' &nbsp; <b>Gender:</b> '+esc(a.gender||"-")+' &nbsp; <b>Marital status:</b> '+esc(a.marital_status||"-")+'<br><b>Nationality:</b> '+esc(a.nationality||"-")+'<br>'+(a.nrc_number?'<b>NRC number:</b> '+esc(a.nrc_number):'')+(a.passport_number?'<b>Passport number:</b> '+esc(a.passport_number):'')+'<br><b>Address:</b> '+esc(a.address||a.location||"-")+(a.district?', '+esc(a.district):'')+(a.province?', '+esc(a.province):'')+'<br><b>Church or ministry:</b> '+esc(a.church||"-")+'<br><b>Education or training:</b> '+esc(a.education||"-")+'</p>'
+    +'<details><summary>Reason for applying</summary><p style="white-space:pre-line">'+esc(a.reason)+'</p></details>'
+    +'<div class="row"><button class="o" data-nrc="'+a.id+'">View ID copy (NRC or passport)</button>'
+    +'<select data-st="'+a.id+'" style="width:auto"><option value="submitted">New</option><option value="under_review">Under review</option><option value="accepted">Accepted</option><option value="declined">Declined</option></select>'
+    +(a.status==="accepted"?'<a class="b wa" href="'+waUrl(wa,acceptText(a))+'" target="_blank" rel="noopener">WhatsApp acceptance message</a><a class="b o" href="'+mailUrl(a.email,"Your BFS application: accepted",acceptText(a))+'">Email acceptance</a>':'')
+    +'</div></div>';
+  }).join(""):'<div class="msg">No applications to show.</div>';
+  Array.prototype.forEach.call($("list").querySelectorAll("select[data-st]"),function(s){s.value=(apps.filter(function(a){return a.id===s.getAttribute("data-st")})[0]||{}).status||"submitted"});
+}
+$("flt").onchange=render;$("q").oninput=render;
+$("list").addEventListener("change",function(e){var id=e.target.getAttribute&&e.target.getAttribute("data-st");if(!id)return;
+  sb.from("applications").update({status:e.target.value}).eq("id",id).then(function(r){if(r.error){alert("Could not save the change.")}else{apps.forEach(function(a){if(a.id===id)a.status=e.target.value});render();fillStudents()}})
+});
+$("list").addEventListener("click",function(e){var id=e.target.getAttribute&&e.target.getAttribute("data-nrc");if(!id)return;
+  var a=apps.filter(function(x){return x.id===id})[0];if(!a||!a.nrc_path){alert("No NRC copy was uploaded.");return}
+  var w=window.open("","_blank");
+  sb.storage.from("nrc").createSignedUrl(a.nrc_path,300).then(function(r){if(r.error||!r.data){if(w)w.close();alert("Could not open the NRC copy.")}else{w.location=r.data.signedUrl}})
+});
+
+document.querySelectorAll(".tabs button").forEach(function(b){b.onclick=function(){
+  document.querySelectorAll(".tabs button").forEach(function(x){x.classList.toggle("on",x===b)});
+  $("apps").hidden=b.getAttribute("data-t")!=="apps";$("rec").hidden=b.getAttribute("data-t")!=="rec"}});
+
+function fillStudents(){
+  var acc=apps.filter(function(a){return a.status==="accepted"});
+  $("ra").innerHTML=acc.length?acc.map(function(a){return '<option value="'+a.id+'">'+esc(a.full_name)+'</option>'}).join(""):'<option value="">No accepted applicants yet</option>';
+}
+$("ri").onchange=function(){$("szw").hidden=$("ri").value!=="tshirt"};
+$("rf").addEventListener("submit",function(e){e.preventDefault();
+  var a=apps.filter(function(x){return x.id===$("ra").value})[0];if(!a){show("rmsg","Choose an accepted applicant first.",1);return}
+  var item=$("ri").value,size=$("rs").value;
+  if(item==="tshirt"&&!size){show("rmsg","Choose the T-shirt size.",1);return}
+  sb.from("receipts").insert({application_id:a.id,student_name:a.full_name,item:item,amount:FEES[item].amount,size:item==="tshirt"?size:null,ref:$("rr").value.trim()||null}).select().single().then(function(r){
+    if(r.error){show("rmsg",r.error.code==="23505"?"A payment for this item is already recorded for this student.":"Could not save the payment.",1)}
+    else{show("rmsg","Payment recorded. Receipt "+r.data.receipt_no+". Use the buttons below to send it.");$("rf").reset();$("szw").hidden=true;loadReceipts()}
+  })
+});
+function renderReceipts(){
+  $("rlist").innerHTML=receipts.length?receipts.map(function(r){
+    var a=apps.filter(function(x){return x.id===r.application_id})[0]||{},it=FEES[r.item]||{label:r.item},t=receiptText(r),wa=a.whatsapp||a.phone||"";
+    return '<div class="card"><div class="row"><b style="flex:1">'+esc(r.receipt_no)+'</b><span class="mute">'+fmtDate(r.paid_at)+'</span></div>'
+    +'<div>'+esc(r.student_name)+': '+esc(it.label)+(r.size?' ('+esc(r.size)+')':'')+', K'+r.amount+(r.ref?' <span class="mute">ref '+esc(r.ref)+'</span>':'')+'</div>'
+    +'<div class="row">'+(a.email?'<a class="b" href="'+mailUrl(a.email,"BFS receipt "+r.receipt_no,t)+'">Send receipt by email</a>':'')
+    +(wa?'<a class="b wa" href="'+waUrl(wa,t)+'" target="_blank" rel="noopener">Send on WhatsApp</a>':'')
+    +'<button class="o" data-del="'+r.id+'">Remove</button></div></div>';
+  }).join(""):'<div class="msg">No receipts yet.</div>';
+}
+$("rlist").addEventListener("click",function(e){var id=e.target.getAttribute&&e.target.getAttribute("data-del");if(!id)return;
+  if(!confirm("Remove this receipt record?"))return;
+  sb.from("receipts").delete().eq("id",id).then(function(){loadReceipts()})
+});
+init();
+</script>
+</body>
+</html>
