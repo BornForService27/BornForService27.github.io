@@ -78,7 +78,8 @@ label{display:block;font-weight:600;margin:12px 0 4px}
 <script>
 /* BFS settings: paste your Supabase Project URL and anon public key between the quotes. See the setup guide. */
 var BFS_URL="https://qbttclxxyxliiuvyyyqj.supabase.co";
-var BFS_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFidHRjbHh4eXhsaWl1dnl5eXFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1OTcyMDgsImV4cCI6MjEwNzE3MzIwOH0.3MHyXKWmRd4RzffvHNpUICjsYmd-NIwspOrbwDQCUbA"";
+var BFS_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFidHRjbHh4eXhsaWl1dnl5eXFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1OTcyMDgsImV4cCI6MjEwNzE3MzIwOH0.3MHyXKWmRd4RzffvHNpUICjsYmd-NIwspOrbwDQCUbA";
+BFS_URL=BFS_URL.replace(/\/rest\/v1\/?$/,"").replace(/\/+$/,"");
 /* Optional: paste the WhatsApp group invite link so the acceptance message includes it. */
 var GROUP_INVITE="";
 var PAY_NUMBER="+260 975 153 242";
@@ -139,21 +140,29 @@ function receiptText(r){
 function show(id,msg,err){var m=$(id);m.hidden=!msg;m.className="msg"+(err?" err":"");m.textContent=msg||""}
 
 function init(){
-  if(!BFS_URL||!BFS_KEY){show("lmsg","This page is not connected yet. Add the Supabase Project URL and anon key at the top of admin.html (see the setup guide).",1);return}
-  sb=makeClient();
-  sb.auth.getSession().then(function(r){if(r.data.session)enter()});
+  if(!BFS_URL||!BFS_KEY){show("lmsg","This page is not connected yet. Check the two settings at the top of the script in admin.html.",1);return}
+  try{sb=makeClient();sb.auth.getSession().then(function(r){if(r.data&&r.data.session)enter()}).catch(function(){})}
+  catch(err){show("lmsg","Page error: "+err.message,1)}
 }
 $("lf").addEventListener("submit",function(e){e.preventDefault();
-  if(!sb){return}
+  if(!sb){show("lmsg","This page is not connected yet. Check the two settings at the top of the script in admin.html.",1);return}
+  show("lmsg","Signing in...");
   sb.auth.signInWithPassword({email:$("e").value.trim(),password:$("p").value}).then(function(r){
-    if(r.error){show("lmsg","Email or password is not correct.",1)}else{show("lmsg","");enter()}
-  })
+    if(r.error){var m=r.error.message||"";show("lmsg",/confirm/i.test(m)?"This login's email is not confirmed yet. In Supabase open Authentication, then Users, and confirm it.":"Email or password is not correct.",1)}
+    else{enter()}
+  }).catch(function(){show("lmsg","Could not reach the database. Check your internet connection and the settings at the top of admin.html.",1)})
 });
+window.addEventListener("error",function(ev){show("lmsg","Page error: "+ev.message,1)});
 $("out").onclick=function(){sb.auth.signOut().then(function(){location.reload()})};
 
+function backToLogin(msg){$("app").hidden=true;$("out").hidden=true;$("login").hidden=false;show("lmsg",msg,1);if(sb)sb.auth.signOut()}
 function enter(){
-  $("login").hidden=true;$("app").hidden=false;$("out").hidden=false;
-  loadApps().then(loadReceipts);
+  sb.from("admins").select("user_id").then(function(r){
+    if(r.error){backToLogin(r.error.status===404||/admins/.test(r.error.message||"")?"The database is not set up yet. Run the setup script from the guide (Part 2) in the Supabase SQL Editor.":"Could not check your access: "+r.error.message);return}
+    if(!r.data||!r.data.length){backToLogin("You signed in, but this login is not an administrator yet. In the Supabase SQL Editor, run the line from Part 4 of the guide, with this login's email address.");return}
+    $("login").hidden=true;$("app").hidden=false;$("out").hidden=false;show("lmsg","");
+    loadApps().then(loadReceipts)
+  }).catch(function(){backToLogin("Could not reach the database. Check your internet connection and the settings at the top of admin.html.")})
 }
 function loadApps(){
   return sb.from("applications").select("*").order("created_at",{ascending:false}).then(function(r){
