@@ -163,7 +163,7 @@ function receiptText(r){
 
 function letterHtml(a){
   var p=PROG[a.programme],when=fmtDate(a.admitted_at||new Date()),addr=[a.address,a.district,a.province].filter(Boolean).map(esc).join(", ");
-  return '<div class="lh"><img src="'+LOGO+'" alt=""><div><h1>BORN FOR SERVICE SCHOOL OF MINISTRY</h1><p><i>Created for Good Works (Ephesians 2:10)</i><br>Lusaka, Zambia<br>Phone and WhatsApp: '+PAY_NUMBER+' &nbsp;|&nbsp; Email: BornForService027@gmail.com</p></div></div>'
+  return '<div class="lh"><img src="'+LOGO+'" alt=""><div><h1>BORN FOR SERVICE SCHOOL OF MINISTRY</h1><p><i>Created for Good Works (Ephesians 2:10)</i><br>Lusaka, Zambia<br>Phone and WhatsApp: '+PAY_NUMBER+' &nbsp;|&nbsp; Email: Bornforservice27@gmail.com</p></div></div>'
   +'<p style="text-align:right">'+when+'<br>Ref: BFS/ADM/'+esc(a.student_number)+'</p>'
   +'<p><b>'+esc(a.full_name)+'</b><br>'+addr+'</p>'
   +'<h2>LETTER OF ADMISSION</h2>'
@@ -248,7 +248,7 @@ $("list").addEventListener("change",function(e){var t=e.target,pid=t.getAttribut
   if(t.value==="accepted"&&!cur.programme){alert("Choose the programme (Certificate or Diploma) before accepting this applicant.");render();return}
   sb.from("applications").update({status:t.value}).eq("id",id).then(function(r){if(r.error){alert("Could not save the change.");render();return}
     if(t.value==="accepted"){loadApps().then(function(){var a=apps.filter(function(x){return x.id===id})[0];if(a)openLetter(a)})}
-    else{apps.forEach(function(a){if(a.id===id)a.status=t.value});render();fillStudents()}})
+    else{loadApps()}})
 });
 $("list").addEventListener("click",function(e){var lid=e.target.getAttribute&&e.target.getAttribute("data-letter");if(lid){var la=apps.filter(function(x){return x.id===lid})[0];if(la)openLetter(la);return}
   var id=e.target.getAttribute&&e.target.getAttribute("data-nrc");if(!id)return;
