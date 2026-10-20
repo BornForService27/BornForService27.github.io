@@ -155,7 +155,7 @@ function esc(t){return String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"
 function digits(n){return String(n||"").replace(/[^0-9]/g,"")}
 function waUrl(num,text){return "https://wa.me/"+digits(num)+"?text="+encodeURIComponent(text)}
 function mailUrl(to,sub,body){return "mailto:"+encodeURIComponent(to)+"?subject="+encodeURIComponent(sub)+"&body="+encodeURIComponent(body)}
-function fmtDate(d){return new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric",timeZone:"Africa/Lusaka"})}
+function fmtDate(d){var x=new Date(d),n=Number(x.toLocaleDateString("en-GB",{day:"numeric",timeZone:"Africa/Lusaka"})),m=n%100,sf=(m>=11&&m<=13)?"th":(["th","st","nd","rd"][n%10<4?n%10:0]);return n+sf+" "+x.toLocaleDateString("en-GB",{month:"long",year:"numeric",timeZone:"Africa/Lusaka"})}
 
 function acceptText(a){
   var p=PROG[a.programme]||{name:"",fee:""};
@@ -224,7 +224,7 @@ function admissionPdf(a){
   d.setFont("times","normal");d.setFontSize(10);d.setTextColor(100,105,115);d.text("Lusaka, Zambia  |  "+PAY_NUMBER+"  |  Bornforservice27@gmail.com",L,58);
   d.setDrawColor(teal[0],teal[1],teal[2]);d.setLineWidth(1);d.line(L,62,R,62);
   d.setTextColor(30);d.setFontSize(10.5);
-  d.setFont("times","bold");d.text("Ref:",L,70);d.setFont("times","normal");d.text("BFS/ADM/"+a.student_number,L+d.getTextWidth("Ref: "),70);
+  d.setFont("times","bold");d.text("Ref: BFS/ADM/"+a.student_number,L,70);d.setFont("times","normal");
   var ds=fmtDate(a.admitted_at||new Date());d.setFont("times","normal");var dw=d.getTextWidth(ds);d.setFont("times","bold");var lw=d.getTextWidth("Date: ");
   d.text("Date:",R-dw-lw,70);d.setFont("times","normal");d.text(ds,R,70,{align:"right"});
   y=78;d.setFont("times","bold");d.setFontSize(11);d.text(a.full_name,L,y);y+=5;
@@ -234,7 +234,7 @@ function admissionPdf(a){
   y+=6.5;d.setFontSize(10.5);d.setTextColor(30);d.text(p.name,105,y,{align:"center"});
   y+=9;d.setFont("times","normal");d.setFontSize(11);d.text("Dear "+a.full_name+",",L,y);y+=6.2;
   rich([["Congratulations! Born For Service School of Ministry is pleased to inform you that your application has been accepted, and you are admitted to the ",0],[p.name,1],[".",0]],10.5,2.6);
-  rich([["Student number. ",1],["Your student number is "+a.student_number+". Please quote it whenever you contact BFS.",0]],10.5,2.6);
+  rich([["Student number. ",1],["Your student number is ",0],[a.student_number+".",1],[" Please quote it whenever you contact BFS.",0]],10.5,2.6);
   rich([["Duration. ",1],["The programme runs for "+p.length+".",0]],10.5,2.6);
   y+=1;d.setFont("times","bold");d.setFontSize(12.5);d.setTextColor(teal[0],teal[1],teal[2]);d.text("TERMS OF ADMISSION",L,y);
   d.setDrawColor(teal[0],teal[1],teal[2]);d.setLineWidth(.4);d.line(L,y+1.6,L+d.getTextWidth("TERMS OF ADMISSION"),y+1.6);
