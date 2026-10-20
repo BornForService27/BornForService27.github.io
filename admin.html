@@ -47,7 +47,12 @@ label{display:block;font-weight:600;margin:12px 0 4px}
 .paper p{margin:0 0 10px}
 .paper .sg{height:72px;display:block;margin:6px 0 0}
 @media(max-width:640px){.paper{padding:22px 18px;font-size:14px}}
-@media print{body>*:not(#lw){display:none!important}#lw{position:static;background:#fff;padding:0;overflow:visible}.lbar{display:none!important}.paper{max-width:none;border-top:0;padding:0 6mm}@page{size:A4;margin:14mm}}
+@media print{body>*:not(#lw){display:none!important}#lw{position:static;background:#fff;padding:0;overflow:visible}.lbar{display:none!important}
+.paper{max-width:none;border-top:0;padding:0;font-size:11pt;line-height:1.42}
+.paper .lh{gap:12px;padding-bottom:8px;margin-bottom:10px}.paper .lh img{width:20mm;height:20mm}.paper h1{font-size:13pt}.paper .lh p{font-size:8.5pt}
+.paper h2{margin:10px 0 8px;font-size:12.5pt}.paper h3{margin:8px 0 4px;font-size:10.5pt}.paper p{margin:0 0 6px}
+.paper td{padding:4px 9px}.paper table{margin:6px 0}.paper li{margin:4px 0}.paper .sg{height:19mm;margin:2px 0 0}
+.sgb{break-inside:avoid;page-break-inside:avoid}@page{size:A4;margin:12mm}}
 </style>
 </head>
 <body>
@@ -94,6 +99,7 @@ label{display:block;font-weight:600;margin:12px 0 4px}
 
 <div id="lw" hidden><div class="lbar"><button id="lprint">Print or save as PDF</button><button class="o" id="lclose">Close</button></div><div class="paper" id="lt"></div></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 /* BFS settings: paste your Supabase Project URL and anon public key between the quotes. See the setup guide. */
 var BFS_URL="https://qbttclxxyxliiuvyyyqj.supabase.co";
@@ -156,9 +162,48 @@ function acceptText(a){
   var g=GROUP_INVITE?("1. Join the BFS WhatsApp group, where lessons, assignments and announcements are shared: "+GROUP_INVITE):"1. We are adding your number to the BFS WhatsApp group, where lessons, assignments and announcements are shared.";
   return "Hello "+a.full_name+",\n\nCongratulations! Your application to Born For Service School of Ministry has been accepted.\n\nProgramme: "+p.name+"\nStudent number: "+(a.student_number||"")+"\nYour admission letter is attached.\n\nNext steps:\n"+g+"\n2. Every admitted student must have a BFS Identity Card (K100) and a BFS T-shirt (K200). Pay by Airtel Money to "+PAY_NUMBER+", then forward your Airtel Money receipt to this number on WhatsApp.\n3. Please send your T-shirt size (S, M, L, XL or XXL) and a passport-style photo for your Identity Card.\n4. The graduation fee ("+p.fee+") is not a tuition fee. It is paid for graduation after you finish your programme.\n\nBorn For Service School of Ministry";
 }
+function receiptApp(r){return apps.filter(function(x){return x.id===r.application_id})[0]||{}}
 function receiptText(r){
-  var it=FEES[r.item]||{label:r.item};
-  return "BFS RECEIPT "+r.receipt_no+"\nName: "+r.student_name+"\nItem: "+it.label+(r.size?" (size "+r.size+")":"")+"\nAmount: K"+r.amount+"\nPaid by: Airtel Money to "+PAY_NUMBER+(r.ref?"\nReference: "+r.ref:"")+"\nDate: "+fmtDate(r.paid_at)+"\n\nThank you.\nBorn For Service School of Ministry";
+  var it=FEES[r.item]||{label:r.item},a=receiptApp(r);
+  return "BFS RECEIPT "+r.receipt_no+"\nName: "+r.student_name+(a.student_number?"\nStudent number: "+a.student_number:"")+"\nItem: "+it.label+(r.size?" (size "+r.size+")":"")+"\nAmount: K"+r.amount+"\nPaid by: Airtel Money to "+PAY_NUMBER+(r.ref?"\nReference: "+r.ref:"")+"\nDate: "+fmtDate(r.paid_at)+"\n\nYour official BFS receipt (PDF) is attached.\n\nThank you.\nBorn For Service School of Ministry";
+}
+function receiptFile(r){return "BFS-Receipt-"+r.receipt_no+"-"+String(r.student_name||"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"")+".pdf"}
+function receiptPdf(r){
+  var J=window.jspdf;if(!J){alert("The PDF tool could not load. Check your internet connection and refresh the page.");return null}
+  var a=receiptApp(r),it=FEES[r.item]||{label:r.item},pg=PROG[a.programme],d=new J.jsPDF({unit:"mm",format:"a5"}),teal=[15,143,134];
+  d.setFillColor(teal[0],teal[1],teal[2]);d.rect(0,0,148,4,"F");
+  d.addImage(LOGO,"JPEG",12,10,24,24);
+  d.setTextColor(teal[0],teal[1],teal[2]);d.setFont("helvetica","bold");d.setFontSize(13);d.text("BORN FOR SERVICE",40,18);d.text("SCHOOL OF MINISTRY",40,24);
+  d.setTextColor(60);d.setFont("helvetica","italic");d.setFontSize(8);d.text("Created for Good Works (Ephesians 2:10)",40,29);
+  d.setFont("helvetica","normal");d.text("Lusaka, Zambia  |  "+PAY_NUMBER+"  |  Bornforservice27@gmail.com",40,33.5);
+  d.setDrawColor(teal[0],teal[1],teal[2]);d.setLineWidth(.6);d.line(12,39,136,39);
+  d.setTextColor(20);d.setFont("helvetica","bold");d.setFontSize(15);d.text("OFFICIAL RECEIPT",74,50,{align:"center"});
+  d.setFontSize(9);d.text("Receipt No: "+r.receipt_no,12,58);d.text("Date: "+fmtDate(r.paid_at),136,58,{align:"right"});
+  var rows=[["Received from",r.student_name],["Student number",a.student_number||"-"],["Programme",pg?pg.name:"-"],["Phone / WhatsApp",a.whatsapp||a.phone||"-"]];
+  if(a.email)rows.push(["Email",a.email]);
+  rows.push(["Payment for",it.label+(r.size?" (size "+r.size+")":"")],["Amount paid","K"+Number(r.amount).toFixed(2)],["Paid by","Airtel Money to "+PAY_NUMBER]);
+  if(r.ref)rows.push(["Reference",r.ref]);
+  var y=63;d.setLineWidth(.2);
+  rows.forEach(function(row){
+    var lines=d.splitTextToSize(String(row[1]),76),h=Math.max(8,lines.length*4.6+3.4);
+    d.setDrawColor(150);d.setFillColor(243,246,244);d.rect(12,y,46,h,"FD");d.rect(58,y,78,h);
+    d.setTextColor(30);d.setFont("helvetica","bold");d.setFontSize(9);d.text(row[0],14,y+5.4);
+    d.setFont("helvetica",row[0]==="Amount paid"?"bold":"normal");d.text(lines,60,y+5.4);y+=h;
+  });
+  d.setDrawColor(teal[0],teal[1],teal[2]);d.setLineWidth(.8);d.roundedRect(12,y+7,34,12,2,2);
+  d.setTextColor(teal[0],teal[1],teal[2]);d.setFont("helvetica","bold");d.setFontSize(14);d.text("PAID",29,y+15.3,{align:"center"});
+  d.setTextColor(20);d.setFontSize(10);d.text("Amount received: K"+Number(r.amount).toFixed(2),136,y+15.3,{align:"right"});
+  d.setDrawColor(teal[0],teal[1],teal[2]);d.setLineWidth(.4);d.line(12,193,136,193);
+  d.setTextColor(60);d.setFont("helvetica","normal");d.setFontSize(8);
+  d.text("Thank you. May God bless you as you serve.",74,198,{align:"center"});
+  d.text("Issued by Born For Service School of Ministry. Generated automatically; valid without a signature.",74,202.5,{align:"center"});
+  return d;
+}
+function savePdf(r){var d=receiptPdf(r);if(d)d.save(receiptFile(r))}
+function sharePdf(r){
+  var d=receiptPdf(r);if(!d)return;var f=new File([d.output("blob")],receiptFile(r),{type:"application/pdf"});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:"BFS receipt "+r.receipt_no,text:receiptText(r)}).catch(function(){})}
+  else{d.save(receiptFile(r));alert("The PDF was downloaded. Attach it in WhatsApp or email.")}
 }
 
 function letterHtml(a){
@@ -176,15 +221,16 @@ function letterHtml(a){
   +'<li>Lessons, assignments and announcements are shared in the BFS WhatsApp group.</li>'
   +'<li>To receive your award, you must complete and pass all the required courses. The minimum pass mark is 50%.</li>'
   +'<li>Please quote your student number whenever you contact BFS.</li></ol>'
-  +'<p>We warmly welcome you to Born For Service. May God bless you as you answer the call to serve.</p>'
-  +'<p>Yours in service,</p><img class="sg" src="'+SIGN+'" alt="Signature"><p><b>'+SIGNER.name+'</b><br>'+SIGNER.title+'<br>Born For Service School of Ministry</p>';
+  +'<div class="sgb"><p>We warmly welcome you to Born For Service. May God bless you as you answer the call to serve.</p>'
+  +'<p>Yours in service,</p><img class="sg" src="'+SIGN+'" alt="Signature"><p><b>'+SIGNER.name+'</b><br>'+SIGNER.title+'<br>Born For Service School of Ministry</p></div>';
 }
+var BASE_TITLE=document.title;
 function openLetter(a){
   if(!a.programme){alert("Choose the programme for this applicant first.");return}
   if(!a.student_number){alert("This applicant has no student number yet. Run the update script in Supabase, then set the status to Accepted again.");return}
-  $("lt").innerHTML=letterHtml(a);$("lw").hidden=false;$("lw").scrollTop=0;
+  $("lt").innerHTML=letterHtml(a);document.title="Admission letter - "+a.full_name;$("lw").hidden=false;$("lw").scrollTop=0;
 }
-$("lclose").onclick=function(){$("lw").hidden=true};
+$("lclose").onclick=function(){$("lw").hidden=true;document.title=BASE_TITLE};
 $("lprint").onclick=function(){window.print()};
 
 function show(id,msg,err){var m=$(id);m.hidden=!msg;m.className="msg"+(err?" err":"");m.textContent=msg||""}
@@ -272,7 +318,7 @@ $("rf").addEventListener("submit",function(e){e.preventDefault();
   if(item==="tshirt"&&!size){show("rmsg","Choose the T-shirt size.",1);return}
   sb.from("receipts").insert({application_id:a.id,student_name:a.full_name,item:item,amount:FEES[item].amount,size:item==="tshirt"?size:null,ref:$("rr").value.trim()||null}).select().single().then(function(r){
     if(r.error){show("rmsg",r.error.code==="23505"?"A payment for this item is already recorded for this student.":"Could not save the payment.",1)}
-    else{show("rmsg","Payment recorded. Receipt "+r.data.receipt_no+". Use the buttons below to send it.");$("rf").reset();$("szw").hidden=true;loadReceipts()}
+    else{show("rmsg","Payment recorded. Receipt "+r.data.receipt_no+" was created as a PDF and downloaded. Use the buttons below to send it.");$("rf").reset();$("szw").hidden=true;savePdf(r.data);loadReceipts()}
   })
 });
 function renderReceipts(){
@@ -282,10 +328,12 @@ function renderReceipts(){
     +'<div>'+esc(r.student_name)+': '+esc(it.label)+(r.size?' ('+esc(r.size)+')':'')+', K'+r.amount+(r.ref?' <span class="mute">ref '+esc(r.ref)+'</span>':'')+'</div>'
     +'<div class="row">'+(a.email?'<a class="b" href="'+mailUrl(a.email,"BFS receipt "+r.receipt_no,t)+'">Send receipt by email</a>':'')
     +(wa?'<a class="b wa" href="'+waUrl(wa,t)+'" target="_blank" rel="noopener">Send on WhatsApp</a>':'')
-    +'<button class="o" data-del="'+r.id+'">Remove</button></div></div>';
+    +'<button data-pdf="'+r.id+'">Download PDF</button><button data-share="'+r.id+'">Send PDF</button><button class="o" data-del="'+r.id+'">Remove</button></div></div>';
   }).join(""):'<div class="msg">No receipts yet.</div>';
 }
-$("rlist").addEventListener("click",function(e){var id=e.target.getAttribute&&e.target.getAttribute("data-del");if(!id)return;
+$("rlist").addEventListener("click",function(e){var t=e.target,pid=t.getAttribute&&t.getAttribute("data-pdf"),sid=t.getAttribute&&t.getAttribute("data-share");
+  if(pid||sid){var rr=receipts.filter(function(x){return x.id===(pid||sid)})[0];if(rr){pid?savePdf(rr):sharePdf(rr)}return}
+  var id=t.getAttribute&&t.getAttribute("data-del");if(!id)return;
   if(!confirm("Remove this receipt record?"))return;
   sb.from("receipts").delete().eq("id",id).then(function(){loadReceipts()})
 });
