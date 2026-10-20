@@ -203,15 +203,16 @@ function savePdf(r){var d=receiptPdf(r);if(d)d.save(receiptFile(r))}
 function letterFile(a){return "Admission letter - "+String(a.full_name||"").replace(/[\\\/:*?"<>|]+/g," ").replace(/\s+/g," ").trim()+".pdf"}
 function admissionPdf(a){
   var J=window.jspdf;if(!J){alert("The PDF tool could not load. Check your internet connection and refresh the page.");return null}
-  var p=PROG[a.programme],d=new J.jsPDF({unit:"mm",format:"a4"}),teal=[22,158,148],L=17,R=193,W=R-L,y,lh=4.9;
+  var p=PROG[a.programme],d=new J.jsPDF({unit:"mm",format:"a4"}),teal=[22,158,148],L=17,R=193,W=R-L,y,lh=4.6;
   var addr=[a.address,a.district,a.province].filter(Boolean).join(", "),wa=a.whatsapp||a.phone||"";
-  function rich(segs,size,gap){
-    d.setFontSize(size);var words=[],lines=[],cur=[],cw=0;
+  function rich(segs,size,gap,num){
+    var ix=num?7:0,WW=W-ix;d.setFontSize(size);var words=[],lines=[],cur=[],cw=0;
     segs.forEach(function(sg){d.setFont("times",sg[1]?"bold":"normal");sg[0].split(" ").forEach(function(w){if(w)words.push({t:w,b:sg[1],w:d.getTextWidth(w)})})});
     d.setFont("times","normal");var sp=d.getTextWidth(" ");
-    words.forEach(function(wd){var add=(cur.length?sp:0)+wd.w;if(cw+add>W&&cur.length){lines.push(cur);cur=[wd];cw=wd.w}else{cur.push(wd);cw+=add}});
+    words.forEach(function(wd){var add=(cur.length?sp:0)+wd.w;if(cw+add>WW&&cur.length){lines.push(cur);cur=[wd];cw=wd.w}else{cur.push(wd);cw+=add}});
     if(cur.length)lines.push(cur);
-    lines.forEach(function(ln,i){var tot=ln.reduce(function(s,x){return s+x.w},0),last=i===lines.length-1,g=(!last&&ln.length>1)?(W-tot)/(ln.length-1):sp,x=L;
+    if(num){d.setFont("times","bold");d.text(num,L,y)}
+    lines.forEach(function(ln,i){var tot=ln.reduce(function(s,x){return s+x.w},0),last=i===lines.length-1,g=(!last&&ln.length>1)?(WW-tot)/(ln.length-1):sp,x=L+ix;
       ln.forEach(function(wd){d.setFont("times",wd.b?"bold":"normal");d.text(wd.t,x,y);x+=wd.w+g});y+=lh});
     y+=gap;
   }
@@ -232,16 +233,21 @@ function admissionPdf(a){
   y+=7;d.setFont("times","bold");d.setFontSize(14);d.setTextColor(teal[0],teal[1],teal[2]);d.text("LETTER OF ADMISSION",105,y,{align:"center"});
   y+=6.5;d.setFontSize(10.5);d.setTextColor(30);d.text(p.name,105,y,{align:"center"});
   y+=9;d.setFont("times","normal");d.setFontSize(11);d.text("Dear "+a.full_name+",",L,y);y+=6.2;
-  rich([["Congratulations! Born For Service School of Ministry is pleased to inform you that your application has been accepted, and you are admitted to the ",0],[p.name,1],[".",0]],11,2.6);
-  rich([["Student number. ",1],["Your student number is "+a.student_number+". Please quote it whenever you contact BFS.",0]],11,2.6);
-  rich([["Programme and mode of study. ",1],["The programme runs for "+p.length+" and is studied online. Lessons, assignments and announcements are shared in the BFS WhatsApp group.",0]],11,2.6);
-  rich([["Tuition. ",1],["Tuition is free.",0]],11,2.6);
-  rich([["Graduation fee. ",1],["The graduation fee of "+p.fee+" is not a tuition fee. It is paid for graduation, after you finish your programme.",0]],11,2.6);
-  rich([["Required items. ",1],["Every admitted student must have a BFS Identity Card (K100) and a BFS T-shirt (K200). Pay by Airtel Money to "+PAY_NUMBER+", then forward your Airtel Money receipt to the same number on WhatsApp. Please also send your T-shirt size and a passport-style photo for your Identity Card.",0]],11,2.6);
-  rich([["Award. ",1],["To receive your award, you must complete and pass all the required courses. The minimum pass mark is 50%.",0]],11,2.6);
-  rich([["We warmly welcome you to Born For Service. May God bless you as you answer the call to serve.",0]],11,3.4);
+  rich([["Congratulations! Born For Service School of Ministry is pleased to inform you that your application has been accepted, and you are admitted to the ",0],[p.name,1],[".",0]],10.5,2.6);
+  rich([["Student number. ",1],["Your student number is "+a.student_number+". Please quote it whenever you contact BFS.",0]],10.5,2.6);
+  rich([["Duration. ",1],["The programme runs for "+p.length+".",0]],10.5,2.6);
+  y+=1;d.setFont("times","bold");d.setFontSize(12.5);d.setTextColor(teal[0],teal[1],teal[2]);d.text("TERMS OF ADMISSION",L,y);
+  d.setDrawColor(teal[0],teal[1],teal[2]);d.setLineWidth(.4);d.line(L,y+1.6,L+d.getTextWidth("TERMS OF ADMISSION"),y+1.6);
+  y+=6.5;d.setTextColor(30);d.setFont("times","normal");
+  rich([["Mode of study. ",1],["The programme is studied online. Lessons, assignments and announcements are shared in the BFS WhatsApp group.",0]],10.5,2.2,"1.");
+  rich([["Tuition. ",1],["Tuition is free.",0]],10.5,2.2,"2.");
+  rich([["Graduation fee. ",1],["The graduation fee of "+p.fee+" is not a tuition fee. It is paid for graduation, after you finish your programme.",0]],10.5,2.2,"3.");
+  rich([["Required items. ",1],["Every admitted student must have a BFS Identity Card (K100) and a BFS T-shirt (K200). Pay by Airtel Money to "+PAY_NUMBER+", then forward your Airtel Money receipt to the same number on WhatsApp. Please also send your T-shirt size and a passport-style photo for your Identity Card.",0]],10.5,2.2,"4.");
+  rich([["Award. ",1],["To receive your award, you must complete and pass all the required courses. The minimum pass mark is 50%.",0]],10.5,2.2,"5.");
+  rich([["Conditions. ",1],["This admission is based on the information and documents you gave in your application. If any of it is found to be false, BFS may withdraw this admission.",0]],10.5,3.4,"6.");
+  rich([["We warmly welcome you to Born For Service. May God bless you as you answer the call to serve.",0]],10.5,3.4);
   d.text("Yours in service,",L,y);y+=1.5;
-  var sh=34*230/420;d.addImage(SIGN,"PNG",L,y,34,sh);y+=sh+1;
+  var sh=30*230/420;d.addImage(SIGN,"PNG",L,y,30,sh);y+=sh+1;
   d.setDrawColor(20);d.setLineWidth(.5);d.line(L,y,L+78,y);y+=5.2;
   d.setFont("times","bold");d.text(SIGNER.name,L,y);y+=5;d.setFont("times","normal");d.text(SIGNER.title,L,y);y+=4.9;d.text("Born For Service School of Ministry",L,y);
   y+=4;d.setDrawColor(teal[0],teal[1],teal[2]);d.setLineWidth(1);d.line(L,y,R,y);
