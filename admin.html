@@ -135,7 +135,7 @@ function makeClient(){
     signOut:function(){SESS=null;save();return Promise.resolve({error:null})}};
   function from(name){var q={m:"GET",cols:"*",f:[],ord:null,body:null,one:false,rep:false};
     var b={
-      select:function(c){q.cols=c||"*";if(q.m==="POST"||q.m==="PATCH")q.rep=true;return b},
+      select:function(c){q.cols=c||"*";if(q.m==="POST"||q.m==="PATCH"||q.m==="DELETE")q.rep=true;return b},
       order:function(c,o){q.ord=c+"."+(o&&o.ascending===false?"desc":"asc");return b},
       eq:function(c,v){q.f.push(c+"=eq."+encodeURIComponent(v));return b},
       single:function(){q.one=true;return b},
@@ -362,11 +362,12 @@ $("list").addEventListener("change",function(e){var t=e.target,pid=t.getAttribut
 function deleteApp(a){
   var msg="Delete the application of "+a.full_name+"? This cannot be undone."+(a.student_number?" Their student number "+a.student_number+" will be given to the next person you accept.":"");
   if(!confirm(msg))return;
-  sb.from("applications").delete().eq("id",a.id).then(function(r){
+  sb.from("applications").delete().eq("id",a.id).select().then(function(r){
     if(r.error){var c=String(r.error.code||"");
       if(c==="23503"||/foreign key|violates/i.test(String(r.error.message||""))){alert("This applicant has receipts recorded. Remove their receipts in the Receipts tab first, then delete the application.")}
       else{alert("Could not delete the application. Run the update script in Supabase (it adds permission to delete), then try again.")}
       return}
+    if(!r.data||!r.data.length){alert("The application was NOT deleted, because the database did not give permission. Run the latest bfs-update-programmes.sql in Supabase (SQL Editor), then try again.");return}
     if(a.nrc_path){try{sb.storage.from("nrc").remove(a.nrc_path)}catch(x){}}
     loadApps();
   });
