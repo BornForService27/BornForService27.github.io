@@ -87,6 +87,21 @@ label{display:block;font-weight:600;margin:14px 0 4px}input,select,textarea{widt
 .chk{display:flex;gap:10px;align-items:flex-start;font-weight:400}.chk input{width:auto;margin-top:6px}
 #ok{display:none;margin-top:16px;padding:14px;border-radius:6px;background:var(--alt);border-left:5px solid var(--teal-d)}
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}@media(max-width:700px){.fgrid{grid-template-columns:1fr}}
+.pk{position:relative}
+.pkb{width:100%;display:flex;align-items:center;gap:8px;padding:11px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;text-align:left;cursor:pointer;min-height:46px}
+.pkb .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pkb .ph2{color:var(--mute)}
+.pkb:after{content:"";border:solid var(--mute);border-width:0 2px 2px 0;padding:3px;transform:rotate(45deg);margin:-3px 2px 0 0}
+.pkb.bad{border-color:#B3261E;background:#FFF6F5}
+.pkl{position:absolute;left:0;right:0;top:100%;z-index:30;margin-top:4px;background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:0 8px 24px rgba(27,36,51,.18);min-width:260px}
+.pkl[hidden]{display:none}
+.pkl input{border:0;border-bottom:1px solid var(--line);border-radius:6px 6px 0 0}
+.pkl ul{list-style:none;margin:0;padding:0;max-height:260px;overflow:auto}
+.pkl li{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer}
+.pkl li:hover,.pkl li.on{background:var(--alt)}.pkl li em{margin-left:auto;font-style:normal;color:var(--mute);font-size:.88rem}
+.fl{width:24px;height:18px;object-fit:cover;border-radius:2px;border:1px solid var(--line);flex:none;background:#fff}
+.fl2{width:24px;text-align:center;flex:none;font-size:18px;line-height:18px}
+.pr{display:grid;grid-template-columns:150px 1fr;gap:8px}.pr .pkl{min-width:300px}
+@media(max-width:420px){.pr{grid-template-columns:128px 1fr}}
 footer{background:#EEF0F2;color:#1B1F24;border-top:3px solid var(--teal);padding:48px 0 28px}
 footer h3{color:#0F8F86;font-size:1.15rem}footer a{color:#0B7F77;display:block;padding:3px 0}
 footer .fg{display:grid;grid-template-columns:1.4fr 1fr 1.2fr 1fr;gap:28px}
@@ -243,7 +258,6 @@ input.bad,select.bad,textarea.bad{border-color:#B3261E;background:#FFF6F5}
 
 <section id="certificate"><div class="wrap"><span class="eyebrow">Our programmes</span><h2>CERTIFICATE AND ADVANCED CERTIFICATE IN BIBLICAL STUDIES AND CHRISTIAN MINISTRY</h2><p>BFS offers two programmes. You choose one when you apply.</p>
 <div class="two" style="margin:20px 0"><div class="panel"><h3>Certificate in Biblical Studies and Christian Ministry</h3><p><b>Duration:</b> 1 year</p></div><div class="panel b"><h3>Advanced Certificate in Biblical Studies and Christian Ministry</h3><p><b>Duration:</b> 2 years</p></div></div>
-<p class="draft">The graduation fee is not a tuition fee. Tuition is free. The graduation fee is paid for graduation, after you finish your programme.</p>
 <h3>How studying and graduating at BFS works</h3>
 <div class="feat"><div><h3>Course access</h3><p>Students access their courses through the BFS WhatsApp group.</p></div><div><h3>Assessment</h3><p>Each course has its required assignments, quizzes, or examinations.</p></div><div><h3>Progress tracking</h3><p>BFS records completion and assessment results for every course.</p></div><div><h3>Graduation eligibility</h3><p>Students must complete and pass all the courses required for the programme. The minimum passing mark is 50%.</p></div><div><h3>Certificate issuance</h3><p>Once an authorised BFS administrator verifies eligibility, the final Certificate or Advanced Certificate is issued.</p></div><div><h3>No partial awards</h3><p>Completing only some of the required courses does not qualify a student for the final award.</p></div></div>
 <h3 style="margin-top:28px">Grading scale</h3><div style="overflow-x:auto"><table style="min-width:560px"><tr><th>Mark</th><th>Description</th><th>Grade</th><th>Grade scale</th><th>Comment</th></tr><tr><td>90–100</td><td>Distinction</td><td>A+</td><td>5</td><td></td></tr><tr><td>80–89</td><td>Distinction</td><td>A</td><td>4</td><td></td></tr><tr><td>70–79</td><td>Meritorious</td><td>B+</td><td>3.5</td><td></td></tr><tr><td>60–69</td><td>Meritorious</td><td>B</td><td>3</td><td></td></tr><tr><td>50–59</td><td>Credit</td><td>C+</td><td>2</td><td></td></tr><tr><td>45–49</td><td>Credit</td><td>C</td><td>1</td><td></td></tr><tr><td>40–44</td><td>Compensatory Pass</td><td>D+</td><td>0</td><td>Supplementary</td></tr><tr><td>0–39</td><td>Fail</td><td>D</td><td>0</td><td>Repeat course</td></tr></table></div><span class="draft">A high average never replaces a failed course: each required course must be passed.</span></div></section>
@@ -264,27 +278,28 @@ input.bad,select.bad,textarea.bad{border-color:#B3261E;background:#FFF6F5}
 <div><label for="dob">Date of birth</label><input id="dob" type="date" required autocomplete="bday"></div>
 <div><label for="gd">Gender</label><select id="gd" required><option value="">Select</option><option>Male</option><option>Female</option></select></div>
 <div><label for="ms">Marital status</label><select id="ms" required><option value="">Select</option><option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option></select></div>
-<div><label for="nat">Nationality</label><select id="nat" required><option value="">Select</option><option value="Zambian">Zambian</option><option value="Other">Other nationality</option></select></div>
-<div id="natw" hidden><label for="nat2">Your nationality</label><input id="nat2"></div>
-<div id="nrcw" hidden><label for="nrcn">National Registration Card (NRC) number</label><input id="nrcn" placeholder="123456/10/1"></div>
+<div><label for="nat-b">Nationality</label><div class="pk" data-pk="nat" data-ph="Select nationality"></div><input type="hidden" id="nat"></div>
+<div id="nrcw" hidden><label for="nrcn">National Registration Card (NRC) number</label><input id="nrcn" placeholder="123456/10/1" inputmode="numeric" maxlength="11" autocomplete="off"></div>
 <div id="ppw" hidden><label for="ppn">Passport number</label><input id="ppn"></div>
 </div>
 <h4 class="fh">Contact details</h4>
 <div class="fgrid">
-<div><label for="ph">Phone number</label><input id="ph" type="tel" inputmode="tel" required autocomplete="tel"></div>
-<div><label for="wa">Valid WhatsApp number</label><input id="wa" type="tel" inputmode="tel" required placeholder="+260 97 123 4567"></div>
+<div><label for="ph">Phone number</label><div class="pr"><div class="pk" data-pk="phc" data-ph="Code"></div><input id="ph" type="tel" inputmode="tel" required autocomplete="tel-national" placeholder="97 123 4567"></div></div>
+<div><label for="wa">Valid WhatsApp number</label><div class="pr"><div class="pk" data-pk="wac" data-ph="Code"></div><input id="wa" type="tel" inputmode="tel" required placeholder="97 123 4567"></div></div>
 <div><label for="em">Email address</label><input id="em" type="email" required autocomplete="email"></div>
 </div>
-<p class="draft">Your WhatsApp number must be valid and active, with the country code. If you are accepted, BFS adds this number to the lessons group, and other group members can see it.</p>
+<p class="draft">Your WhatsApp number must be valid and active. Choose the country code from the list. If you are accepted, BFS adds this number to the lessons group, and other group members can see it.</p>
 <h4 class="fh">Address</h4>
-<label for="ad">Residential address</label><input id="ad" required autocomplete="street-address">
 <div class="fgrid">
-<div><label for="di">District</label><input id="di" required></div>
-<div><label for="pr">Province</label><select id="pr" required><option value="">Select</option><option>Central</option><option>Copperbelt</option><option>Eastern</option><option>Luapula</option><option>Lusaka</option><option>Muchinga</option><option>Northern</option><option>North-Western</option><option>Southern</option><option>Western</option><option>Outside Zambia</option></select></div>
+<div><label for="pr">Province</label><select id="pr" required><option value="">Select province</option><option>Central</option><option>Copperbelt</option><option>Eastern</option><option>Luapula</option><option>Lusaka</option><option>Muchinga</option><option>Northern</option><option>North-Western</option><option>Southern</option><option>Western</option><option>Outside Zambia</option></select></div>
+<div><label for="di" id="dil">District</label><select id="di" required disabled><option value="">Select province first</option></select><input id="di2" hidden placeholder="City, town or region"></div>
 </div>
+<label for="ad">Residential address</label><input id="ad" required autocomplete="street-address">
 <h4 class="fh">Background</h4>
 <label for="ch">Church or ministry (if applicable)</label><input id="ch">
 <label for="ed">Previous education or ministry training (if applicable)</label><textarea id="ed" rows="3"></textarea>
+<label for="hb">How did you hear about Born For Service School of Ministry?</label><select id="hb" required><option value="">Select an option</option><option>Church or pastor</option><option>Friend or family member</option><option>Current student or graduate</option><option>WhatsApp</option><option>Facebook</option><option>Instagram</option><option>TikTok</option><option>YouTube</option><option>Radio or television</option><option>Poster or printed flyer</option><option>Online search</option><option>Other</option></select>
+<input id="hb2" hidden placeholder="Please tell us how you heard about us" style="margin-top:8px">
 <label for="re">Reason for applying</label><textarea id="re" rows="4" required></textarea>
 <h4 class="fh">Identification</h4>
 <label for="nrc">Copy of your NRC (Zambian applicants) or your passport (other applicants). Photo or PDF, up to 5 MB.</label><input id="nrc" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required>
@@ -337,32 +352,82 @@ h="";J.forEach(function(j,i){h+='<li data-n="'+(i+1)+'"><b>'+j[0]+'</b><p>'+j[1]
 h="";V.forEach(function(v){h+='<div class="val"><h3>'+v[0]+'</h3><p>'+v[1]+'</p></div>'});document.getElementById("vg").innerHTML=h;
 h="";C.forEach(function(c,i){h+='<a href="#course-'+i+'">'+c[0]+'</a>'});document.getElementById("fc").innerHTML=h;
 
+
+var BFS_C=[["AF", "Afghanistan", "93", "Afghan"], ["AL", "Albania", "355", "Albanian"], ["DZ", "Algeria", "213", "Algerian"], ["AD", "Andorra", "376", "Andorran"], ["AO", "Angola", "244", "Angolan"], ["AG", "Antigua and Barbuda", "1268", "Antiguan and Barbudan"], ["AR", "Argentina", "54", "Argentine"], ["AM", "Armenia", "374", "Armenian"], ["AU", "Australia", "61", "Australian"], ["AT", "Austria", "43", "Austrian"], ["AZ", "Azerbaijan", "994", "Azerbaijani"], ["BS", "Bahamas", "1242", "Bahamian"], ["BH", "Bahrain", "973", "Bahraini"], ["BD", "Bangladesh", "880", "Bangladeshi"], ["BB", "Barbados", "1246", "Barbadian"], ["BY", "Belarus", "375", "Belarusian"], ["BE", "Belgium", "32", "Belgian"], ["BZ", "Belize", "501", "Belizean"], ["BJ", "Benin", "229", "Beninese"], ["BT", "Bhutan", "975", "Bhutanese"], ["BO", "Bolivia", "591", "Bolivian"], ["BA", "Bosnia and Herzegovina", "387", "Bosnian and Herzegovinian"], ["BW", "Botswana", "267", "Motswana"], ["BR", "Brazil", "55", "Brazilian"], ["BN", "Brunei", "673", "Bruneian"], ["BG", "Bulgaria", "359", "Bulgarian"], ["BF", "Burkina Faso", "226", "Burkinabe"], ["BI", "Burundi", "257", "Burundian"], ["CV", "Cabo Verde", "238", "Cape Verdean"], ["KH", "Cambodia", "855", "Cambodian"], ["CM", "Cameroon", "237", "Cameroonian"], ["CA", "Canada", "1", "Canadian"], ["CF", "Central African Republic", "236", "Central African"], ["TD", "Chad", "235", "Chadian"], ["CL", "Chile", "56", "Chilean"], ["CN", "China", "86", "Chinese"], ["CO", "Colombia", "57", "Colombian"], ["KM", "Comoros", "269", "Comorian"], ["CG", "Congo (Republic of the Congo)", "242", "Congolese (Republic of the Congo)"], ["CD", "Congo (DR Congo)", "243", "Congolese (DR Congo)"], ["CR", "Costa Rica", "506", "Costa Rican"], ["CI", "Côte d'Ivoire", "225", "Ivorian"], ["HR", "Croatia", "385", "Croatian"], ["CU", "Cuba", "53", "Cuban"], ["CY", "Cyprus", "357", "Cypriot"], ["CZ", "Czechia", "420", "Czech"], ["DK", "Denmark", "45", "Danish"], ["DJ", "Djibouti", "253", "Djiboutian"], ["DM", "Dominica", "1767", "Dominican (Dominica)"], ["DO", "Dominican Republic", "1809", "Dominican (Dominican Republic)"], ["EC", "Ecuador", "593", "Ecuadorian"], ["EG", "Egypt", "20", "Egyptian"], ["SV", "El Salvador", "503", "Salvadoran"], ["GQ", "Equatorial Guinea", "240", "Equatorial Guinean"], ["ER", "Eritrea", "291", "Eritrean"], ["EE", "Estonia", "372", "Estonian"], ["SZ", "Eswatini", "268", "Swazi"], ["ET", "Ethiopia", "251", "Ethiopian"], ["FJ", "Fiji", "679", "Fijian"], ["FI", "Finland", "358", "Finnish"], ["FR", "France", "33", "French"], ["GA", "Gabon", "241", "Gabonese"], ["GM", "Gambia", "220", "Gambian"], ["GE", "Georgia", "995", "Georgian"], ["DE", "Germany", "49", "German"], ["GH", "Ghana", "233", "Ghanaian"], ["GR", "Greece", "30", "Greek"], ["GD", "Grenada", "1473", "Grenadian"], ["GT", "Guatemala", "502", "Guatemalan"], ["GN", "Guinea", "224", "Guinean"], ["GW", "Guinea-Bissau", "245", "Bissau-Guinean"], ["GY", "Guyana", "592", "Guyanese"], ["HT", "Haiti", "509", "Haitian"], ["HN", "Honduras", "504", "Honduran"], ["HK", "Hong Kong", "852", "Hong Konger"], ["HU", "Hungary", "36", "Hungarian"], ["IS", "Iceland", "354", "Icelandic"], ["IN", "India", "91", "Indian"], ["ID", "Indonesia", "62", "Indonesian"], ["IR", "Iran", "98", "Iranian"], ["IQ", "Iraq", "964", "Iraqi"], ["IE", "Ireland", "353", "Irish"], ["IL", "Israel", "972", "Israeli"], ["IT", "Italy", "39", "Italian"], ["JM", "Jamaica", "1876", "Jamaican"], ["JP", "Japan", "81", "Japanese"], ["JO", "Jordan", "962", "Jordanian"], ["KZ", "Kazakhstan", "7", "Kazakhstani"], ["KE", "Kenya", "254", "Kenyan"], ["KI", "Kiribati", "686", "I-Kiribati"], ["XK", "Kosovo", "383", "Kosovar"], ["KW", "Kuwait", "965", "Kuwaiti"], ["KG", "Kyrgyzstan", "996", "Kyrgyz"], ["LA", "Laos", "856", "Laotian"], ["LV", "Latvia", "371", "Latvian"], ["LB", "Lebanon", "961", "Lebanese"], ["LS", "Lesotho", "266", "Mosotho"], ["LR", "Liberia", "231", "Liberian"], ["LY", "Libya", "218", "Libyan"], ["LI", "Liechtenstein", "423", "Liechtensteiner"], ["LT", "Lithuania", "370", "Lithuanian"], ["LU", "Luxembourg", "352", "Luxembourger"], ["MO", "Macao", "853", "Macanese"], ["MG", "Madagascar", "261", "Malagasy"], ["MW", "Malawi", "265", "Malawian"], ["MY", "Malaysia", "60", "Malaysian"], ["MV", "Maldives", "960", "Maldivian"], ["ML", "Mali", "223", "Malian"], ["MT", "Malta", "356", "Maltese"], ["MH", "Marshall Islands", "692", "Marshallese"], ["MR", "Mauritania", "222", "Mauritanian"], ["MU", "Mauritius", "230", "Mauritian"], ["MX", "Mexico", "52", "Mexican"], ["FM", "Micronesia", "691", "Micronesian"], ["MD", "Moldova", "373", "Moldovan"], ["MC", "Monaco", "377", "Monegasque"], ["MN", "Mongolia", "976", "Mongolian"], ["ME", "Montenegro", "382", "Montenegrin"], ["MA", "Morocco", "212", "Moroccan"], ["MZ", "Mozambique", "258", "Mozambican"], ["MM", "Myanmar", "95", "Burmese"], ["NA", "Namibia", "264", "Namibian"], ["NR", "Nauru", "674", "Nauruan"], ["NP", "Nepal", "977", "Nepalese"], ["NL", "Netherlands", "31", "Dutch"], ["NZ", "New Zealand", "64", "New Zealander"], ["NI", "Nicaragua", "505", "Nicaraguan"], ["NE", "Niger", "227", "Nigerien"], ["NG", "Nigeria", "234", "Nigerian"], ["KP", "North Korea", "850", "North Korean"], ["MK", "North Macedonia", "389", "Macedonian"], ["NO", "Norway", "47", "Norwegian"], ["OM", "Oman", "968", "Omani"], ["PK", "Pakistan", "92", "Pakistani"], ["PW", "Palau", "680", "Palauan"], ["PS", "Palestine", "970", "Palestinian"], ["PA", "Panama", "507", "Panamanian"], ["PG", "Papua New Guinea", "675", "Papua New Guinean"], ["PY", "Paraguay", "595", "Paraguayan"], ["PE", "Peru", "51", "Peruvian"], ["PH", "Philippines", "63", "Filipino"], ["PL", "Poland", "48", "Polish"], ["PT", "Portugal", "351", "Portuguese"], ["QA", "Qatar", "974", "Qatari"], ["RO", "Romania", "40", "Romanian"], ["RU", "Russia", "7", "Russian"], ["RW", "Rwanda", "250", "Rwandan"], ["KN", "Saint Kitts and Nevis", "1869", "Kittitian and Nevisian"], ["LC", "Saint Lucia", "1758", "Saint Lucian"], ["VC", "Saint Vincent and the Grenadines", "1784", "Vincentian"], ["WS", "Samoa", "685", "Samoan"], ["SM", "San Marino", "378", "Sammarinese"], ["ST", "São Tomé and Príncipe", "239", "São Toméan"], ["SA", "Saudi Arabia", "966", "Saudi"], ["SN", "Senegal", "221", "Senegalese"], ["RS", "Serbia", "381", "Serbian"], ["SC", "Seychelles", "248", "Seychellois"], ["SL", "Sierra Leone", "232", "Sierra Leonean"], ["SG", "Singapore", "65", "Singaporean"], ["SK", "Slovakia", "421", "Slovak"], ["SI", "Slovenia", "386", "Slovenian"], ["SB", "Solomon Islands", "677", "Solomon Islander"], ["SO", "Somalia", "252", "Somali"], ["ZA", "South Africa", "27", "South African"], ["KR", "South Korea", "82", "South Korean"], ["SS", "South Sudan", "211", "South Sudanese"], ["ES", "Spain", "34", "Spanish"], ["LK", "Sri Lanka", "94", "Sri Lankan"], ["SD", "Sudan", "249", "Sudanese"], ["SR", "Suriname", "597", "Surinamese"], ["SE", "Sweden", "46", "Swedish"], ["CH", "Switzerland", "41", "Swiss"], ["SY", "Syria", "963", "Syrian"], ["TW", "Taiwan", "886", "Taiwanese"], ["TJ", "Tajikistan", "992", "Tajik"], ["TZ", "Tanzania", "255", "Tanzanian"], ["TH", "Thailand", "66", "Thai"], ["TL", "Timor-Leste", "670", "Timorese"], ["TG", "Togo", "228", "Togolese"], ["TO", "Tonga", "676", "Tongan"], ["TT", "Trinidad and Tobago", "1868", "Trinidadian and Tobagonian"], ["TN", "Tunisia", "216", "Tunisian"], ["TR", "Türkiye", "90", "Turkish"], ["TM", "Turkmenistan", "993", "Turkmen"], ["TV", "Tuvalu", "688", "Tuvaluan"], ["UG", "Uganda", "256", "Ugandan"], ["UA", "Ukraine", "380", "Ukrainian"], ["AE", "United Arab Emirates", "971", "Emirati"], ["GB", "United Kingdom", "44", "British"], ["US", "United States", "1", "American"], ["UY", "Uruguay", "598", "Uruguayan"], ["UZ", "Uzbekistan", "998", "Uzbekistani"], ["VU", "Vanuatu", "678", "Ni-Vanuatu"], ["VA", "Vatican City", "379", "Vatican citizen"], ["VE", "Venezuela", "58", "Venezuelan"], ["VN", "Vietnam", "84", "Vietnamese"], ["YE", "Yemen", "967", "Yemeni"], ["ZM", "Zambia", "260", "Zambian"], ["ZW", "Zimbabwe", "263", "Zimbabwean"]],BFS_PD={"Central": ["Chibombo", "Chisamba", "Chitambo", "Itezhi-Tezhi", "Kabwe", "Kapiri Mposhi", "Luano", "Mkushi", "Mumbwa", "Ngabwe", "Serenje"], "Copperbelt": ["Chililabombwe", "Chingola", "Kafulafuta", "Kalulushi", "Kitwe", "Luanshya", "Lufwanyama", "Masaiti", "Mpongwe", "Mufulira", "Ndola"], "Eastern": ["Chadiza", "Chasefu", "Chipangali", "Chipata", "Kasenengwa", "Katete", "Lumezi", "Lundazi", "Lusangazi", "Mambwe", "Nyimba", "Petauke", "Sinda", "Vubwi"], "Luapula": ["Chembe", "Chiengi", "Chifunabuli", "Chipili", "Kawambwa", "Lunga", "Mansa", "Milenge", "Mwansabombwe", "Mwense", "Nchelenge", "Samfya"], "Lusaka": ["Chilanga", "Chirundu", "Chongwe", "Kafue", "Luangwa", "Lusaka", "Rufunsa", "Shibuyunji"], "Muchinga": ["Chama", "Chinsali", "Isoka", "Kanchibiya", "Lavushimanda", "Mafinga", "Mpika", "Nakonde", "Shiwang'andu"], "Northern": ["Chilubi", "Kaputa", "Kasama", "Lunte", "Lupososhi", "Luwingu", "Malole", "Mbala", "Mporokoso", "Mpulungu", "Mungwi", "Nsama", "Senga Hill"], "North-Western": ["Chavuma", "Ikelenge", "Kabompo", "Kalumbila", "Kasempa", "Manyinga", "Mufumbwe", "Mushindamo", "Mwinilunga", "Solwezi", "Zambezi"], "Southern": ["Chikankata", "Choma", "Gwembe", "Kalomo", "Kazungula", "Livingstone", "Mazabuka", "Monze", "Namwala", "Pemba", "Siavonga", "Sinazongwe", "Zimba"], "Western": ["Kalabo", "Kaoma", "Limulunga", "Luampa", "Lukulu", "Mitete", "Mongu", "Mulobezi", "Mwandi", "Nalolo", "Nkeyema", "Senanga", "Sesheke", "Shangombo", "Sikongo", "Sioma"]};
+function BFS_fb(m){var i=m.getAttribute("data-i").toUpperCase(),sp=document.createElement("span");sp.className="fl2";sp.textContent=String.fromCodePoint(127397+i.charCodeAt(0),127397+i.charCodeAt(1));m.replaceWith(sp)}
+var BFSP=(function(){
+var st={nat:{v:"",iso:""},phc:{v:"260",iso:"ZM"},wac:{v:"260",iso:"ZM"}},cfg={},open=null;
+function fl(i){return '<img class="fl" alt="" loading="lazy" src="https://flagcdn.com/w40/'+i.toLowerCase()+'.png" srcset="https://flagcdn.com/w80/'+i.toLowerCase()+'.png 2x" data-i="\'+i+\'" onerror="BFS_fb(this)">'}
+function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;")}
+function items(k){var a=BFS_C.map(function(c){return k==="nat"?{iso:c[0],label:c[3],v:c[3],right:""}:{iso:c[0],label:c[1],v:c[2],right:"+"+c[2]}});
+ a.sort(function(x,y){return x.label.localeCompare(y.label,"en")});return a}
+function paint(k){var c=cfg[k],b=c.btn,s=st[k];
+ if(k==="nat")b.querySelector(".t").innerHTML=s.v?fl(s.iso)+" "+esc(s.v):'<span class="ph2">'+esc(c.ph)+'</span>';
+ else b.querySelector(".t").innerHTML=fl(s.iso)+" +"+esc(s.v);
+ if(k==="nat"){var h=document.getElementById("nat");h.value=s.v}}
+function close(){if(open){cfg[open].pop.hidden=true;cfg[open].btn.setAttribute("aria-expanded","false");open=null}}
+function render(k,q){var c=cfg[k],ul=c.ul,s=st[k];q=(q||"").toLowerCase().trim();var h="";
+ c.list.forEach(function(it,i){if(q&&it.label.toLowerCase().indexOf(q)<0&&it.right.indexOf(q)<0)return;
+  h+='<li role="option" data-i="'+i+'"'+(it.iso===s.iso?' class="on"':'')+'>'+fl(it.iso)+'<span>'+esc(it.label)+'</span>'+(it.right?'<em>'+esc(it.right)+'</em>':'')+'</li>'});
+ ul.innerHTML=h||'<li style="cursor:default">No match</li>'}
+function pick(k,it){st[k]={v:it.v,iso:it.iso};paint(k);cfg[k].btn.classList.remove("bad");close();
+ if(k==="nat")document.getElementById("nat").dispatchEvent(new Event("change",{bubbles:true}));cfg[k].btn.focus()}
+function build(host){var k=host.getAttribute("data-pk"),id=k+"-b";
+ host.innerHTML='<button type="button" class="pkb" id="'+id+'" aria-haspopup="listbox" aria-expanded="false"><span class="t"></span></button><div class="pkl" hidden><input type="text" placeholder="Search" aria-label="Search" autocomplete="off"><ul role="listbox"></ul></div>';
+ var c={host:host,btn:host.querySelector("button"),pop:host.querySelector(".pkl"),inp:host.querySelector("input"),ul:host.querySelector("ul"),ph:host.getAttribute("data-ph"),list:items(k)};cfg[k]=c;paint(k);
+ c.btn.addEventListener("click",function(){if(open===k){close();return}close();open=k;c.pop.hidden=false;c.btn.setAttribute("aria-expanded","true");c.inp.value="";render(k,"");
+  var on=c.ul.querySelector(".on");if(on)c.ul.scrollTop=on.offsetTop-60;c.inp.focus({preventScroll:true})});
+ c.inp.addEventListener("input",function(){render(k,c.inp.value)});
+ c.inp.addEventListener("keydown",function(e){if(e.key==="Escape"){close();c.btn.focus()}else if(e.key==="Enter"){e.preventDefault();var f=c.ul.querySelector("li[data-i]");if(f)pick(k,c.list[+f.getAttribute("data-i")])}});
+ c.ul.addEventListener("click",function(e){var li=e.target.closest("li[data-i]");if(li)pick(k,c.list[+li.getAttribute("data-i")])})}
+Array.prototype.forEach.call(document.querySelectorAll("[data-pk]"),build);
+document.addEventListener("click",function(e){if(open&&!cfg[open].host.contains(e.target))close()});
+document.addEventListener("keydown",function(e){if(e.key==="Escape")close()});
+return{dial:function(k){return st[k].v},reset:function(){st.nat={v:"",iso:""};st.phc={v:"260",iso:"ZM"};st.wac={v:"260",iso:"ZM"};["nat","phc","wac"].forEach(paint)}}
+})();
 (function(){
 var $=function(i){return document.getElementById(i)},af=$("af"),box=$("ok");
 function say(h,err){box.style.display="block";box.style.borderLeftColor=err?"#B3261E":"";box.innerHTML=h}
 function g(i){return $(i).value.trim()}
 function digits(v){var d=String(v).replace(/[^0-9+]/g,"");if(d.charAt(0)==="+")d=d.slice(1);else if(d.indexOf("00")===0)d=d.slice(2);else if(d.charAt(0)==="0")d="260"+d.slice(1);else if(d.length===9)d="260"+d;return d}
 function age(d){var b=new Date(d),t=new Date(),a=t.getFullYear()-b.getFullYear(),m=t.getMonth()-b.getMonth();if(m<0||(m===0&&t.getDate()<b.getDate()))a--;return a}
-function nationality(){return $("nat").value==="Other"?g("nat2"):$("nat").value}
+function nationality(){return $("nat").value}
+function fullDigits(id){var raw=g(id),k=id==="ph"?"phc":"wac",d=raw.replace(/\D/g,"");if(!d)return "";if(raw.charAt(0)==="+")return d;if(raw.indexOf("00")===0)return d.slice(2);return BFSP.dial(k)+d.replace(/^0+/,"")}
+function phoneOk(id){var d=fullDigits(id),k=id==="ph"?"phc":"wac";if(!d)return false;if(g(id).charAt(0)!=="+"&&g(id).indexOf("00")!==0&&BFSP.dial(k)==="260")return /^260\d{9}$/.test(d);return /^\d{8,15}$/.test(d)}
+function distVal(){var p=$("pr").value;return(p==="Outside Zambia"||$("di").value==="Other (not listed)")?g("di2"):g("di")}
+function hearVal(){return $("hb").value==="Other"?"Other: "+g("hb2"):$("hb").value}
+function setDistricts(){var p=$("pr").value,sel=$("di"),t=$("di2"),l=$("dil");t.hidden=true;t.value="";sel.classList.remove("bad");t.classList.remove("bad");
+ if(!p){sel.hidden=false;sel.disabled=true;sel.innerHTML='<option value="">Select province first</option>';l.textContent="District";return}
+ if(p==="Outside Zambia"){sel.hidden=true;sel.disabled=true;t.hidden=false;t.placeholder="City, town or region";l.textContent="City, town or region";return}
+ sel.hidden=false;sel.disabled=false;l.textContent="District";
+ sel.innerHTML='<option value="">Select district</option>'+BFS_PD[p].map(function(d){return"<option>"+d+"</option>"}).join("")+'<option>Other (not listed)</option>'}
+$("pr").addEventListener("change",setDistricts);
+$("di").addEventListener("change",function(){var o=$("di").value==="Other (not listed)";$("di2").hidden=!o;$("di2").value="";$("di2").placeholder="Type your district";if(o)$("di2").focus()});
+$("hb").addEventListener("change",function(){var o=$("hb").value==="Other";$("hb2").hidden=!o;if(o)$("hb2").focus()});
+$("nrcn").addEventListener("input",function(e){var d=this.value.replace(/\D/g,"").slice(0,9),del=e.inputType&&e.inputType.indexOf("delete")===0,o=d.slice(0,6);
+ if(d.length>6||(d.length===6&&!del))o+="/";if(d.length>6)o+=d.slice(6,8);if(d.length>8||(d.length===8&&!del))o+="/";if(d.length>8)o+=d.slice(8);this.value=o});
+af.addEventListener("reset",function(){setTimeout(function(){BFSP.reset();setDistricts();$("hb2").hidden=true;$("nrcw").hidden=true;$("ppw").hidden=true},0)});
 $("dob").max=new Date().toISOString().slice(0,10);
-$("nat").addEventListener("change",function(){var z=$("nat").value==="Zambian",o=$("nat").value==="Other";$("nrcw").hidden=!z;$("natw").hidden=!o;$("ppw").hidden=!o});
+$("nat").addEventListener("change",function(){var v=$("nat").value,z=v==="Zambian",o=!!v&&!z;$("nrcw").hidden=!z;$("ppw").hidden=!o});
 af.addEventListener("input",function(e){e.target.classList.remove("bad")});
-function waText(wa){return "Hello, I would like to apply to Born For Service School of Ministry.\n\nProgramme: "+g("pg")+"\nFull name: "+g("fn")+"\nDate of birth: "+g("dob")+"\nGender: "+g("gd")+"\nMarital status: "+g("ms")+"\nNationality: "+nationality()+"\n"+($("nat").value==="Zambian"?"NRC number: "+g("nrcn"):"Passport number: "+g("ppn"))+"\nPhone: "+g("ph")+"\nWhatsApp: +"+wa+"\nEmail: "+g("em")+"\nResidential address: "+g("ad")+"\nDistrict: "+g("di")+"\nProvince: "+g("pr")+"\nChurch or ministry: "+g("ch")+"\nEducation or training: "+g("ed")+"\nReason for applying: "+g("re")+"\n\nI will attach a copy of my NRC or passport in this chat."}
+function waText(wa){return "Hello, I would like to apply to Born For Service School of Ministry.\n\nProgramme: "+g("pg")+"\nFull name: "+g("fn")+"\nDate of birth: "+g("dob")+"\nGender: "+g("gd")+"\nMarital status: "+g("ms")+"\nNationality: "+nationality()+"\n"+($("nat").value==="Zambian"?"NRC number: "+g("nrcn"):"Passport number: "+g("ppn"))+"\nPhone: +"+fullDigits("ph")+"\nWhatsApp: +"+wa+"\nEmail: "+g("em")+"\nResidential address: "+g("ad")+"\nProvince: "+g("pr")+"\nDistrict: "+distVal()+"\nChurch or ministry: "+g("ch")+"\nEducation or training: "+g("ed")+"\nHow I heard about BFS: "+hearVal()+"\nReason for applying: "+g("re")+"\n\nI will attach a copy of my NRC or passport in this chat."}
 function waLink(wa){return "https://wa.me/260975153242?text="+encodeURIComponent(waText(wa))}
 af.addEventListener("submit",function(e){e.preventDefault();
 Array.prototype.forEach.call(af.querySelectorAll(".bad"),function(x){x.classList.remove("bad")});
-var bad=[],f=$("nrc").files[0],zam=$("nat").value==="Zambian",oth=$("nat").value==="Other";
-["pg","fn","dob","gd","ms","nat","ph","wa","em","ad","di","pr","re"].forEach(function(i){if(!g(i))bad.push(i)});
-if(oth){if(!g("nat2"))bad.push("nat2");if(!g("ppn"))bad.push("ppn")}
-if(zam&&g("nrcn").length<6)bad.push("nrcn");
-var wa=digits(g("wa"));
-if(g("wa")&&!/^\d{11,15}$/.test(wa))bad.push("wa");
-if(g("ph")&&digits(g("ph")).length<9)bad.push("ph");
+var bad=[],f=$("nrc").files[0],zam=$("nat").value==="Zambian",oth=!!$("nat").value&&!zam;
+["pg","fn","dob","gd","ms","nat","ph","wa","em","ad","pr","hb","re"].forEach(function(i){if(!g(i))bad.push(i)});
+if(oth&&!g("ppn"))bad.push("ppn");
+if(zam&&!/^\d{6}\/\d{2}\/\d$/.test(g("nrcn")))bad.push("nrcn");
+if($("pr").value&&!distVal())bad.push(($("pr").value==="Outside Zambia"||$("di").value==="Other (not listed)")?"di2":"di");
+if($("hb").value==="Other"&&!g("hb2"))bad.push("hb2");
+var wa=fullDigits("wa");
+if(g("wa")&&!phoneOk("wa"))bad.push("wa");
+if(g("ph")&&!phoneOk("ph"))bad.push("ph");
 if(g("em")&&!/^\S+@\S+\.\S+$/.test(g("em")))bad.push("em");
 if(!f)bad.push("nrc");
 if(!$("ag").checked)bad.push("ag");
 if(!$("cn").checked)bad.push("cn");
-if(bad.length){bad.forEach(function(i){$(i).classList.add("bad")});say("Please complete the highlighted details. Check that your WhatsApp number includes the country code and that you ticked both boxes.",1);$(bad[0]).focus();return}
+if(bad.length){bad.forEach(function(i){$(i).classList.add("bad");var b=$(i+"-b");if(b)b.classList.add("bad")});say("Please complete the highlighted details. Check your NRC number (format 123456/10/1), your phone and WhatsApp numbers, and that you ticked both boxes.",1);($(bad[0]+"-b")||$(bad[0])).focus();return}
 if(age(g("dob"))<17){$("dob").classList.add("bad");say("Sorry, BFS admits people who are 17 years of age or older.",1);return}
 if(f.size>5*1024*1024||["image/jpeg","image/png","image/webp","application/pdf"].indexOf(f.type)<0){$("nrc").classList.add("bad");say("Please attach your document as a JPG, PNG or PDF file no larger than 5 MB.",1);return}
 if(!BFS_URL||!BFS_KEY){say("To finish your application, please <a href=\""+waLink(wa)+"\" target=\"_blank\" rel=\"noopener noreferrer\"><b>send it to us on WhatsApp</b></a> and attach your NRC or passport copy in the chat.");return}
@@ -370,11 +435,12 @@ var btn=af.querySelector("button[type=submit]");btn.disabled=true;say("Sending y
 var ext=(f.name.split(".").pop()||"bin").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,5);
 var id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():Date.now()+"-"+Math.random().toString(36).slice(2);
 var path=id+"."+ext,H={apikey:BFS_KEY};if(BFS_KEY.indexOf("eyJ")===0)H.Authorization="Bearer "+BFS_KEY;
-var row={programme:g("pg"),full_name:g("fn"),date_of_birth:g("dob"),gender:g("gd"),marital_status:g("ms"),nationality:nationality(),nrc_number:zam?g("nrcn"):null,passport_number:oth?g("ppn"):null,phone:g("ph"),whatsapp:"+"+wa,email:g("em"),address:g("ad"),district:g("di"),province:g("pr"),location:g("di")+", "+g("pr"),church:g("ch"),education:g("ed"),reason:g("re"),consent:true,nrc_path:path};
+var row={programme:g("pg"),full_name:g("fn"),date_of_birth:g("dob"),gender:g("gd"),marital_status:g("ms"),nationality:nationality(),nrc_number:zam?g("nrcn"):null,passport_number:oth?g("ppn"):null,phone:"+"+fullDigits("ph"),whatsapp:"+"+wa,email:g("em"),address:g("ad"),district:distVal(),province:g("pr"),location:distVal()+", "+g("pr"),church:g("ch"),education:g("ed"),heard_about:hearVal(),reason:g("re"),consent:true,nrc_path:path};
+function insert(b){return fetch(BFS_URL+"/rest/v1/applications",{method:"POST",headers:Object.assign({"Content-Type":"application/json",Prefer:"return=minimal"},H),body:JSON.stringify(b)})}
 fetch(BFS_URL+"/storage/v1/object/nrc/"+path,{method:"POST",headers:Object.assign({"Content-Type":f.type},H),body:f})
 .then(function(r){if(!r.ok)throw new Error("upload");
-return fetch(BFS_URL+"/rest/v1/applications",{method:"POST",headers:Object.assign({"Content-Type":"application/json",Prefer:"return=minimal"},H),body:JSON.stringify(row)})})
-.then(function(r){if(!r.ok)throw new Error("save");af.reset();$("nrcw").hidden=true;$("natw").hidden=true;$("ppw").hidden=true;say("<b>Thank you.</b> We have received your application. BFS will contact you on your WhatsApp number. Submitting an application does not mean you have been admitted.")})
+return insert(row).then(function(r){if(r.ok)return r;return r.clone().text().then(function(t){if(t.indexOf("heard_about")<0)return r;var r2=Object.assign({},row);delete r2.heard_about;r2.reason=row.reason+"\n\nHow I heard about BFS: "+row.heard_about;return insert(r2)})})})
+.then(function(r){if(!r.ok)throw new Error("save");af.reset();say("<b>Thank you.</b> We have received your application. BFS will contact you on your WhatsApp number. Submitting an application does not mean you have been admitted.")})
 .catch(function(){say("Sorry, we could not send your application just now. Please try again, or <a href=\""+waLink(wa)+"\" target=\"_blank\" rel=\"noopener noreferrer\"><b>send it to us on WhatsApp</b></a>.",1)})
 .then(function(){btn.disabled=false})
 })})();
