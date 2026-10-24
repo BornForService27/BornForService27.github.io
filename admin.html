@@ -70,7 +70,19 @@ label{display:block;font-weight:600;margin:12px 0 4px}
 </div>
 
 <div id="app" hidden>
-  <div class="tabs"><button class="on" data-t="apps">Applications</button><button data-t="rec">Receipts</button></div>
+  <div class="tabs"><button class="on" data-t="apps">Applications</button><button data-t="reg">Registrations<span id="rbadge"></span></button><button data-t="stu">Students</button><button data-t="rec">Receipts</button></div>
+
+  <section id="regs" hidden>
+    <p class="mute">Existing students who registered on the website. Check each one against your records, then verify. Verified students move into their start year under Students.</p>
+    <div class="row"><select id="rf" style="width:auto"><option value="pending">Waiting for verification</option><option value="verified">Verified</option><option value="rejected">Rejected</option><option value="">All</option></select>
+    <input id="rq" placeholder="Search by name or student number" style="max-width:300px"><span class="mute" id="rcount"></span></div>
+    <div id="rlist"></div>
+  </section>
+
+  <section id="stu" hidden>
+    <div class="row"><input id="sq" placeholder="Search by name or student number" style="max-width:300px"><span class="mute" id="scount"></span></div>
+        <div id="syears"></div>
+  </section>
 
   <section id="apps">
     <div class="row"><select id="flt" style="width:auto"><option value="">All applications</option><option value="submitted">New</option><option value="under_review">Under review</option><option value="accepted">Accepted</option><option value="declined">Declined</option></select>
@@ -319,13 +331,13 @@ function enter(){
     if(r.error){backToLogin(r.error.status===404||/admins/.test(r.error.message||"")?"The database is not set up yet. Run the setup script from the guide (Part 2) in the Supabase SQL Editor.":"Could not check your access: "+r.error.message);return}
     if(!r.data||!r.data.length){backToLogin("You signed in, but this login is not an administrator yet. In the Supabase SQL Editor, run the line from Part 4 of the guide, with this login's email address.");return}
     $("login").hidden=true;$("app").hidden=false;$("out").hidden=false;show("lmsg","");
-    loadApps().then(loadReceipts)
+    loadApps().then(loadReceipts).then(loadStudents)
   }).catch(function(){backToLogin("Could not reach the database. Check your internet connection and the settings at the top of admin.html.")})
 }
 function loadApps(){
   return sb.from("applications").select("*").order("created_at",{ascending:false}).then(function(r){
     if(r.error){$("list").innerHTML='<div class="msg err">You do not have access yet. Ask the person who set up BFS to add your account as an administrator.</div>';return}
-    apps=r.data||[];render();fillStudents();
+    apps=r.data||[];render();fillStudents();if(window.stuRows)renderStudents();
   })
 }
 function loadReceipts(){
@@ -382,8 +394,53 @@ $("list").addEventListener("click",function(e){var dl=e.target.getAttribute&&e.t
 
 document.querySelectorAll(".tabs button").forEach(function(b){b.onclick=function(){
   document.querySelectorAll(".tabs button").forEach(function(x){x.classList.toggle("on",x===b)});
-  $("apps").hidden=b.getAttribute("data-t")!=="apps";$("rec").hidden=b.getAttribute("data-t")!=="rec"}});
+  var t=b.getAttribute("data-t");$("apps").hidden=t!=="apps";$("rec").hidden=t!=="rec";$("stu").hidden=t!=="stu";$("regs").hidden=t!=="reg"}});
 
+
+var stuRows=null;
+function loadStudents(){return sb.from("students").select("*").order("created_at",{ascending:false}).then(function(r){
+  if(r.error){var m='<div class="msg err">The students table is not set up yet, or you do not have access. Run the students script (students-setup.sql) in the Supabase SQL Editor, then refresh this page.</div>';$("rlist").innerHTML=m;$("syears").innerHTML=m;return}
+  stuRows=r.data||[];renderStudents()})}
+function stuKey(x){return(x._src==="s"?"s:":"a:")+x.id}
+function renderStudents(){
+  var rows=stuRows||[],np=rows.filter(function(s){return s.status==="pending"}).length;
+  $("rbadge").textContent=np?" ("+np+")":"";
+  var f=$("rf").value,rq=($("rq").value||"").toLowerCase();
+  var rl=rows.filter(function(s){return(!f||s.status===f)&&(!rq||(s.full_name||"").toLowerCase().indexOf(rq)>=0||String(s.student_number||"").toLowerCase().indexOf(rq)>=0)});
+  $("rcount").textContent=rl.length+" registration"+(rl.length===1?"":"s");
+  var SL={pending:"Waiting",verified:"Verified",rejected:"Rejected"};
+  $("rlist").innerHTML=rl.length?rl.map(function(s){
+    var btn=s.status==="pending"?'<button data-sv="'+s.id+'">Verify and add to '+esc(s.intake_year)+' records</button><a class="b wa" target="_blank" rel="noopener" href="'+waUrl(s.whatsapp,"Hello "+s.full_name+", this is Born For Service School of Ministry. We received your student registration ("+s.student_number+"). Please confirm that these details are yours.")+'">Confirm on WhatsApp</a><button class="o" data-sr="'+s.id+'">Reject</button>'
+      :s.status==="verified"?'<button data-dl="s:'+s.id+'">Download admission letter</button><button class="wa" data-sl="s:'+s.id+'">Send admission letter</button>'
+      :'<button class="o" data-rs="'+s.id+'">Move back to waiting</button>';
+    return '<div class="card"><div class="row"><h3 style="margin:0;flex:1">'+esc(s.full_name)+'</h3><span class="pill" style="margin-right:6px">'+esc(s.student_number)+'</span><span class="pill">'+(SL[s.status]||esc(s.status))+'</span></div>'
+    +'<p style="margin:8px 0"><b>Started:</b> '+esc(s.intake_year)+' &nbsp; <b>Programme:</b> '+esc(s.programme||"-")+' &nbsp; <b>Gender:</b> '+esc(s.gender||"-")+'<br><b>WhatsApp:</b> '+esc(s.whatsapp||"-")+' &nbsp; <b>Email:</b> '+esc(s.email||"-")+'<br><b>Location:</b> '+esc((s.district||"-")+", "+(s.province||"-"))+(s.church?' &nbsp; <b>Church:</b> '+esc(s.church):'')+'<br><span class="mute">Submitted '+esc(fmtDate(s.created_at))+'</span></p>'
+    +'<div class="row">'+btn+'</div></div>'}).join(""):'<p class="mute">'+(f==="pending"?"No student registrations are waiting for verification.":"No registrations to show here.")+'</p>';
+  var q=($("sq").value||"").toLowerCase();
+  var all=rows.filter(function(s){return s.status==="verified"}).map(function(s){s._src="s";s._yr=s.intake_year;return s})
+   .concat(apps.filter(function(a){return a.status==="accepted"}).map(function(a){a._src="a";a._yr=new Date(a.admitted_at||a.created_at).getFullYear();return a}))
+   .filter(function(x){return!q||(x.full_name||"").toLowerCase().indexOf(q)>=0||String(x.student_number||"").toLowerCase().indexOf(q)>=0});
+  var by={};all.forEach(function(x){(by[x._yr]=by[x._yr]||[]).push(x)});
+  var yrs=Object.keys(by).sort(function(a,b){return b-a});
+  $("scount").textContent=all.length+" student"+(all.length===1?"":"s");
+  $("syears").innerHTML=yrs.length?'<h3>Student records by year</h3>'+yrs.map(function(y,i){
+    var l=by[y].sort(function(a,b){return String(a.student_number||"").localeCompare(String(b.student_number||""))});
+    return '<details class="card"'+(i===0||q?' open':'')+'><summary style="cursor:pointer;font-size:1.05rem"><b>'+y+' students</b> <span class="mute">('+l.length+')</span></summary><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;margin-top:10px"><tr style="text-align:left"><th>Student no.</th><th>Name</th><th>Programme</th><th>WhatsApp</th><th>Source</th><th></th></tr>'
+    +l.map(function(x){return '<tr style="border-top:1px solid var(--line)"><td>'+esc(x.student_number||"-")+'</td><td>'+esc(x.full_name)+'</td><td>'+esc(x.programme||"-")+'</td><td>'+esc(x.whatsapp||x.phone||"-")+'</td><td><span class="pill">'+(x._src==="s"?"Existing student":"Application")+'</span></td><td style="white-space:nowrap"><button data-dl="'+stuKey(x)+'">Letter</button> <button class="wa" data-sl="'+stuKey(x)+'">Send</button></td></tr>'}).join("")+'</table></div></details>'}).join(""):'<p class="mute">No students in the records yet.</p>';
+  function find(k){var p=k.split(":");return(p[0]==="s"?rows:apps).filter(function(x){return x.id===p[1]})[0]}
+  function each(sel,fn){Array.prototype.forEach.call(document.querySelectorAll(sel),fn)}
+  each("[data-dl]",function(b){b.onclick=function(){var x=find(b.getAttribute("data-dl"));if(x)downloadLetter(x)}});
+  each("[data-sl]",function(b){b.onclick=function(){var x=find(b.getAttribute("data-sl"));if(x)sendLetter(x)}});
+  each("[data-sv]",function(b){b.onclick=function(){var id=b.getAttribute("data-sv"),s=rows.filter(function(x){return x.id===id})[0];
+    if(!confirm("Verify "+s.full_name+" ("+s.student_number+")?\n\nOnly continue if the name, student number and start year match BFS records."))return;
+    sb.from("students").update({status:"verified",admitted_at:new Date().toISOString()}).eq("id",id).then(function(r){if(r.error){alert("Could not save the change.");return}
+      loadStudents().then(function(){var v=(stuRows||[]).filter(function(x){return x.id===id})[0];if(v)downloadLetter(v)})})}});
+  each("[data-sr]",function(b){b.onclick=function(){var id=b.getAttribute("data-sr");if(!confirm("Reject this registration?"))return;
+    sb.from("students").update({status:"rejected"}).eq("id",id).then(function(r){if(r.error){alert("Could not save the change.");return}loadStudents()})}});
+  each("[data-rs]",function(b){b.onclick=function(){sb.from("students").update({status:"pending"}).eq("id",b.getAttribute("data-rs")).then(function(r){if(r.error){alert("Could not save the change.");return}loadStudents()})}});
+}
+$("sq").oninput=function(){if(stuRows)renderStudents()};
+$("rq").oninput=function(){if(stuRows)renderStudents()};$("rf").onchange=function(){if(stuRows)renderStudents()};
 function fillStudents(){
   var acc=apps.filter(function(a){return a.status==="accepted"});
   $("ra").innerHTML=acc.length?acc.map(function(a){return '<option value="'+a.id+'">'+esc(a.full_name)+'</option>'}).join(""):'<option value="">No accepted applicants yet</option>';

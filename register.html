@@ -180,7 +180,6 @@ input.bad,select.bad,textarea.bad{border-color:#B3261E;background:#FFF6F5}
 <div><label for="s_yr">Year you started studying at BFS</label><select id="s_yr" required></select></div>
 <div><label for="s_no">Your student number</label><input id="s_no" inputmode="numeric" maxlength="4" placeholder="e.g. 2714" autocomplete="off" required></div>
 </div>
-<p id="s_full" class="draft" hidden></p>
 <label for="s_pg">Programme</label><select id="s_pg" required><option value="">Select</option><option value="Certificate">Certificate in Biblical Studies and Christian Ministry (1 year)</option><option value="Advanced Certificate">Advanced Certificate in Biblical Studies and Christian Ministry (2 years)</option></select>
 <div class="fgrid">
 <div><label for="s_fn">Full name</label><input id="s_fn" required autocomplete="name"></div>
@@ -244,7 +243,7 @@ var yr=$("s_yr"),h='<option value="">Select year</option>';for(var y=2023;y<=Y;y
 $("s_pr").innerHTML+=Object.keys(BFS_PD).map(function(k){return"<option>"+k+"</option>"}).join("");
 $("s_pr").onchange=function(){var p=this.value,d=$("s_di");d.disabled=!p;d.innerHTML=p?'<option value="">Select district</option>'+BFS_PD[p].map(function(x){return"<option>"+x+"</option>"}).join("")+"<option>Other (not listed)</option>":'<option value="">Select province first</option>'};
 function full(){var n=g("s_no");return $("s_yr").value&&/^\d{4}$/.test(n)?$("s_yr").value+"-"+n:""}
-function pv(){var f=full(),b=$("s_full");b.hidden=!f;if(f)b.innerHTML="Your full student number will be recorded as <b>"+f+"</b>."}
+function pv(){}
 $("s_no").oninput=function(){this.value=this.value.replace(/\D/g,"").slice(0,4);pv()};yr.onchange=pv;
 function wa(){var raw=g("s_wa"),d=raw.replace(/\D/g,"");if(!d)return"";if(raw.charAt(0)==="+")return d;if(raw.indexOf("00")===0)return d.slice(2);return BFSP.dial("swc")+d.replace(/^0+/,"")}
 sf.addEventListener("input",function(e){e.target.classList.remove("bad")});sf.addEventListener("change",function(e){e.target.classList.remove("bad")});
@@ -259,7 +258,7 @@ var btn=sf.querySelector("button[type=submit]");btn.disabled=true;say("Sending y
 var H={"Content-Type":"application/json",Prefer:"return=minimal",apikey:BFS_KEY};if(BFS_KEY.indexOf("eyJ")===0)H.Authorization="Bearer "+BFS_KEY;
 var d=g("s_di"),row={intake_year:+$("s_yr").value,student_number:full(),full_name:g("s_fn"),gender:g("s_gd"),whatsapp:"+"+w,phone:"+"+w,email:g("s_em"),province:g("s_pr"),district:d,church:g("s_ch"),programme:g("s_pg"),status:"pending"};
 fetch(BFS_URL+"/rest/v1/students",{method:"POST",headers:H,body:JSON.stringify(row)}).then(function(r){
- if(r.ok){sf.reset();$("s_di").disabled=true;pv();say("<b>Thank you, "+row.full_name.split(" ")[0]+".</b> BFS has received your details and will verify them against its records. We will contact you on WhatsApp once you are confirmed, and your admission letter will be sent to you then.");return}
+ if(r.ok){sf.reset();$("s_di").disabled=true;pv();say("<b>Thank you, "+row.full_name.split(" ")[0]+".</b> BFS has received your details and will verify them against its records. Once you are confirmed, your admission letter will be sent to you on WhatsApp or through your email address.");return}
  return r.text().then(function(t){say(/23505|duplicate/i.test(t)?"This student number has already been submitted for "+row.intake_year+". If this is a mistake, please contact BFS on WhatsApp.":"Sorry, your details could not be sent. Please try again, or contact BFS on WhatsApp.",1)})
 }).catch(function(){say("Sorry, we could not reach the server. Please check your internet connection and try again.",1)}).then(function(){btn.disabled=false})});
 })();
