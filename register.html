@@ -242,7 +242,7 @@ function g(i){return $(i).value.trim()}
 var yr=$("s_yr"),h='<option value="">Select year</option>';for(var y=2023;y<=Y;y++)h+="<option>"+y+"</option>";yr.innerHTML=h;
 $("s_pr").innerHTML+=Object.keys(BFS_PD).map(function(k){return"<option>"+k+"</option>"}).join("");
 $("s_pr").onchange=function(){var p=this.value,d=$("s_di");d.disabled=!p;d.innerHTML=p?'<option value="">Select district</option>'+BFS_PD[p].map(function(x){return"<option>"+x+"</option>"}).join("")+"<option>Other (not listed)</option>":'<option value="">Select province first</option>'};
-function full(){var n=g("s_no");return $("s_yr").value&&/^\d{4}$/.test(n)?$("s_yr").value+"-"+n:""}
+function full(){var n=g("s_no");return $("s_yr").value&&/^\d{4}$/.test(n)?$("s_yr").value+n:""}
 function pv(){}
 $("s_no").oninput=function(){this.value=this.value.replace(/\D/g,"").slice(0,4);pv()};yr.onchange=pv;
 function wa(){var raw=g("s_wa"),d=raw.replace(/\D/g,"");if(!d)return"";if(raw.charAt(0)==="+")return d;if(raw.indexOf("00")===0)return d.slice(2);return BFSP.dial("swc")+d.replace(/^0+/,"")}
