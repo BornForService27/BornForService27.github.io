@@ -71,13 +71,18 @@ label{display:block;font-weight:600;margin:12px 0 4px}
 </div>
 
 <div id="app" hidden>
-  <div class="tabs"><button class="on" data-t="apps">Applications</button><button data-t="reg">Registrations<span id="rbadge"></span></button><button data-t="stu">Students</button><button data-t="rec">Receipts</button></div>
+  <div class="tabs"><button class="on" data-t="apps">Applications</button><button data-t="reg">Registrations<span id="gbadge"></span></button><button data-t="bin">Recycle bin<span id="bbadge"></span></button><button data-t="stu">Students</button><button data-t="rec">Receipts</button></div>
 
   <section id="regs" hidden>
     <p class="mute">Existing students who registered on the website. Check each one against your records, then verify. Verified students move into their start year under Students.</p>
-    <div class="row"><select id="rf" style="width:auto"><option value="pending">Waiting for verification</option><option value="verified">Verified</option><option value="rejected">Rejected</option><option value="">All</option></select>
-    <input id="rq" placeholder="Search by name or student number" style="max-width:300px"><span class="mute" id="rcount"></span></div>
-    <div id="rlist"></div>
+    <div class="row"><select id="gf" style="width:auto"><option value="pending">Waiting for verification</option><option value="verified">Verified</option><option value="rejected">Rejected</option><option value="">All</option></select>
+    <input id="gq" placeholder="Search by name or student number" style="max-width:300px"><span class="mute" id="gcount"></span></div>
+    <div id="glist"></div>
+  </section>
+
+  <section id="bin" hidden>
+    <p class="mute">Deleted items wait here, so nothing is lost by mistake. Restore an item to bring it back, or delete it forever to free up space. Deleting an application or a registration never removes a student from the Students register.</p>
+    <div id="binlist"></div>
   </section>
 
   <section id="stu" hidden>
@@ -341,16 +346,16 @@ function enter(){
 function loadApps(){
   return sb.from("applications").select("*").order("created_at",{ascending:false}).then(function(r){
     if(r.error){$("list").innerHTML='<div class="msg err">You do not have access yet. Ask the person who set up BFS to add your account as an administrator.</div>';return}
-    apps=r.data||[];render();fillStudents();if(window.stuRows)renderStudents();
+    apps=(r.data||[]).map(normA);render();fillStudents();renderBin();if(stuRows){renderStudents();syncStudents()}
   })
 }
 function loadReceipts(){
-  return sb.from("receipts").select("*").order("paid_at",{ascending:false}).then(function(r){receipts=r.data||[];renderReceipts()})
+  return sb.from("receipts").select("*").order("paid_at",{ascending:false}).then(function(r){var all=r.data||[];binReceipts=all.filter(function(x){return x.deleted_at});receipts=all.filter(act);renderReceipts();renderBin()})
 }
 var LABEL={submitted:"New",under_review:"Under review",accepted:"Accepted",declined:"Declined"};
 function render(){
-  var f=$("flt").value,q=$("q").value.toLowerCase(),list=apps.filter(function(a){return(!f||a.status===f)&&(!q||(a.full_name||"").toLowerCase().indexOf(q)>=0)});
-  $("count").textContent=list.length+" of "+apps.length;
+  var f=$("flt").value,q=$("q").value.toLowerCase(),list=apps.filter(function(a){return act(a)&&(!f||a.status===f)&&(!q||(a.full_name||"").toLowerCase().indexOf(q)>=0)});
+  $("count").textContent=list.length+" of "+apps.filter(act).length;
   $("list").innerHTML=list.length?list.map(function(a,i){
     var wa=a.whatsapp||a.phone||"";
     return '<div class="card"><div class="row"><h3 style="margin:0;flex:1">'+esc(a.full_name)+'</h3>'+(a.student_number?'<span class="pill" style="margin-right:6px">'+esc(a.student_number)+'</span>':'')+'<span class="pill">'+esc(LABEL[a.status]||a.status)+'</span></div>'
@@ -360,7 +365,7 @@ function render(){
     +'<details><summary>Reason for applying</summary><p style="white-space:pre-line">'+esc(a.reason)+'</p></details>'
     +'<div class="row"><button class="o" data-nrc="'+a.id+'">View ID copy (NRC or passport)</button>'
     +'<select data-st="'+a.id+'" style="width:auto"><option value="submitted">New</option><option value="under_review">Under review</option><option value="accepted">Accepted</option><option value="declined">Declined</option></select>'
-    +(a.status==="accepted"?'<button data-letter="'+a.id+'">Download admission letter</button><button data-sendletter="'+a.id+'">Send admission letter</button><a class="b o" href="'+mailUrl(a.email,"Your BFS application: accepted",acceptText(a))+'">Email acceptance</a>':'')
+    +(a.status==="accepted"?'<button data-letter="'+a.id+'">Download admission letter</button><a class="b o" href="'+mailUrl(a.email,"Your BFS application: accepted",acceptText(a))+'">Email acceptance</a>':'')
     +'<button class="o" data-delapp="'+a.id+'">Delete application</button>'
     +'</div></div>';
   }).join(""):'<div class="msg">No applications to show.</div>';
@@ -375,19 +380,6 @@ $("list").addEventListener("change",function(e){var t=e.target,pid=t.getAttribut
     if(t.value==="accepted"){loadApps().then(function(){var a=apps.filter(function(x){return x.id===id})[0];if(a)downloadLetter(a)})}
     else{loadApps()}})
 });
-function deleteApp(a){
-  var msg="Delete the application of "+a.full_name+"? This cannot be undone."+(a.student_number?" Their student number "+a.student_number+" will be given to the next person you accept.":"");
-  if(!confirm(msg))return;
-  sb.from("applications").delete().eq("id",a.id).select().then(function(r){
-    if(r.error){var c=String(r.error.code||"");
-      if(c==="23503"||/foreign key|violates/i.test(String(r.error.message||""))){alert("This applicant has receipts recorded. Remove their receipts in the Receipts tab first, then delete the application.")}
-      else{alert("Could not delete the application. Run the update script in Supabase (it adds permission to delete), then try again.")}
-      return}
-    if(!r.data||!r.data.length){alert("The application was NOT deleted, because the database did not give permission. Run the latest bfs-update-programmes.sql in Supabase (SQL Editor), then try again.");return}
-    if(a.nrc_path){try{sb.storage.from("nrc").remove(a.nrc_path)}catch(x){}}
-    loadApps();
-  });
-}
 $("list").addEventListener("click",function(e){var dl=e.target.getAttribute&&e.target.getAttribute("data-delapp");if(dl){var da=apps.filter(function(x){return x.id===dl})[0];if(da)deleteApp(da);return}
   var lid=e.target.getAttribute&&e.target.getAttribute("data-letter"),sl=e.target.getAttribute&&e.target.getAttribute("data-sendletter");if(lid||sl){var la=apps.filter(function(x){return x.id===(lid||sl)})[0];if(la){lid?downloadLetter(la):sendLetter(la)}return}
   var id=e.target.getAttribute&&e.target.getAttribute("data-nrc");if(!id)return;
@@ -398,47 +390,72 @@ $("list").addEventListener("click",function(e){var dl=e.target.getAttribute&&e.t
 
 document.querySelectorAll(".tabs button").forEach(function(b){b.onclick=function(){
   document.querySelectorAll(".tabs button").forEach(function(x){x.classList.toggle("on",x===b)});
-  var t=b.getAttribute("data-t");$("apps").hidden=t!=="apps";$("rec").hidden=t!=="rec";$("stu").hidden=t!=="stu";$("regs").hidden=t!=="reg"}});
+  var t=b.getAttribute("data-t");$("apps").hidden=t!=="apps";$("rec").hidden=t!=="rec";$("stu").hidden=t!=="stu";$("regs").hidden=t!=="reg";$("bin").hidden=t!=="bin"}});
 
 
-var stuRows=null,stuProg="All";
+var stuRows=null,stuProg="All",syncBusy=false,tried={},binReceipts=[];
+function act(x){return!x.deleted_at}
+function normA(a){var m=String(a.reason||"").split("\n\nHow I heard about BFS: ");if(m.length>1&&!a.heard_about){a.reason=m[0];a.heard_about=m.slice(1).join("\n\n")}return a}
+function snap(a){return{application_id:a.id,source:"application",status:"verified",intake_year:new Date(a.admitted_at||a.created_at).getFullYear(),student_number:a.student_number,full_name:a.full_name,date_of_birth:a.date_of_birth||null,gender:a.gender||null,marital_status:a.marital_status||null,nationality:a.nationality||null,nrc_number:a.nrc_number||null,passport_number:a.passport_number||null,phone:a.phone||null,whatsapp:a.whatsapp||null,email:a.email||null,address:a.address||null,district:a.district||null,province:a.province||null,church:a.church||null,education:a.education||null,programme:a.programme||null,reason:a.reason||null,heard_about:a.heard_about||null,nrc_path:a.nrc_path||null,admitted_at:a.admitted_at||a.created_at}}
+var SQLMSG="Run the latest students-setup.sql in the Supabase SQL Editor (it adds the Recycle bin), then refresh this page.";
+function softDel(table,id,col,cb){var u={};u[col]=new Date().toISOString();sb.from(table).update(u).eq("id",id).then(function(r){if(r.error){alert("Could not move this to the Recycle bin. "+SQLMSG);return}cb()})}
+function restoreRow(table,id,col,cb){var u={};u[col]=null;sb.from(table).update(u).eq("id",id).then(function(r){if(r.error){alert("Could not restore this item.");return}cb()})}
+function purge(table,id,cb){if(!confirm("Delete this permanently? This cannot be undone."))return;sb.from(table).delete().eq("id",id).select().then(function(r){
+  if(r.error){var m=String(r.error.message||"");alert(/foreign key|violates/i.test(m)||String(r.error.code)==="23503"?"This applicant still has receipts. Delete their receipts permanently from the Recycle bin first.":"Could not delete this item.");return}
+  if(!r.data||!r.data.length){alert("It was not deleted, because the database did not give permission. "+SQLMSG);return}cb()})}
+function haveStudent(a){return(stuRows||[]).some(function(s){return s.application_id===a.id})}
+function ensureStudent(a,cb){
+  if(a.status!=="accepted"||haveStudent(a)){cb(true);return}
+  if(!stuRows){alert("Before deleting an accepted application, the student must be saved in the Students register. "+SQLMSG);cb(false);return}
+  sb.from("students").insert(snap(a)).then(function(r){if(r.error){alert("The student could not be saved to the Students register, so the application was not deleted. "+SQLMSG);cb(false);return}loadStudents().then(function(){cb(true)})})}
+function syncStudents(){
+  if(!stuRows||syncBusy)return;
+  var todo=apps.filter(function(a){return a.status==="accepted"&&a.student_number&&!haveStudent(a)&&!tried[a.id]});
+  if(!todo.length)return;syncBusy=true;todo.forEach(function(a){tried[a.id]=1});
+  Promise.all(todo.map(function(a){return sb.from("students").insert(snap(a)).then(function(r){return r})})).then(function(){syncBusy=false;loadStudents()})}
+function deleteApp(a){
+  if(!confirm("Move the application of "+a.full_name+" to the Recycle bin?"+(a.status==="accepted"?"\n\nThe student stays in the Students register.":"")))return;
+  ensureStudent(a,function(ok){if(ok)softDel("applications",a.id,"deleted_at",loadApps)})}
 function loadStudents(){return sb.from("students").select("*").order("created_at",{ascending:false}).then(function(r){
-  if(r.error){var m='<div class="msg err">The students table is not set up yet, or you do not have access. Run the students script (students-setup.sql) in the Supabase SQL Editor, then refresh this page.</div>';$("rlist").innerHTML=m;$("syears").innerHTML=m;return}
-  stuRows=(r.data||[]).map(function(s){s.student_number=String(s.student_number||"").replace(/-/g,"");return s});renderStudents()})}
+  if(r.error){stuRows=null;renderStudents();return}
+  stuRows=(r.data||[]).map(function(s){s.student_number=String(s.student_number||"").replace(/-/g,"");return normA(s)});
+  renderStudents();syncStudents()})}
 function stuKey(x){return(x._src==="s"?"s:":"a:")+x.id}
 function viewStudent(x){
-  var LBL={student_number:"Student number",full_name:"Full name",intake_year:"Year started",date_of_birth:"Date of birth",created_at:"Submitted",admitted_at:"Admitted or verified",heard_about:"Heard about BFS from",marital_status:"Marital status",nrc_number:"NRC number",passport_number:"Passport number",whatsapp:"WhatsApp",email:"Email address"};
-  var skip={id:1,_src:1,_yr:1,nrc_path:1,consent:1},first=["student_number","full_name","status"];
+  var LBL={student_number:"Student number",full_name:"Full name",intake_year:"Year started",date_of_birth:"Date of birth",created_at:"Submitted",admitted_at:"Admitted or verified",heard_about:"How they heard about BFS",reason:"Reason for applying",marital_status:"Marital status",nrc_number:"NRC number",passport_number:"Passport number",whatsapp:"WhatsApp",email:"Email address"};
+  var skip={id:1,_src:1,_yr:1,nrc_path:1,consent:1,deleted_at:1,reg_deleted_at:1,application_id:1,source:1},first=["student_number","full_name","status"];
   var keys=Object.keys(x).filter(function(k){return!skip[k]&&x[k]!==null&&x[k]!==undefined&&x[k]!==""&&typeof x[k]!=="object"});
   keys.sort(function(p,q){var i=first.indexOf(p),j=first.indexOf(q);return(i<0?99:i)-(j<0?99:j)});
   var rows=keys.map(function(k){var v=x[k];if(k==="created_at"||k==="admitted_at")v=fmtDate(v);
-    var l=LBL[k]||(k.charAt(0).toUpperCase()+k.slice(1).replace(/_/g," "));return'<tr><td>'+esc(l)+'</td><td>'+esc(v)+'</td></tr>'}).join("");
-  $("sdt").innerHTML='<h3 style="margin-top:0">'+esc(x.full_name)+' <span class="pill">Student</span></h3><table>'+rows+'</table>';
+    var l=LBL[k]||(k.charAt(0).toUpperCase()+k.slice(1).replace(/_/g," "));return'<tr><td>'+esc(l)+'</td><td style="white-space:pre-wrap">'+esc(v)+'</td></tr>'}).join("");
+  $("sdt").innerHTML='<h3 style="margin-top:0">'+esc(x.full_name)+' <span class="pill">Student</span></h3><table>'+rows+'</table><p style="margin-top:14px"><button id="sdl">Download admission letter</button></p>';
+  $("sdl").onclick=function(){downloadLetter(x)};
   $("sd").hidden=false;$("sd").scrollTop=0}
 $("sdclose").onclick=function(){$("sd").hidden=true};
 function deleteStudent(x){
-  if(x._src==="a"){deleteApp(x);return}
-  if(!confirm("Delete "+x.full_name+" ("+x.student_number+") from the system? This cannot be undone."))return;
-  sb.from("students").delete().eq("id",x.id).select().then(function(r){
-    if(r.error||!r.data||!r.data.length){alert("Could not delete this student. Run students-setup.sql in Supabase (it gives administrators permission to delete), then try again.");return}
-    loadStudents()})}
+  if(x._src==="a"){alert("Before deleting this student, they must be saved in the Students register. "+SQLMSG);return}
+  if(!confirm("Move "+x.full_name+" ("+x.student_number+") to the Recycle bin? You can restore them later."))return;
+  softDel("students",x.id,"deleted_at",loadStudents)}
 function renderStudents(){
-  var rows=stuRows||[],np=rows.filter(function(s){return s.status==="pending"}).length;
-  $("rbadge").textContent=np?" ("+np+")":"";
-  var f=$("rf").value,rq=($("rq").value||"").toLowerCase();
-  var rl=rows.filter(function(s){return(!f||s.status===f)&&(!rq||(s.full_name||"").toLowerCase().indexOf(rq)>=0||String(s.student_number||"").toLowerCase().indexOf(rq)>=0)});
-  $("rcount").textContent=rl.length+" registration"+(rl.length===1?"":"s");
+  var rows=stuRows||[],regRows=rows.filter(function(s){return s.source!=="application"&&act(s)&&!s.reg_deleted_at});
+  var np=regRows.filter(function(s){return s.status==="pending"}).length;
+  $("gbadge").textContent=np?" ("+np+")":"";
+  var f=$("gf").value,gq=($("gq").value||"").toLowerCase();
+  var rl=regRows.filter(function(s){return(!f||s.status===f)&&(!gq||(s.full_name||"").toLowerCase().indexOf(gq)>=0||String(s.student_number||"").toLowerCase().indexOf(gq)>=0)});
+  $("gcount").textContent=stuRows?rl.length+" registration"+(rl.length===1?"":"s"):"";
   var SL={pending:"Waiting",verified:"Verified",rejected:"Rejected"};
-  $("rlist").innerHTML=rl.length?rl.map(function(s){
-    var btn=s.status==="pending"?'<button data-sv="'+s.id+'">Verify and add to '+esc(s.intake_year)+' records</button><a class="b wa" target="_blank" rel="noopener" href="'+waUrl(s.whatsapp,"Hello "+s.full_name+", this is Born For Service School of Ministry. We received your student registration ("+s.student_number+"). Please confirm that these details are yours.")+'">Confirm on WhatsApp</a><button class="o" data-sr="'+s.id+'">Reject</button>'
-      :s.status==="verified"?'<button data-dl="s:'+s.id+'">Download admission letter</button><button class="wa" data-sl="s:'+s.id+'">Send admission letter</button>'
+  var DEL=function(id){return'<button class="o" data-rdel="'+id+'" style="color:#B3261E;border-color:#B3261E">Delete</button>'};
+  $("glist").innerHTML=!stuRows?'<div class="msg err">The students table is not set up yet, or you do not have access. Run students-setup.sql in the Supabase SQL Editor, then refresh this page.</div>':rl.length?rl.map(function(s){
+    var btn=s.status==="pending"?'<button data-sv="'+s.id+'">Verify and add to '+esc(s.intake_year)+' records</button><button class="o" data-sr="'+s.id+'">Reject</button>'
+      :s.status==="verified"?'<button data-dl="s:'+s.id+'">Download admission letter</button>'
       :'<button class="o" data-rs="'+s.id+'">Move back to waiting</button>';
     return '<div class="card"><div class="row"><h3 style="margin:0;flex:1">'+esc(s.full_name)+'</h3><span class="pill" style="margin-right:6px">'+esc(s.student_number)+'</span><span class="pill">'+(SL[s.status]||esc(s.status))+'</span></div>'
-    +'<p style="margin:8px 0"><b>Started:</b> '+esc(s.intake_year)+' &nbsp; <b>Programme:</b> '+esc(s.programme||"-")+' &nbsp; <b>Gender:</b> '+esc(s.gender||"-")+'<br><b>WhatsApp:</b> '+esc(s.whatsapp||"-")+' &nbsp; <b>Email:</b> '+esc(s.email||"-")+'<br><b>Phone:</b> '+esc(s.phone||"-")+' &nbsp; <b>Date of birth:</b> '+esc(s.date_of_birth||"-")+' &nbsp; <b>Marital status:</b> '+esc(s.marital_status||"-")+'<br><b>Nationality:</b> '+esc(s.nationality||"-")+' &nbsp; <b>'+(s.passport_number?'Passport':'NRC')+' number:</b> '+esc(s.nrc_number||s.passport_number||"-")+'<br><b>Address:</b> '+esc(s.address||"-")+'<br><b>Location:</b> '+esc((s.district||"-")+", "+(s.province||"-"))+(s.church?' &nbsp; <b>Church:</b> '+esc(s.church):'')+(s.education?'<br><b>Education:</b> '+esc(s.education):'')+'<br><span class="mute">Submitted '+esc(fmtDate(s.created_at))+'</span></p>'
-    +'<div class="row">'+btn+'</div></div>'}).join(""):'<p class="mute">'+(f==="pending"?"No student registrations are waiting for verification.":"No registrations to show here.")+'</p>';
-  var q=($("sq").value||"").toLowerCase();
-  var all=rows.filter(function(s){return s.status==="verified"}).map(function(s){s._src="s";s._yr=s.intake_year;return s})
-   .concat(apps.filter(function(a){return a.status==="accepted"}).map(function(a){a._src="a";a._yr=new Date(a.admitted_at||a.created_at).getFullYear();return a}))
+    +'<p style="margin:8px 0"><b>Started:</b> '+esc(s.intake_year)+' &nbsp; <b>Programme:</b> '+esc(s.programme||"-")+' &nbsp; <b>Gender:</b> '+esc(s.gender||"-")+'<br><b>WhatsApp:</b> '+esc(s.whatsapp||"-")+' &nbsp; <b>Email:</b> '+esc(s.email||"-")
+    +'<br><b>Phone:</b> '+esc(s.phone||"-")+' &nbsp; <b>Date of birth:</b> '+esc(s.date_of_birth||"-")+' &nbsp; <b>Marital status:</b> '+esc(s.marital_status||"-")+'<br><b>Nationality:</b> '+esc(s.nationality||"-")+' &nbsp; <b>'+(s.passport_number?'Passport':'NRC')+' number:</b> '+esc(s.nrc_number||s.passport_number||"-")+'<br><b>Address:</b> '+esc(s.address||"-")+'<br><b>Location:</b> '+esc((s.district||"-")+", "+(s.province||"-"))+(s.church?' &nbsp; <b>Church:</b> '+esc(s.church):'')+(s.education?'<br><b>Education:</b> '+esc(s.education):'')+'<br><span class="mute">Submitted '+esc(fmtDate(s.created_at))+'</span></p>'
+    +'<div class="row">'+btn+DEL(s.id)+'</div></div>'}).join(""):'<p class="mute">'+(f==="pending"?"No student registrations are waiting for verification.":"No registrations to show here.")+'</p>';
+  var q=($("sq").value||"").toLowerCase(),sIds={};rows.forEach(function(s){if(s.application_id)sIds[s.application_id]=1});
+  var all=rows.filter(function(s){return s.status==="verified"&&act(s)}).map(function(s){s._src="s";s._yr=s.intake_year;return s})
+   .concat(apps.filter(function(a){return act(a)&&a.status==="accepted"&&a.student_number&&!sIds[a.id]}).map(function(a){a._src="a";a._yr=new Date(a.admitted_at||a.created_at).getFullYear();return a}))
    .filter(function(x){return!q||(x.full_name||"").toLowerCase().indexOf(q)>=0||String(x.student_number||"").toLowerCase().indexOf(q)>=0});
   var PG=["All","Certificate","Advanced Certificate"],cnt={};PG.forEach(function(p){cnt[p]=p==="All"?all.length:all.filter(function(x){return x.programme===p}).length});
   $("sprog").innerHTML=PG.map(function(p){return'<button data-sp="'+p+'"'+(p===stuProg?' class="on"':'')+'>'+p+' ('+cnt[p]+')</button>'}).join("");
@@ -450,13 +467,14 @@ function renderStudents(){
   $("syears").innerHTML=yrs.length?'<h3>Student records by year</h3>'+yrs.map(function(y,i){
     var l=by[y].sort(function(a,b){return String(a.student_number||"").localeCompare(String(b.student_number||""))});
     return '<details class="card"'+(i===0||q?' open':'')+'><summary style="cursor:pointer;font-size:1.05rem"><b>'+y+' students</b> <span class="mute">('+l.length+')</span></summary><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;margin-top:10px"><tr style="text-align:left"><th>Student no.</th><th>Name</th>'+(stuProg==="All"?'<th>Programme</th>':'')+'<th>WhatsApp</th><th></th></tr>'
-    +l.map(function(x){return '<tr style="border-top:1px solid var(--line)"><td>'+esc(x.student_number||"-")+'</td><td>'+esc(x.full_name)+'</td>'+(stuProg==="All"?'<td>'+esc(x.programme||"-")+'</td>':'')+'<td>'+esc(x.whatsapp||x.phone||"-")+'</td><td style="white-space:nowrap"><button class="o" data-stview="'+stuKey(x)+'">View</button> <button data-dl="'+stuKey(x)+'">Letter</button> <button class="wa" data-sl="'+stuKey(x)+'">Send</button> <button class="o" data-stdel="'+stuKey(x)+'" style="color:#B3261E;border-color:#B3261E">Delete</button></td></tr>'}).join("")+'</table></div></details>'}).join(""):'<p class="mute">No '+(stuProg==="All"?"":stuProg+" ")+'students in the records yet.</p>';
+    +l.map(function(x){return '<tr style="border-top:1px solid var(--line)"><td>'+esc(x.student_number||"-")+'</td><td>'+esc(x.full_name)+'</td>'+(stuProg==="All"?'<td>'+esc(x.programme||"-")+'</td>':'')+'<td>'+esc(x.whatsapp||x.phone||"-")+'</td><td style="white-space:nowrap"><button class="o" data-stview="'+stuKey(x)+'">View</button> <button data-dl="'+stuKey(x)+'">Letter</button> <button class="o" data-stdel="'+stuKey(x)+'" style="color:#B3261E;border-color:#B3261E">Delete</button></td></tr>'}).join("")+'</table></div></details>'}).join(""):'<p class="mute">No '+(stuProg==="All"?"":stuProg+" ")+'students in the records yet.</p>';
   function find(k){var p=k.split(":");return(p[0]==="s"?rows:apps).filter(function(x){return x.id===p[1]})[0]}
   function each(sel,fn){Array.prototype.forEach.call(document.querySelectorAll(sel),fn)}
   each("[data-dl]",function(b){b.onclick=function(){var x=find(b.getAttribute("data-dl"));if(x)downloadLetter(x)}});
-  each("[data-sl]",function(b){b.onclick=function(){var x=find(b.getAttribute("data-sl"));if(x)sendLetter(x)}});
   each("[data-stview]",function(b){b.onclick=function(){var x=find(b.getAttribute("data-stview"));if(x)viewStudent(x)}});
   each("[data-stdel]",function(b){b.onclick=function(){var x=find(b.getAttribute("data-stdel"));if(x)deleteStudent(x)}});
+  each("[data-rdel]",function(b){b.onclick=function(){var id=b.getAttribute("data-rdel"),s=rows.filter(function(x){return x.id===id})[0];
+    if(!confirm("Move this registration to the Recycle bin?"+(s&&s.status==="verified"?"\n\nThe student stays in the Students register.":"")))return;softDel("students",id,"reg_deleted_at",loadStudents)}});
   each("[data-sv]",function(b){b.onclick=function(){var id=b.getAttribute("data-sv"),s=rows.filter(function(x){return x.id===id})[0];
     if(!confirm("Verify "+s.full_name+" ("+s.student_number+")?\n\nOnly continue if the name, student number and start year match BFS records."))return;
     sb.from("students").update({status:"verified",admitted_at:new Date().toISOString()}).eq("id",id).then(function(r){if(r.error){alert("Could not save the change.");return}
@@ -464,11 +482,25 @@ function renderStudents(){
   each("[data-sr]",function(b){b.onclick=function(){var id=b.getAttribute("data-sr");if(!confirm("Reject this registration?"))return;
     sb.from("students").update({status:"rejected"}).eq("id",id).then(function(r){if(r.error){alert("Could not save the change.");return}loadStudents()})}});
   each("[data-rs]",function(b){b.onclick=function(){sb.from("students").update({status:"pending"}).eq("id",b.getAttribute("data-rs")).then(function(r){if(r.error){alert("Could not save the change.");return}loadStudents()})}});
+  renderBin();
 }
+function renderBin(){
+  var A=apps.filter(function(a){return a.deleted_at}),R=(stuRows||[]).filter(function(s){return s.source!=="application"&&s.reg_deleted_at&&!s.deleted_at}),S=(stuRows||[]).filter(function(s){return s.deleted_at}),C=binReceipts||[];
+  var n=A.length+R.length+S.length+C.length;$("bbadge").textContent=n?" ("+n+")":"";
+  function it(kind,id,name,sub,forever){return'<div class="card"><div class="row"><div style="flex:1"><b>'+esc(name)+'</b><div class="mute">'+sub+'</div></div><button data-brs="'+kind+':'+id+'">Restore</button>'+(forever?'<button class="o" data-bdel="'+kind+':'+id+'" style="color:#B3261E;border-color:#B3261E">Delete forever</button>':'')+'</div></div>'}
+  function sec(t,l,f){return'<h3>'+t+' ('+l.length+')</h3>'+(l.length?l.map(f).join(""):'<p class="mute">Nothing here.</p>')}
+  $("binlist").innerHTML=sec("Applications",A,function(a){return it("a",a.id,a.full_name,esc(LABEL[a.status]||a.status)+" &middot; deleted "+esc(fmtDate(a.deleted_at))+(a.status==="accepted"?" &middot; the student stays in the register":""),true)})
+   +sec("Registrations",R,function(s){return it("r",s.id,s.full_name,esc(s.student_number)+" &middot; "+esc(s.status==="verified"?"verified, the student stays in the register":s.status)+" &middot; deleted "+esc(fmtDate(s.reg_deleted_at)),s.status!=="verified")})
+   +sec("Students",S,function(s){return it("s",s.id,s.full_name,esc(s.student_number)+" &middot; "+esc(s.programme||"")+" &middot; deleted "+esc(fmtDate(s.deleted_at)),true)})
+   +sec("Receipts",C,function(r){return it("c",r.id,(r.student_name||"Receipt")+(r.receipt_no?" ("+r.receipt_no+")":""),esc(r.item||"")+" &middot; deleted "+esc(fmtDate(r.deleted_at)),true)})}
+$("bin").addEventListener("click",function(e){var t=e.target,rs=t.getAttribute&&t.getAttribute("data-brs"),bd=t.getAttribute&&t.getAttribute("data-bdel"),v=rs||bd;if(!v)return;
+  var k=v.split(":")[0],id=v.split(":")[1];
+  if(rs){if(k==="a")restoreRow("applications",id,"deleted_at",loadApps);else if(k==="r")restoreRow("students",id,"reg_deleted_at",loadStudents);else if(k==="s")restoreRow("students",id,"deleted_at",loadStudents);else restoreRow("receipts",id,"deleted_at",loadReceipts);return}
+  if(k==="a")purge("applications",id,loadApps);else if(k==="c")purge("receipts",id,loadReceipts);else purge("students",id,loadStudents)});
 $("sq").oninput=function(){if(stuRows)renderStudents()};
-$("rq").oninput=function(){if(stuRows)renderStudents()};$("rf").onchange=function(){if(stuRows)renderStudents()};
+$("gq").oninput=function(){if(stuRows)renderStudents()};$("gf").onchange=function(){if(stuRows)renderStudents()};
 function fillStudents(){
-  var acc=apps.filter(function(a){return a.status==="accepted"});
+  var acc=apps.filter(function(a){return a.status==="accepted"&&act(a)});
   $("ra").innerHTML=acc.length?acc.map(function(a){return '<option value="'+a.id+'">'+esc(a.full_name)+'</option>'}).join(""):'<option value="">No accepted applicants yet</option>';
 }
 $("ri").onchange=function(){$("szw").hidden=$("ri").value!=="tshirt"};
@@ -494,8 +526,8 @@ function renderReceipts(){
 $("rlist").addEventListener("click",function(e){var t=e.target,pid=t.getAttribute&&t.getAttribute("data-pdf"),sid=t.getAttribute&&t.getAttribute("data-share");
   if(pid||sid){var rr=receipts.filter(function(x){return x.id===(pid||sid)})[0];if(rr){pid?savePdf(rr):sharePdf(rr)}return}
   var id=t.getAttribute&&t.getAttribute("data-del");if(!id)return;
-  if(!confirm("Remove this receipt record?"))return;
-  sb.from("receipts").delete().eq("id",id).then(function(){loadReceipts()})
+  if(!confirm("Move this receipt to the Recycle bin?"))return;
+  softDel("receipts",id,"deleted_at",loadReceipts)
 });
 init();
 </script>

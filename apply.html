@@ -232,7 +232,7 @@ function fl(i){return '<img class="fl" alt="" loading="lazy" src="https://flagcd
 function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;")}
 function items(k){var a=BFS_C.map(function(c){return k==="nat"?{iso:c[0],label:c[3],v:c[3],right:""}:{iso:c[0],label:c[1],v:c[2],right:"+"+c[2]}});
  a.sort(function(x,y){return x.label.localeCompare(y.label,"en")});return a}
-function paint(k){var c=cfg[k],b=c.btn,s=st[k];
+function paint(k){var c=cfg[k];if(!c)return;var b=c.btn,s=st[k];
  if(k==="nat")b.querySelector(".t").innerHTML=s.v?fl(s.iso)+" "+esc(s.v):'<span class="ph2">'+esc(c.ph)+'</span>';
  else b.querySelector(".t").innerHTML=fl(s.iso)+" +"+esc(s.v);
  if(k==="nat"){var h=document.getElementById("nat");h.value=s.v}}
