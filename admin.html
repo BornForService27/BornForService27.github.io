@@ -405,7 +405,7 @@ function loadStudents(){return sb.from("students").select("*").order("created_at
   stuRows=(r.data||[]).map(function(s){s.student_number=String(s.student_number||"").replace(/-/g,"");return s});renderStudents()})}
 function stuKey(x){return(x._src==="s"?"s:":"a:")+x.id}
 function viewStudent(x){
-  var LBL={student_number:"Student number",full_name:"Full name",intake_year:"Year started",date_of_birth:"Date of birth",created_at:"Submitted",admitted_at:"Admitted or verified",heard_about:"Heard about BFS from",marital_status:"Marital status",nrc:"NRC number"};
+  var LBL={student_number:"Student number",full_name:"Full name",intake_year:"Year started",date_of_birth:"Date of birth",created_at:"Submitted",admitted_at:"Admitted or verified",heard_about:"Heard about BFS from",marital_status:"Marital status",nrc_number:"NRC number",passport_number:"Passport number",whatsapp:"WhatsApp",email:"Email address"};
   var skip={id:1,_src:1,_yr:1,nrc_path:1,consent:1},first=["student_number","full_name","status"];
   var keys=Object.keys(x).filter(function(k){return!skip[k]&&x[k]!==null&&x[k]!==undefined&&x[k]!==""&&typeof x[k]!=="object"});
   keys.sort(function(p,q){var i=first.indexOf(p),j=first.indexOf(q);return(i<0?99:i)-(j<0?99:j)});
@@ -432,7 +432,7 @@ function renderStudents(){
       :s.status==="verified"?'<button data-dl="s:'+s.id+'">Download admission letter</button><button class="wa" data-sl="s:'+s.id+'">Send admission letter</button>'
       :'<button class="o" data-rs="'+s.id+'">Move back to waiting</button>';
     return '<div class="card"><div class="row"><h3 style="margin:0;flex:1">'+esc(s.full_name)+'</h3><span class="pill" style="margin-right:6px">'+esc(s.student_number)+'</span><span class="pill">'+(SL[s.status]||esc(s.status))+'</span></div>'
-    +'<p style="margin:8px 0"><b>Started:</b> '+esc(s.intake_year)+' &nbsp; <b>Programme:</b> '+esc(s.programme||"-")+' &nbsp; <b>Gender:</b> '+esc(s.gender||"-")+'<br><b>WhatsApp:</b> '+esc(s.whatsapp||"-")+' &nbsp; <b>Email:</b> '+esc(s.email||"-")+'<br><b>Location:</b> '+esc((s.district||"-")+", "+(s.province||"-"))+(s.church?' &nbsp; <b>Church:</b> '+esc(s.church):'')+'<br><span class="mute">Submitted '+esc(fmtDate(s.created_at))+'</span></p>'
+    +'<p style="margin:8px 0"><b>Started:</b> '+esc(s.intake_year)+' &nbsp; <b>Programme:</b> '+esc(s.programme||"-")+' &nbsp; <b>Gender:</b> '+esc(s.gender||"-")+'<br><b>WhatsApp:</b> '+esc(s.whatsapp||"-")+' &nbsp; <b>Email:</b> '+esc(s.email||"-")+'<br><b>Phone:</b> '+esc(s.phone||"-")+' &nbsp; <b>Date of birth:</b> '+esc(s.date_of_birth||"-")+' &nbsp; <b>Marital status:</b> '+esc(s.marital_status||"-")+'<br><b>Nationality:</b> '+esc(s.nationality||"-")+' &nbsp; <b>'+(s.passport_number?'Passport':'NRC')+' number:</b> '+esc(s.nrc_number||s.passport_number||"-")+'<br><b>Address:</b> '+esc(s.address||"-")+'<br><b>Location:</b> '+esc((s.district||"-")+", "+(s.province||"-"))+(s.church?' &nbsp; <b>Church:</b> '+esc(s.church):'')+(s.education?'<br><b>Education:</b> '+esc(s.education):'')+'<br><span class="mute">Submitted '+esc(fmtDate(s.created_at))+'</span></p>'
     +'<div class="row">'+btn+'</div></div>'}).join(""):'<p class="mute">'+(f==="pending"?"No student registrations are waiting for verification.":"No registrations to show here.")+'</p>';
   var q=($("sq").value||"").toLowerCase();
   var all=rows.filter(function(s){return s.status==="verified"}).map(function(s){s._src="s";s._yr=s.intake_year;return s})

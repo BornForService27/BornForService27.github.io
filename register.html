@@ -176,20 +176,37 @@ input.bad,select.bad,textarea.bad{border-color:#B3261E;background:#FFF6F5}
 <div class="panel"><h2>Register here</h2>
 <p>If you are already studying at BFS and have a student number but are not yet in our system, register your details here. <b>This is not an application.</b> BFS will check your details against its records before confirming you. Once confirmed, you will receive your admission letter on WhatsApp or through your email address.</p>
 <form id="sf" novalidate style="margin-top:18px">
+<h4 class="fh">Student details</h4>
 <div class="fgrid">
 <div><label for="s_yr">Year you started studying at BFS</label><select id="s_yr" required></select></div>
 <div><label for="s_no">Your student number</label><input id="s_no" inputmode="numeric" maxlength="4" placeholder="e.g. 2714" autocomplete="off" required></div>
 </div>
 <label for="s_pg">Programme</label><select id="s_pg" required><option value="">Select</option><option value="Certificate">Certificate in Biblical Studies and Christian Ministry (1 year)</option><option value="Advanced Certificate">Advanced Certificate in Biblical Studies and Christian Ministry (2 years)</option></select>
+<h4 class="fh">Personal details</h4>
 <div class="fgrid">
 <div><label for="s_fn">Full name</label><input id="s_fn" required autocomplete="name"></div>
+<div><label for="s_dob">Date of birth</label><input id="s_dob" type="date" required autocomplete="bday"></div>
 <div><label for="s_gd">Gender</label><select id="s_gd" required><option value="">Select</option><option>Male</option><option>Female</option></select></div>
+<div><label for="s_ms">Marital status</label><select id="s_ms" required><option value="">Select</option><option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option></select></div>
+<div><label for="nat-b">Nationality</label><div class="pk" data-pk="nat" data-ph="Select nationality"></div><input type="hidden" id="nat"></div>
+<div id="s_nrcw" hidden><label for="s_nrc">National Registration Card (NRC) number</label><input id="s_nrc" placeholder="123456/10/1" inputmode="numeric" maxlength="11" autocomplete="off"></div>
+<div id="s_ppw" hidden><label for="s_pp">Passport number</label><input id="s_pp"></div>
+</div>
+<h4 class="fh">Contact details</h4>
+<div class="fgrid">
+<div><label for="s_ph">Phone number</label><div class="pr"><div class="pk" data-pk="phc" data-ph="Code"></div><input id="s_ph" type="tel" inputmode="tel" required autocomplete="tel-national" placeholder="97 123 4567"></div></div>
 <div><label for="s_wa">WhatsApp number</label><div class="pr"><div class="pk" data-pk="swc" data-ph="Code"></div><input id="s_wa" type="tel" inputmode="tel" required placeholder="97 123 4567"></div></div>
 <div><label for="s_em">Email address</label><input id="s_em" type="email" required autocomplete="email"></div>
+</div>
+<h4 class="fh">Address</h4>
+<div class="fgrid">
 <div><label for="s_pr">Province</label><select id="s_pr" required><option value="">Select province</option></select></div>
 <div><label for="s_di">District</label><select id="s_di" required disabled><option value="">Select province first</option></select></div>
 </div>
-<label for="s_ch">Church or ministry (optional)</label><input id="s_ch">
+<label for="s_ad">Residential address</label><input id="s_ad" required autocomplete="street-address">
+<h4 class="fh">Background</h4>
+<label for="s_ch">Church or ministry (if applicable)</label><input id="s_ch">
+<label for="s_ed">Previous education or ministry training (if applicable)</label><textarea id="s_ed" rows="3"></textarea>
 <label class="chk"><input type="checkbox" id="s_ag" required> I confirm that these details are true and that I am a student of BFS. I agree that BFS may use them to verify my records. Read the <a href="index.html#privacy">Privacy Notice</a>.</label>
 <p style="margin-top:16px"><button class="btn" type="submit">Submit my details</button></p>
 <div id="s_ok" role="status"></div>
@@ -239,26 +256,32 @@ return{dial:function(k){return st[k].v},reset:function(){st.nat={v:"",iso:""};st
 var $=function(i){return document.getElementById(i)},sf=$("sf"),box=$("s_ok"),Y=new Date().getFullYear();
 function say(h,e){box.style.display="block";box.style.borderLeftColor=e?"#B3261E":"";box.innerHTML=h}
 function g(i){return $(i).value.trim()}
-var yr=$("s_yr"),h='<option value="">Select year</option>';for(var y=2023;y<=Y;y++)h+="<option>"+y+"</option>";yr.innerHTML=h;
+var h='<option value="">Select year</option>';for(var y=2023;y<=Y;y++)h+="<option>"+y+"</option>";$("s_yr").innerHTML=h;
 $("s_pr").innerHTML+=Object.keys(BFS_PD).map(function(k){return"<option>"+k+"</option>"}).join("");
 $("s_pr").onchange=function(){var p=this.value,d=$("s_di");d.disabled=!p;d.innerHTML=p?'<option value="">Select district</option>'+BFS_PD[p].map(function(x){return"<option>"+x+"</option>"}).join("")+"<option>Other (not listed)</option>":'<option value="">Select province first</option>'};
 function full(){var n=g("s_no");return $("s_yr").value&&/^\d{4}$/.test(n)?$("s_yr").value+n:""}
-function pv(){}
-$("s_no").oninput=function(){this.value=this.value.replace(/\D/g,"").slice(0,4);pv()};yr.onchange=pv;
-function wa(){var raw=g("s_wa"),d=raw.replace(/\D/g,"");if(!d)return"";if(raw.charAt(0)==="+")return d;if(raw.indexOf("00")===0)return d.slice(2);return BFSP.dial("swc")+d.replace(/^0+/,"")}
-sf.addEventListener("input",function(e){e.target.classList.remove("bad")});sf.addEventListener("change",function(e){e.target.classList.remove("bad")});
-sf.addEventListener("submit",function(ev){ev.preventDefault();var bad=[];
-["s_yr","s_pg","s_fn","s_gd","s_pr","s_di"].forEach(function(i){if(!g(i))bad.push(i)});
+$("s_no").oninput=function(){this.value=this.value.replace(/\D/g,"").slice(0,4)};
+function fd(id,k){var raw=g(id),d=raw.replace(/\D/g,"");if(!d)return"";if(raw.charAt(0)==="+")return d;if(raw.indexOf("00")===0)return d.slice(2);return BFSP.dial(k)+d.replace(/^0+/,"")}
+function pok(id,k){var w=fd(id,k);return/^\d{8,15}$/.test(w)&&(w.indexOf("260")!==0||/^260\d{9}$/.test(w))}
+$("nat").addEventListener("change",function(){var v=$("nat").value,z=v==="Zambian";$("s_nrcw").hidden=!z;$("s_ppw").hidden=!(v&&!z)});
+$("s_nrc").addEventListener("input",function(e){var d=this.value.replace(/\D/g,"").slice(0,9),del=e.inputType&&e.inputType.indexOf("delete")===0,o=d.slice(0,6);
+ if(d.length>6||(d.length===6&&!del))o+="/";if(d.length>6)o+=d.slice(6,8);if(d.length>8||(d.length===8&&!del))o+="/";if(d.length>8)o+=d.slice(8);this.value=o});
+function clr(e){e.target.classList.remove("bad")}sf.addEventListener("input",clr);sf.addEventListener("change",clr);
+sf.addEventListener("submit",function(ev){ev.preventDefault();var bad=[],v=$("nat").value,z=v==="Zambian",o=!!v&&!z;
+["s_yr","s_pg","s_fn","s_dob","s_gd","s_ms","nat","s_pr","s_di","s_ad"].forEach(function(i){if(!g(i))bad.push(i)});
 if(!/^\d{4}$/.test(g("s_no")))bad.push("s_no");
-var w=wa();if(!(/^\d{8,15}$/.test(w)&&(w.indexOf("260")!==0||/^260\d{9}$/.test(w))))bad.push("s_wa");
+if(z&&!/^\d{6}\/\d{2}\/\d$/.test(g("s_nrc")))bad.push("s_nrc");
+if(o&&!g("s_pp"))bad.push("s_pp");
+if(!pok("s_ph","phc"))bad.push("s_ph");
+if(!pok("s_wa","swc"))bad.push("s_wa");
 if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(g("s_em")))bad.push("s_em");
 if(!$("s_ag").checked)bad.push("s_ag");
-if(bad.length){bad.forEach(function(i){$(i).classList.add("bad")});say("Please complete the highlighted details. Your student number must be 4 digits.",1);$(bad[0]).focus();return}
+if(bad.length){bad.forEach(function(i){$(i).classList.add("bad");var b=$(i+"-b");if(b)b.classList.add("bad")});say("Please complete the highlighted details. Your student number must be 4 digits"+(z?" and your NRC must look like 123456/10/1":"")+".",1);($(bad[0]+"-b")||$(bad[0])).focus();return}
 var btn=sf.querySelector("button[type=submit]");btn.disabled=true;say("Sending your details...");
 var H={"Content-Type":"application/json",Prefer:"return=minimal",apikey:BFS_KEY};if(BFS_KEY.indexOf("eyJ")===0)H.Authorization="Bearer "+BFS_KEY;
-var d=g("s_di"),row={intake_year:+$("s_yr").value,student_number:full(),full_name:g("s_fn"),gender:g("s_gd"),whatsapp:"+"+w,phone:"+"+w,email:g("s_em"),province:g("s_pr"),district:d,church:g("s_ch"),programme:g("s_pg"),status:"pending"};
+var w=fd("s_wa","swc"),row={intake_year:+$("s_yr").value,student_number:full(),full_name:g("s_fn"),date_of_birth:g("s_dob"),gender:g("s_gd"),marital_status:g("s_ms"),nationality:v,nrc_number:z?g("s_nrc"):null,passport_number:o?g("s_pp"):null,phone:"+"+fd("s_ph","phc"),whatsapp:"+"+w,email:g("s_em"),address:g("s_ad"),province:g("s_pr"),district:g("s_di"),church:g("s_ch"),education:g("s_ed"),programme:g("s_pg"),status:"pending"};
 fetch(BFS_URL+"/rest/v1/students",{method:"POST",headers:H,body:JSON.stringify(row)}).then(function(r){
- if(r.ok){sf.reset();$("s_di").disabled=true;pv();say("<b>Thank you, "+row.full_name.split(" ")[0]+".</b> BFS has received your details and will verify them against its records. Once you are confirmed, your admission letter will be sent to you on WhatsApp or through your email address.");return}
+ if(r.ok){sf.reset();BFSP.reset();$("s_di").disabled=true;$("s_nrcw").hidden=true;$("s_ppw").hidden=true;say("<b>Thank you, "+row.full_name.split(" ")[0]+".</b> BFS has received your details and will verify them against its records. Once you are confirmed, your admission letter will be sent to you on WhatsApp or through your email address.");return}
  return r.text().then(function(t){say(/23505|duplicate/i.test(t)?"This student number has already been submitted for "+row.intake_year+". If this is a mistake, please contact BFS on WhatsApp.":"Sorry, your details could not be sent. Please try again, or contact BFS on WhatsApp.",1)})
 }).catch(function(){say("Sorry, we could not reach the server. Please check your internet connection and try again.",1)}).then(function(){btn.disabled=false})});
 })();
