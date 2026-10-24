@@ -30,7 +30,7 @@ label{display:block;font-weight:600;margin:12px 0 4px}
 .msg.err{border-left-color:#B3261E}
 .pill{display:inline-block;padding:2px 10px;border-radius:12px;background:var(--alt);font-size:.82rem;font-weight:600}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}
-[hidden]{display:none!important}
+[hidden]{display:none!important} #sd{position:fixed;inset:0;z-index:50;background:rgba(27,36,51,.78);overflow:auto;padding:12px} #sd .paper{font-family:inherit;padding:22px 24px;max-width:640px} #sd table{width:100%;border-collapse:collapse} #sd td{padding:7px 4px;border-top:1px solid var(--line);vertical-align:top} #sd td:first-child{width:38%;color:var(--mute)}
 #lw{position:fixed;inset:0;z-index:50;background:rgba(27,36,51,.78);overflow:auto;padding:12px}
 .lbar{max-width:794px;margin:0 auto 10px;display:flex;gap:8px;flex-wrap:wrap}
 .paper{max-width:794px;margin:0 auto;background:#fff;color:#111;padding:44px 52px;font:15px/1.55 Georgia,"Times New Roman",serif;border-top:6px solid var(--teal)}
@@ -108,6 +108,8 @@ label{display:block;font-weight:600;margin:12px 0 4px}
   </section>
 </div>
 </div>
+
+<div id="sd" hidden><div class="lbar" style="max-width:640px"><button class="o" id="sdclose">Close</button></div><div class="paper" id="sdt"></div></div>
 
 <div id="lw" hidden><div class="lbar"><button id="lprint">Print or save as PDF</button><button class="o" id="lclose">Close</button></div><div class="paper" id="lt"></div></div>
 
@@ -402,6 +404,22 @@ function loadStudents(){return sb.from("students").select("*").order("created_at
   if(r.error){var m='<div class="msg err">The students table is not set up yet, or you do not have access. Run the students script (students-setup.sql) in the Supabase SQL Editor, then refresh this page.</div>';$("rlist").innerHTML=m;$("syears").innerHTML=m;return}
   stuRows=r.data||[];renderStudents()})}
 function stuKey(x){return(x._src==="s"?"s:":"a:")+x.id}
+function viewStudent(x){
+  var LBL={student_number:"Student number",full_name:"Full name",intake_year:"Year started",date_of_birth:"Date of birth",created_at:"Submitted",admitted_at:"Admitted or verified",heard_about:"Heard about BFS from",marital_status:"Marital status",nrc:"NRC number"};
+  var skip={id:1,_src:1,_yr:1,nrc_path:1,consent:1},first=["student_number","full_name","status"];
+  var keys=Object.keys(x).filter(function(k){return!skip[k]&&x[k]!==null&&x[k]!==undefined&&x[k]!==""&&typeof x[k]!=="object"});
+  keys.sort(function(p,q){var i=first.indexOf(p),j=first.indexOf(q);return(i<0?99:i)-(j<0?99:j)});
+  var rows=keys.map(function(k){var v=x[k];if(k==="created_at"||k==="admitted_at")v=fmtDate(v);
+    var l=LBL[k]||(k.charAt(0).toUpperCase()+k.slice(1).replace(/_/g," "));return'<tr><td>'+esc(l)+'</td><td>'+esc(v)+'</td></tr>'}).join("");
+  $("sdt").innerHTML='<h3 style="margin-top:0">'+esc(x.full_name)+' <span class="pill">'+(x._src==="s"?"Existing student":"Application")+'</span></h3><table>'+rows+'</table>';
+  $("sd").hidden=false;$("sd").scrollTop=0}
+$("sdclose").onclick=function(){$("sd").hidden=true};
+function deleteStudent(x){
+  if(x._src==="a"){deleteApp(x);return}
+  if(!confirm("Delete "+x.full_name+" ("+x.student_number+") from the system? This cannot be undone."))return;
+  sb.from("students").delete().eq("id",x.id).select().then(function(r){
+    if(r.error||!r.data||!r.data.length){alert("Could not delete this student. Run students-setup.sql in Supabase (it gives administrators permission to delete), then try again.");return}
+    loadStudents()})}
 function renderStudents(){
   var rows=stuRows||[],np=rows.filter(function(s){return s.status==="pending"}).length;
   $("rbadge").textContent=np?" ("+np+")":"";
@@ -426,11 +444,13 @@ function renderStudents(){
   $("syears").innerHTML=yrs.length?'<h3>Student records by year</h3>'+yrs.map(function(y,i){
     var l=by[y].sort(function(a,b){return String(a.student_number||"").localeCompare(String(b.student_number||""))});
     return '<details class="card"'+(i===0||q?' open':'')+'><summary style="cursor:pointer;font-size:1.05rem"><b>'+y+' students</b> <span class="mute">('+l.length+')</span></summary><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;margin-top:10px"><tr style="text-align:left"><th>Student no.</th><th>Name</th><th>Programme</th><th>WhatsApp</th><th>Source</th><th></th></tr>'
-    +l.map(function(x){return '<tr style="border-top:1px solid var(--line)"><td>'+esc(x.student_number||"-")+'</td><td>'+esc(x.full_name)+'</td><td>'+esc(x.programme||"-")+'</td><td>'+esc(x.whatsapp||x.phone||"-")+'</td><td><span class="pill">'+(x._src==="s"?"Existing student":"Application")+'</span></td><td style="white-space:nowrap"><button data-dl="'+stuKey(x)+'">Letter</button> <button class="wa" data-sl="'+stuKey(x)+'">Send</button></td></tr>'}).join("")+'</table></div></details>'}).join(""):'<p class="mute">No students in the records yet.</p>';
+    +l.map(function(x){return '<tr style="border-top:1px solid var(--line)"><td>'+esc(x.student_number||"-")+'</td><td>'+esc(x.full_name)+'</td><td>'+esc(x.programme||"-")+'</td><td>'+esc(x.whatsapp||x.phone||"-")+'</td><td><span class="pill">'+(x._src==="s"?"Existing student":"Application")+'</span></td><td style="white-space:nowrap"><button class="o" data-stview="'+stuKey(x)+'">View</button> <button data-dl="'+stuKey(x)+'">Letter</button> <button class="wa" data-sl="'+stuKey(x)+'">Send</button> <button class="o" data-stdel="'+stuKey(x)+'" style="color:#B3261E;border-color:#B3261E">Delete</button></td></tr>'}).join("")+'</table></div></details>'}).join(""):'<p class="mute">No students in the records yet.</p>';
   function find(k){var p=k.split(":");return(p[0]==="s"?rows:apps).filter(function(x){return x.id===p[1]})[0]}
   function each(sel,fn){Array.prototype.forEach.call(document.querySelectorAll(sel),fn)}
   each("[data-dl]",function(b){b.onclick=function(){var x=find(b.getAttribute("data-dl"));if(x)downloadLetter(x)}});
   each("[data-sl]",function(b){b.onclick=function(){var x=find(b.getAttribute("data-sl"));if(x)sendLetter(x)}});
+  each("[data-stview]",function(b){b.onclick=function(){var x=find(b.getAttribute("data-stview"));if(x)viewStudent(x)}});
+  each("[data-stdel]",function(b){b.onclick=function(){var x=find(b.getAttribute("data-stdel"));if(x)deleteStudent(x)}});
   each("[data-sv]",function(b){b.onclick=function(){var id=b.getAttribute("data-sv"),s=rows.filter(function(x){return x.id===id})[0];
     if(!confirm("Verify "+s.full_name+" ("+s.student_number+")?\n\nOnly continue if the name, student number and start year match BFS records."))return;
     sb.from("students").update({status:"verified",admitted_at:new Date().toISOString()}).eq("id",id).then(function(r){if(r.error){alert("Could not save the change.");return}
