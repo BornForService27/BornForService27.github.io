@@ -401,7 +401,7 @@ document.querySelectorAll(".tabs button").forEach(function(b){b.onclick=function
   var t=b.getAttribute("data-t");$("apps").hidden=t!=="apps";$("rec").hidden=t!=="rec";$("stu").hidden=t!=="stu";$("regs").hidden=t!=="reg"}});
 
 
-var stuRows=null,stuProg="Certificate";
+var stuRows=null,stuProg="All";
 function loadStudents(){return sb.from("students").select("*").order("created_at",{ascending:false}).then(function(r){
   if(r.error){var m='<div class="msg err">The students table is not set up yet, or you do not have access. Run the students script (students-setup.sql) in the Supabase SQL Editor, then refresh this page.</div>';$("rlist").innerHTML=m;$("syears").innerHTML=m;return}
   stuRows=(r.data||[]).map(function(s){s.student_number=String(s.student_number||"").replace(/-/g,"");return s});renderStudents()})}
@@ -440,17 +440,17 @@ function renderStudents(){
   var all=rows.filter(function(s){return s.status==="verified"}).map(function(s){s._src="s";s._yr=s.intake_year;return s})
    .concat(apps.filter(function(a){return a.status==="accepted"}).map(function(a){a._src="a";a._yr=new Date(a.admitted_at||a.created_at).getFullYear();return a}))
    .filter(function(x){return!q||(x.full_name||"").toLowerCase().indexOf(q)>=0||String(x.student_number||"").toLowerCase().indexOf(q)>=0});
-  var PG=["Certificate","Advanced Certificate"],cnt={};PG.forEach(function(p){cnt[p]=all.filter(function(x){return x.programme===p}).length});
+  var PG=["All","Certificate","Advanced Certificate"],cnt={};PG.forEach(function(p){cnt[p]=p==="All"?all.length:all.filter(function(x){return x.programme===p}).length});
   $("sprog").innerHTML=PG.map(function(p){return'<button data-sp="'+p+'"'+(p===stuProg?' class="on"':'')+'>'+p+' ('+cnt[p]+')</button>'}).join("");
   each("[data-sp]",function(b){b.onclick=function(){stuProg=b.getAttribute("data-sp");renderStudents()}});
-  all=all.filter(function(x){return x.programme===stuProg});
+  if(stuProg!=="All")all=all.filter(function(x){return x.programme===stuProg});
   var by={};all.forEach(function(x){(by[x._yr]=by[x._yr]||[]).push(x)});
   var yrs=Object.keys(by).sort(function(a,b){return b-a});
   $("scount").textContent=all.length+" student"+(all.length===1?"":"s");
   $("syears").innerHTML=yrs.length?'<h3>Student records by year</h3>'+yrs.map(function(y,i){
     var l=by[y].sort(function(a,b){return String(a.student_number||"").localeCompare(String(b.student_number||""))});
     return '<details class="card"'+(i===0||q?' open':'')+'><summary style="cursor:pointer;font-size:1.05rem"><b>'+y+' students</b> <span class="mute">('+l.length+')</span></summary><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;margin-top:10px"><tr style="text-align:left"><th>Student no.</th><th>Name</th><th>WhatsApp</th><th></th></tr>'
-    +l.map(function(x){return '<tr style="border-top:1px solid var(--line)"><td>'+esc(x.student_number||"-")+'</td><td>'+esc(x.full_name)+'</td><td>'+esc(x.whatsapp||x.phone||"-")+'</td><td style="white-space:nowrap"><button class="o" data-stview="'+stuKey(x)+'">View</button> <button data-dl="'+stuKey(x)+'">Letter</button> <button class="wa" data-sl="'+stuKey(x)+'">Send</button> <button class="o" data-stdel="'+stuKey(x)+'" style="color:#B3261E;border-color:#B3261E">Delete</button></td></tr>'}).join("")+'</table></div></details>'}).join(""):'<p class="mute">No '+stuProg+' students in the records yet.</p>';
+    +l.map(function(x){return '<tr style="border-top:1px solid var(--line)"><td>'+esc(x.student_number||"-")+'</td><td>'+esc(x.full_name)+'</td><td>'+esc(x.whatsapp||x.phone||"-")+'</td><td style="white-space:nowrap"><button class="o" data-stview="'+stuKey(x)+'">View</button> <button data-dl="'+stuKey(x)+'">Letter</button> <button class="wa" data-sl="'+stuKey(x)+'">Send</button> <button class="o" data-stdel="'+stuKey(x)+'" style="color:#B3261E;border-color:#B3261E">Delete</button></td></tr>'}).join("")+'</table></div></details>'}).join(""):'<p class="mute">No '+(stuProg==="All"?"":stuProg+" ")+'students in the records yet.</p>';
   function find(k){var p=k.split(":");return(p[0]==="s"?rows:apps).filter(function(x){return x.id===p[1]})[0]}
   function each(sel,fn){Array.prototype.forEach.call(document.querySelectorAll(sel),fn)}
   each("[data-dl]",function(b){b.onclick=function(){var x=find(b.getAttribute("data-dl"));if(x)downloadLetter(x)}});
