@@ -402,7 +402,7 @@ document.querySelectorAll(".tabs button").forEach(function(b){b.onclick=function
 var stuRows=null;
 function loadStudents(){return sb.from("students").select("*").order("created_at",{ascending:false}).then(function(r){
   if(r.error){var m='<div class="msg err">The students table is not set up yet, or you do not have access. Run the students script (students-setup.sql) in the Supabase SQL Editor, then refresh this page.</div>';$("rlist").innerHTML=m;$("syears").innerHTML=m;return}
-  stuRows=r.data||[];renderStudents()})}
+  stuRows=(r.data||[]).map(function(s){s.student_number=String(s.student_number||"").replace(/-/g,"");return s});renderStudents()})}
 function stuKey(x){return(x._src==="s"?"s:":"a:")+x.id}
 function viewStudent(x){
   var LBL={student_number:"Student number",full_name:"Full name",intake_year:"Year started",date_of_birth:"Date of birth",created_at:"Submitted",admitted_at:"Admitted or verified",heard_about:"Heard about BFS from",marital_status:"Marital status",nrc:"NRC number"};
