@@ -172,14 +172,14 @@ input.bad,select.bad,textarea.bad{border-color:#B3261E;background:#FFF6F5}
 <a class="brand" href="index.html">Born For Service<small>School of Ministry</small></a>
 </div></header>
 <main><section><div class="wrap">
-<p><a href="index.html"><b>&larr; Back to the BFS website</b></a></p>
+<p><a class="btn o" href="index.html" title="BFS home page" aria-label="Go to the BFS home page" style="display:inline-flex;align-items:center;gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Home</a></p>
 <div class="panel"><h2>Register here</h2>
 <p>If you are already studying at BFS and have a student number but are not yet in our system, register your details here. <b>This is not an application.</b> BFS will check your details against its records before confirming you. Once confirmed, you will receive your admission letter on WhatsApp or through your email address.</p>
 <form id="sf" novalidate style="margin-top:18px">
 <h4 class="fh">Student details</h4>
 <div class="fgrid">
 <div><label for="s_yr">Year you started studying at BFS</label><select id="s_yr" required></select></div>
-<div><label for="s_no">Your student number</label><input id="s_no" inputmode="numeric" maxlength="4" placeholder="e.g. 2714" autocomplete="off" required></div>
+<div><label for="s_no">Your student number</label><input id="s_no" inputmode="numeric" maxlength="4" placeholder="e.g. 2714" autocomplete="off" required><small id="s_nh" style="color:#B3261E" hidden>Student numbers start with 27, for example 2714.</small></div>
 </div>
 <label for="s_pg">Programme</label><select id="s_pg" required><option value="">Select</option><option value="Certificate">Certificate in Biblical Studies and Christian Ministry (1 year)</option><option value="Advanced Certificate">Advanced Certificate in Biblical Studies and Christian Ministry (2 years)</option></select>
 <h4 class="fh">Personal details</h4>
@@ -254,13 +254,16 @@ return{dial:function(k){return st[k].v},reset:function(){st.nat={v:"",iso:""};st
 
 (function(){
 var $=function(i){return document.getElementById(i)},sf=$("sf"),box=$("s_ok"),Y=new Date().getFullYear();
+function hdr(){var h={"Content-Type":"application/json",apikey:BFS_KEY};if(BFS_KEY.indexOf("eyJ")===0)h.Authorization="Bearer "+BFS_KEY;return h}
+function idTaken(n,p){if(!n&&!p)return Promise.resolve(false);return fetch(BFS_URL+"/rest/v1/rpc/bfs_id_taken",{method:"POST",headers:hdr(),body:JSON.stringify({n:n||"",p:p||""})}).then(function(r){return r.ok?r.json():false}).catch(function(){return false})}
+var DUPMSG="<b>This ID number is already registered with BFS.</b> A student or application record with this NRC or passport number already exists, so it cannot be registered again. If you think this is a mistake, please contact BFS on WhatsApp.";
 function say(h,e){box.style.display="block";box.style.borderLeftColor=e?"#B3261E":"";box.innerHTML=h}
 function g(i){return $(i).value.trim()}
 var h='<option value="">Select year</option>';for(var y=2023;y<=Y;y++)h+="<option>"+y+"</option>";$("s_yr").innerHTML=h;
 $("s_pr").innerHTML+=Object.keys(BFS_PD).map(function(k){return"<option>"+k+"</option>"}).join("");
 $("s_pr").onchange=function(){var p=this.value,d=$("s_di");d.disabled=!p;d.innerHTML=p?'<option value="">Select district</option>'+BFS_PD[p].map(function(x){return"<option>"+x+"</option>"}).join("")+"<option>Other (not listed)</option>":'<option value="">Select province first</option>'};
 function full(){var n=g("s_no");return $("s_yr").value&&/^\d{4}$/.test(n)?$("s_yr").value+n:""}
-$("s_no").oninput=function(){this.value=this.value.replace(/\D/g,"").slice(0,4)};
+$("s_no").oninput=function(){this.value=this.value.replace(/\D/g,"").slice(0,4);var v=this.value,bad=v.length>=2&&v.slice(0,2)!=="27";this.classList.toggle("bad",bad);$("s_nh").hidden=!bad};
 function fd(id,k){var raw=g(id),d=raw.replace(/\D/g,"");if(!d)return"";if(raw.charAt(0)==="+")return d;if(raw.indexOf("00")===0)return d.slice(2);return BFSP.dial(k)+d.replace(/^0+/,"")}
 function pok(id,k){var w=fd(id,k);return/^\d{8,15}$/.test(w)&&(w.indexOf("260")!==0||/^260\d{9}$/.test(w))}
 $("nat").addEventListener("change",function(){var v=$("nat").value,z=v==="Zambian";$("s_nrcw").hidden=!z;$("s_ppw").hidden=!(v&&!z)});
@@ -269,20 +272,20 @@ $("s_nrc").addEventListener("input",function(e){var d=this.value.replace(/\D/g,"
 function clr(e){e.target.classList.remove("bad")}sf.addEventListener("input",clr);sf.addEventListener("change",clr);
 sf.addEventListener("submit",function(ev){ev.preventDefault();var bad=[],v=$("nat").value,z=v==="Zambian",o=!!v&&!z;
 ["s_yr","s_pg","s_fn","s_dob","s_gd","s_ms","nat","s_pr","s_di","s_ad"].forEach(function(i){if(!g(i))bad.push(i)});
-if(!/^\d{4}$/.test(g("s_no")))bad.push("s_no");
+if(!/^27\d\d$/.test(g("s_no")))bad.push("s_no");
 if(z&&!/^\d{6}\/\d{2}\/\d$/.test(g("s_nrc")))bad.push("s_nrc");
 if(o&&!g("s_pp"))bad.push("s_pp");
 if(!pok("s_ph","phc"))bad.push("s_ph");
 if(!pok("s_wa","swc"))bad.push("s_wa");
 if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(g("s_em")))bad.push("s_em");
 if(!$("s_ag").checked)bad.push("s_ag");
-if(bad.length){bad.forEach(function(i){$(i).classList.add("bad");var b=$(i+"-b");if(b)b.classList.add("bad")});say("Please complete the highlighted details. Your student number must be 4 digits"+(z?" and your NRC must look like 123456/10/1":"")+".",1);($(bad[0]+"-b")||$(bad[0])).focus();return}
+if(bad.length){bad.forEach(function(i){$(i).classList.add("bad");var b=$(i+"-b");if(b)b.classList.add("bad")});say("Please complete the highlighted details. Your student number must be 4 digits and start with 27, for example 2714"+(z?" and your NRC must look like 123456/10/1":"")+".",1);($(bad[0]+"-b")||$(bad[0])).focus();return}
 var btn=sf.querySelector("button[type=submit]");btn.disabled=true;say("Sending your details...");
 var H={"Content-Type":"application/json",Prefer:"return=minimal",apikey:BFS_KEY};if(BFS_KEY.indexOf("eyJ")===0)H.Authorization="Bearer "+BFS_KEY;
 var w=fd("s_wa","swc"),row={intake_year:+$("s_yr").value,student_number:full(),full_name:g("s_fn"),date_of_birth:g("s_dob"),gender:g("s_gd"),marital_status:g("s_ms"),nationality:v,nrc_number:z?g("s_nrc"):null,passport_number:o?g("s_pp"):null,phone:"+"+fd("s_ph","phc"),whatsapp:"+"+w,email:g("s_em"),address:g("s_ad"),province:g("s_pr"),district:g("s_di"),church:g("s_ch"),education:g("s_ed"),programme:g("s_pg"),status:"pending"};
-fetch(BFS_URL+"/rest/v1/students",{method:"POST",headers:H,body:JSON.stringify(row)}).then(function(r){
- if(r.ok){sf.reset();BFSP.reset();$("s_di").disabled=true;$("s_nrcw").hidden=true;$("s_ppw").hidden=true;say("<b>Thank you, "+row.full_name.split(" ")[0]+".</b> BFS has received your details and will verify them against its records. Once you are confirmed, your admission letter will be sent to you on WhatsApp or through your email address.");return}
- return r.text().then(function(t){say(/23505|duplicate/i.test(t)?"This student number has already been submitted for "+row.intake_year+". If this is a mistake, please contact BFS on WhatsApp.":"Sorry, your details could not be sent. Please try again, or contact BFS on WhatsApp.",1)})
+idTaken(row.nrc_number,row.passport_number).then(function(t){if(t){say(DUPMSG,1);return null}return fetch(BFS_URL+"/rest/v1/students",{method:"POST",headers:H,body:JSON.stringify(row)})}).then(function(r){
+ if(!r)return;if(r.ok){sf.reset();BFSP.reset();$("s_di").disabled=true;$("s_nrcw").hidden=true;$("s_ppw").hidden=true;say("<b>Thank you, "+row.full_name.split(" ")[0]+".</b> BFS has received your details and will verify them against its records. Once you are confirmed, your admission letter will be sent to you on WhatsApp or through your email address.");return}
+ return r.text().then(function(t){say(/ALREADY_REGISTERED/.test(t)?DUPMSG:/23505|duplicate/i.test(t)?"This student number has already been submitted for "+row.intake_year+". If this is a mistake, please contact BFS on WhatsApp.":"Sorry, your details could not be sent. Please try again, or contact BFS on WhatsApp.",1)})
 }).catch(function(){say("Sorry, we could not reach the server. Please check your internet connection and try again.",1)}).then(function(){btn.disabled=false})});
 })();
 </script>

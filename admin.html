@@ -360,7 +360,7 @@ function render(){
     var wa=a.whatsapp||a.phone||"";
     return '<div class="card"><div class="row"><h3 style="margin:0;flex:1">'+esc(a.full_name)+'</h3>'+(a.student_number?'<span class="pill" style="margin-right:6px">'+esc(a.student_number)+'</span>':'')+'<span class="pill">'+esc(LABEL[a.status]||a.status)+'</span></div>'
     +'<div class="mute">Applied '+fmtDate(a.created_at)+'</div>'
-    +'<p style="margin:8px 0"><b>Programme:</b> <select data-pg="'+a.id+'" style="width:auto"><option value="">Choose programme</option><option value="Certificate"'+(a.programme==="Certificate"?" selected":"")+'>Certificate (1 year)</option><option value="Advanced Certificate"'+(a.programme==="Advanced Certificate"?" selected":"")+'>Advanced Certificate (2 years)</option></select><br><b>WhatsApp:</b> '+(wa?'<a href="'+waUrl(wa,"Hello "+esc(a.full_name)+", this is Born For Service School of Ministry.")+'" target="_blank" rel="noopener">'+esc(wa)+'</a>':'not given')+'<br><b>Phone:</b> '+esc(a.phone||"-")+'<br><b>Email:</b> <a href="mailto:'+esc(a.email)+'">'+esc(a.email)+'</a></p>'
+    +'<p style="margin:8px 0"><b>Programme:</b> <select data-pg="'+a.id+'" style="width:auto"><option value="">Choose programme</option><option value="Certificate"'+(a.programme==="Certificate"?" selected":"")+'>Certificate (1 year)</option><option value="Advanced Certificate"'+(a.programme==="Advanced Certificate"?" selected":"")+'>Advanced Certificate (2 years)</option></select><br><b>WhatsApp:</b> '+(wa?'<a href="'+waUrl(wa,"Hello "+esc(a.full_name)+", this is Born For Service School of Ministry.")+'" target="_blank" rel="noopener">'+esc(wa)+'</a>':'not given')+'<br><b>Phone:</b> '+esc(a.phone||"-")+'<br><b>Email:</b> '+emailHtml(a,"a")+'</p>'
     +'<p style="margin:8px 0"><b>Date of birth:</b> '+esc(a.date_of_birth||"-")+' &nbsp; <b>Gender:</b> '+esc(a.gender||"-")+' &nbsp; <b>Marital status:</b> '+esc(a.marital_status||"-")+'<br><b>Nationality:</b> '+esc(a.nationality||"-")+'<br>'+(a.nrc_number?'<b>NRC number:</b> '+esc(a.nrc_number):'')+(a.passport_number?'<b>Passport number:</b> '+esc(a.passport_number):'')+'<br><b>Address:</b> '+esc(a.address||a.location||"-")+(a.district?', '+esc(a.district):'')+(a.province?', '+esc(a.province):'')+'<br><b>Church or ministry:</b> '+esc(a.church||"-")+'<br><b>Heard about BFS from:</b> '+esc(a.heard_about||"-")+'<br><b>Education or training:</b> '+esc(a.education||"-")+'</p>'
     +'<details><summary>Reason for applying</summary><p style="white-space:pre-line">'+esc(a.reason)+'</p></details>'
     +'<div class="row"><button class="o" data-nrc="'+a.id+'">View ID copy (NRC or passport)</button>'
@@ -395,6 +395,29 @@ document.querySelectorAll(".tabs button").forEach(function(b){b.onclick=function
 
 var stuRows=null,stuProg="All",syncBusy=false,tried={},binReceipts=[];
 function act(x){return!x.deleted_at}
+function emailHtml(x,src){if(!x.email)return"-";return'<a href="mailto:'+esc(x.email)+'" data-mail="'+src+':'+x.id+'" title="Click to email">'+esc(x.email)+'</a>'}
+function admitEmail(x){
+  var p=PROG[x.programme]||{name:x.programme||"",length:"",fee:""},reg=!!x.intake_year&&x.source!=="application";
+  var first=reg
+   ?"On behalf of Born For Service School of Ministry, we are pleased to confirm that your registration has been verified, and that you are recognised as a student of the "+p.name+". Your student number is "+x.student_number+". Please keep it safe and quote it whenever you contact the school."
+   :"On behalf of Born For Service School of Ministry, it is my pleasure to inform you that your application has been successful, and that you have been admitted to the "+p.name+". Your student number is "+x.student_number+". Please keep it safe and quote it whenever you contact the school.";
+  var second=reg
+   ?"We thank God for your commitment to training for ministry, and we encourage you to keep growing in the knowledge of His Word. Tuition remains free, and a graduation fee of "+p.fee+" is payable only after you have completed your programme."
+   :"We rejoice with you as you begin this season of training and equipping for ministry. Lessons are taught online through the BFS WhatsApp group, and you will be added to the group shortly. Tuition is free, and a graduation fee of "+p.fee+" is payable only after you have completed your programme.";
+  var body="Dear "+x.full_name+",\n\nGreetings in the name of our Lord Jesus Christ.\n\n"+first+"\n\n"+second+"\n\nPlease find attached below your official admission letter, which confirms your place at the school.\n\nShould you have any questions, please contact us on WhatsApp at "+PAY_NUMBER+" or reply to this email.\n\nYours in service,\n\nBorn For Service School of Ministry\nLusaka, Zambia\nBornforservice27@gmail.com";
+  return{subject:"Admission to Born For Service School of Ministry - Student No. "+x.student_number,body:body}}
+function emailLetter(x){
+  if(!x.email){alert("This person has no email address.");return}
+  if(!letterReady(x))return;
+  var d=admissionPdf(x);if(!d)return;
+  var m=admitEmail(x),file=letterFile(x),f=new File([d.output("blob")],file,{type:"application/pdf"});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:m.subject,text:m.body}).catch(function(){});return}
+  d.save(file);
+  alert("The admission letter ("+file+") has been downloaded.\n\nYour email app will now open with the admission message ready. Attach the downloaded PDF before you send.");
+  window.location.href=mailUrl(x.email,m.subject,m.body)}
+document.addEventListener("click",function(e){var el=e.target.closest&&e.target.closest("[data-mail]");if(!el)return;
+  var p=el.getAttribute("data-mail").split(":"),list=p[0]==="s"?(stuRows||[]):apps,x=list.filter(function(i){return i.id===p[1]})[0];
+  if(!x||!(p[0]==="s"?x.status==="verified":x.status==="accepted"))return;e.preventDefault();emailLetter(x)});
 function normA(a){var m=String(a.reason||"").split("\n\nHow I heard about BFS: ");if(m.length>1&&!a.heard_about){a.reason=m[0];a.heard_about=m.slice(1).join("\n\n")}return a}
 function snap(a){return{application_id:a.id,source:"application",status:"verified",intake_year:new Date(a.admitted_at||a.created_at).getFullYear(),student_number:a.student_number,full_name:a.full_name,date_of_birth:a.date_of_birth||null,gender:a.gender||null,marital_status:a.marital_status||null,nationality:a.nationality||null,nrc_number:a.nrc_number||null,passport_number:a.passport_number||null,phone:a.phone||null,whatsapp:a.whatsapp||null,email:a.email||null,address:a.address||null,district:a.district||null,province:a.province||null,church:a.church||null,education:a.education||null,programme:a.programme||null,reason:a.reason||null,heard_about:a.heard_about||null,nrc_path:a.nrc_path||null,admitted_at:a.admitted_at||a.created_at}}
 var SQLMSG="Run the latest students-setup.sql in the Supabase SQL Editor (it adds the Recycle bin), then refresh this page.";
@@ -427,7 +450,7 @@ function viewStudent(x){
   var keys=Object.keys(x).filter(function(k){return!skip[k]&&x[k]!==null&&x[k]!==undefined&&x[k]!==""&&typeof x[k]!=="object"});
   keys.sort(function(p,q){var i=first.indexOf(p),j=first.indexOf(q);return(i<0?99:i)-(j<0?99:j)});
   var rows=keys.map(function(k){var v=x[k];if(k==="created_at"||k==="admitted_at")v=fmtDate(v);
-    var l=LBL[k]||(k.charAt(0).toUpperCase()+k.slice(1).replace(/_/g," "));return'<tr><td>'+esc(l)+'</td><td style="white-space:pre-wrap">'+esc(v)+'</td></tr>'}).join("");
+    var l=LBL[k]||(k.charAt(0).toUpperCase()+k.slice(1).replace(/_/g," "));return'<tr><td>'+esc(l)+'</td><td style="white-space:pre-wrap">'+(k==="email"?emailHtml(x,x._src==="a"?"a":"s"):esc(v))+'</td></tr>'}).join("");
   $("sdt").innerHTML='<h3 style="margin-top:0">'+esc(x.full_name)+' <span class="pill">Student</span></h3><table>'+rows+'</table><p style="margin-top:14px"><button id="sdl">Download admission letter</button></p>';
   $("sdl").onclick=function(){downloadLetter(x)};
   $("sd").hidden=false;$("sd").scrollTop=0}
@@ -450,7 +473,7 @@ function renderStudents(){
       :s.status==="verified"?'<button data-dl="s:'+s.id+'">Download admission letter</button>'
       :'<button class="o" data-rs="'+s.id+'">Move back to waiting</button>';
     return '<div class="card"><div class="row"><h3 style="margin:0;flex:1">'+esc(s.full_name)+'</h3><span class="pill" style="margin-right:6px">'+esc(s.student_number)+'</span><span class="pill">'+(SL[s.status]||esc(s.status))+'</span></div>'
-    +'<p style="margin:8px 0"><b>Started:</b> '+esc(s.intake_year)+' &nbsp; <b>Programme:</b> '+esc(s.programme||"-")+' &nbsp; <b>Gender:</b> '+esc(s.gender||"-")+'<br><b>WhatsApp:</b> '+esc(s.whatsapp||"-")+' &nbsp; <b>Email:</b> '+esc(s.email||"-")
+    +'<p style="margin:8px 0"><b>Started:</b> '+esc(s.intake_year)+' &nbsp; <b>Programme:</b> '+esc(s.programme||"-")+' &nbsp; <b>Gender:</b> '+esc(s.gender||"-")+'<br><b>WhatsApp:</b> '+esc(s.whatsapp||"-")+' &nbsp; <b>Email:</b> '+emailHtml(s,"s")
     +'<br><b>Phone:</b> '+esc(s.phone||"-")+' &nbsp; <b>Date of birth:</b> '+esc(s.date_of_birth||"-")+' &nbsp; <b>Marital status:</b> '+esc(s.marital_status||"-")+'<br><b>Nationality:</b> '+esc(s.nationality||"-")+' &nbsp; <b>'+(s.passport_number?'Passport':'NRC')+' number:</b> '+esc(s.nrc_number||s.passport_number||"-")+'<br><b>Address:</b> '+esc(s.address||"-")+'<br><b>Location:</b> '+esc((s.district||"-")+", "+(s.province||"-"))+(s.church?' &nbsp; <b>Church:</b> '+esc(s.church):'')+(s.education?'<br><b>Education:</b> '+esc(s.education):'')+'<br><span class="mute">Submitted '+esc(fmtDate(s.created_at))+'</span></p>'
     +'<div class="row">'+btn+DEL(s.id)+'</div></div>'}).join(""):'<p class="mute">'+(f==="pending"?"No student registrations are waiting for verification.":"No registrations to show here.")+'</p>';
   var q=($("sq").value||"").toLowerCase(),sIds={};rows.forEach(function(s){if(s.application_id)sIds[s.application_id]=1});
