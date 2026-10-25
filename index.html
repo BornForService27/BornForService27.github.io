@@ -355,9 +355,9 @@ n.addEventListener("click",function(e){if(e.target.tagName==="A"){n.classList.re
 
 <script>
 (function(){
-function U(e){var f=e.getAttribute('data-from');if(f){var s=document.querySelector('img[data-id="'+f+'"]');return s?s.getAttribute('src'):null}return e.getAttribute('data-src')}
+function U(e){var f=e.getAttribute('data-from');if(f){var s=document.querySelector('img[data-id="'+f+'"]');return s?(s.getAttribute('src')||s.getAttribute('data-src')):null}return e.getAttribute('data-src')}
 function fill(e){if(!e||e.getAttribute('src'))return;var u=U(e);if(!u)return;e.src=u;var b=e.parentNode.querySelector('.sbg');if(b)b.style.backgroundImage='url("'+u+'")'}
-var AI=[].slice.call(document.querySelectorAll('.cv .slide img'));fill(AI[0]);
+var AI=[].slice.call(document.querySelectorAll('.cv .slide img'));fill(AI[0]);document.querySelectorAll('img[data-from]').forEach(function(e){if(!e.closest('.cv')){e.loading='lazy';fill(e)}});
 function rest(){AI.slice(1).forEach(fill)}if(document.readyState==='complete')setTimeout(rest,300);else window.addEventListener('load',function(){setTimeout(rest,300)});
 var v=document.getElementById('cv');if(!v)return;
 var S=[].slice.call(v.querySelectorAll('.slide')),D=document.getElementById('cd'),pp=document.getElementById('cpp'),i=0,t=null,paused=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
