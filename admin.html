@@ -76,7 +76,7 @@ label{display:block;font-weight:600;margin:12px 0 4px}
   <section id="portal" hidden>
     <style>.pt2{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.pt2 button{background:#fff;color:var(--ink);border-color:var(--line)}.pt2 button.on{background:var(--head);color:#fff;border-color:var(--head)}#pbody table{width:100%;border-collapse:collapse}#pbody th,#pbody td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);font-size:.92rem}#pbody td input{padding:6px;max-width:110px}.pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}</style>
     <h2>Students Portal</h2>
-    <div class="pt2" id="ptabs"><button class="on" data-v="ann">Announcements</button><button data-v="ass">Assessments</button><button data-v="gr">Grades</button><button data-v="fee">Fees</button><button data-v="doc">Documents</button><button data-v="log">Logins</button></div>
+    <div class="pt2" id="ptabs"><button class="on" data-v="ann">Announcements</button><button data-v="ass">Assessments</button><button data-v="gr">Grades</button><button data-v="fee">Fees</button><button data-v="doc">Photos</button><button data-v="log">Logins</button></div>
     <div id="pbody"></div>
   </section>
 
@@ -109,7 +109,7 @@ label{display:block;font-weight:600;margin:12px 0 4px}
     <p class="mute">When you have confirmed an Airtel Money payment (the student forwards the Airtel Money receipt on WhatsApp), record it here. Then send the receipt by email or WhatsApp.</p>
     <form id="rf" class="card">
       <div class="grid2">
-        <div><label for="ra">Student (accepted applicants)</label><select id="ra" required></select></div>
+        <div><label for="ra">Student</label><select id="ra" required></select></div>
         <div><label for="ri">Item</label><select id="ri"><option value="id_card">BFS Identity Card (K100)</option><option value="tshirt">BFS T-shirt (K200)</option></select></div>
         <div id="szw" hidden><label for="rs">T-shirt size</label><select id="rs"><option value="">Choose</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option></select></div>
         <div><label for="rr">Airtel Money reference (optional)</label><input id="rr"></div>
@@ -193,7 +193,7 @@ function acceptText(a){
   var g=GROUP_INVITE?("1. Join the BFS WhatsApp group, where lessons, assignments and announcements are shared: "+GROUP_INVITE):"1. We will add you to the BFS WhatsApp group, where lessons, assignments and announcements are shared.";
   return "Dear "+a.full_name+",\n\nCongratulations! On behalf of Born For Service School of Ministry, we are pleased to inform you that your application has been accepted, and you are admitted to the "+p.name+".\n\nYour student number is "+(a.student_number||"")+". Please find your official admission letter below.\n\nNext steps:\n"+g+"\n2. Every admitted student must have a BFS Identity Card (K100) and a BFS T-shirt (K200). Please pay by Airtel Money to "+PAY_NUMBER+", then forward your Airtel Money receipt to this number on WhatsApp.\n3. Kindly send your T-shirt size (S, M, L, XL or XXL) and a passport-style photo for your Identity Card.\n4. The graduation fee ("+p.fee+") is not a tuition fee. It is paid for graduation, after you finish your programme. It can be paid in instalments, but it must be paid in full 2 months before graduation.\n\nWe warmly welcome you and look forward to serving alongside you. May God bless you.\n\nBrother Christopher Tandeo\nFounder and Overseer\nBorn For Service School of Ministry";
 }
-function receiptApp(r){return apps.filter(function(x){return x.id===r.application_id})[0]||{}}
+function receiptApp(r){return apps.filter(function(x){return x.id===r.application_id})[0]||(r.student_id?(stuRows||[]).filter(function(x){return x.id===r.student_id})[0]:null)||{}}
 function receiptText(r){
   var it=FEES[r.item]||{label:r.item},a=receiptApp(r);
   return "Dear "+r.student_name+",\n\nThank you. We confirm that we have received your payment of K"+r.amount+" for the "+it.label+(r.size?" (size "+r.size+")":"")+", paid by Airtel Money"+(r.ref?" (reference "+r.ref+")":"")+".\n\nReceipt No: "+r.receipt_no+"\nDate: "+fmtDate(r.paid_at)+(a.student_number?"\nStudent number: "+a.student_number:"")+"\n\nPlease find your official receipt below.\n\nMay God bless you.\n\nBorn For Service School of Ministry";
@@ -400,7 +400,7 @@ $("list").addEventListener("click",function(e){var dl=e.target.getAttribute&&e.t
 
 document.querySelectorAll(".tabs button").forEach(function(b){b.onclick=function(){
   document.querySelectorAll(".tabs button").forEach(function(x){x.classList.toggle("on",x===b)});
-  var t=b.getAttribute("data-t");$("apps").hidden=t!=="apps";$("rec").hidden=t!=="rec";$("stu").hidden=t!=="stu";$("regs").hidden=t!=="reg";$("bin").hidden=t!=="bin";$("portal").hidden=t!=="portal";if(t==="portal"&&window.bfsPortal)bfsPortal()}});
+  var t=b.getAttribute("data-t");$("apps").hidden=t!=="apps";$("rec").hidden=t!=="rec";$("stu").hidden=t!=="stu";$("regs").hidden=t!=="reg";$("bin").hidden=t!=="bin";$("portal").hidden=t!=="portal";if(t==="portal"&&window.bfsPortal)bfsPortal();if(t==="rec"&&!stuRows)loadStudents()}});
 
 
 var stuRows=null,stuProg="All",syncBusy=false,tried={},binReceipts=[];
@@ -468,7 +468,7 @@ function deleteApp(a){
 function loadStudents(){return sb.from("students").select("*").order("created_at",{ascending:false}).then(function(r){
   if(r.error){stuRows=null;renderStudents();return}
   stuRows=(r.data||[]).map(function(s){s.student_number=String(s.student_number||"").replace(/-/g,"");return normA(s)});
-  renderStudents();syncStudents()})}
+  renderStudents();syncStudents();fillStudents()})}
 function stuKey(x){return(x._src==="s"?"s:":"a:")+x.id}
 function viewStudent(x){
   var LBL={student_number:"Student number",full_name:"Full name",intake_year:"Year started",date_of_birth:"Date of birth",created_at:"Submitted",admitted_at:"Admitted or verified",letter_emailed_at:"Admission letter emailed",heard_about:"How they heard about BFS",reason:"Reason for applying",marital_status:"Marital status",nrc_number:"NRC number",passport_number:"Passport number",whatsapp:"WhatsApp",email:"Email address"};
@@ -550,22 +550,26 @@ $("bin").addEventListener("click",function(e){var t=e.target,rs=t.getAttribute&&
 $("sq").oninput=function(){if(stuRows)renderStudents()};
 $("gq").oninput=function(){if(stuRows)renderStudents()};$("gf").onchange=function(){if(stuRows)renderStudents()};
 function fillStudents(){
-  var acc=apps.filter(function(a){return a.status==="accepted"&&act(a)});
-  $("ra").innerHTML=acc.length?acc.map(function(a){return '<option value="'+a.id+'">'+esc(a.full_name)+'</option>'}).join(""):'<option value="">No accepted applicants yet</option>';
+  var rows=(stuRows||[]).filter(function(x){return x.status==="verified"&&act(x)&&!x.reg_deleted_at}),
+   acc=apps.filter(function(a){return a.status==="accepted"&&act(a)}),aid={};acc.forEach(function(a){aid[a.id]=1});
+  var o=acc.map(function(a){return{v:"a:"+a.id,n:a.full_name,no:a.student_number}})
+   .concat(rows.filter(function(x){return!(x.application_id&&aid[x.application_id])}).map(function(x){return{v:"s:"+x.id,n:x.full_name,no:x.student_number}}));
+  o.sort(function(x,y){return String(x.n).localeCompare(String(y.n))});
+  $("ra").innerHTML=o.length?o.map(function(x){return '<option value="'+x.v+'">'+esc(x.n)+(x.no?" ("+esc(x.no)+")":"")+'</option>'}).join(""):'<option value="">No students yet</option>';
 }
 $("ri").onchange=function(){$("szw").hidden=$("ri").value!=="tshirt"};
 $("rf").addEventListener("submit",function(e){e.preventDefault();
-  var a=apps.filter(function(x){return x.id===$("ra").value})[0];if(!a){show("rmsg","Choose an accepted applicant first.",1);return}
+  var v=$("ra").value,isS=v.slice(0,2)==="s:",a=isS?(stuRows||[]).filter(function(x){return x.id===v.slice(2)})[0]:apps.filter(function(x){return x.id===v.slice(2)})[0];if(!a){show("rmsg","Choose a student first.",1);return}
   var item=$("ri").value,size=$("rs").value;
   if(item==="tshirt"&&!size){show("rmsg","Choose the T-shirt size.",1);return}
-  sb.from("receipts").insert({application_id:a.id,student_name:a.full_name,item:item,amount:FEES[item].amount,size:item==="tshirt"?size:null,ref:$("rr").value.trim()||null}).select().single().then(function(r){
+  sb.from("receipts").insert(Object.assign({application_id:isS?(a.application_id||null):a.id,student_name:a.full_name,item:item,amount:FEES[item].amount,size:item==="tshirt"?size:null,ref:$("rr").value.trim()||null},isS?{student_id:a.id}:{})).select().single().then(function(r){
     if(r.error){show("rmsg",r.error.code==="23505"?"A payment for this item is already recorded for this student.":"Could not save the payment.",1)}
     else{show("rmsg","Payment recorded. Receipt "+r.data.receipt_no+" was created as a PDF and downloaded. Use the buttons below to send it.");$("rf").reset();$("szw").hidden=true;savePdf(r.data);loadReceipts()}
   })
 });
 function renderReceipts(){
   $("rlist").innerHTML=receipts.length?receipts.map(function(r){
-    var a=apps.filter(function(x){return x.id===r.application_id})[0]||{},it=FEES[r.item]||{label:r.item},t=receiptText(r),wa=a.whatsapp||a.phone||"";
+    var a=receiptApp(r),it=FEES[r.item]||{label:r.item},t=receiptText(r),wa=a.whatsapp||a.phone||"";
     return '<div class="card"><div class="row"><b style="flex:1">'+esc(r.receipt_no)+'</b><span class="mute">'+fmtDate(r.paid_at)+'</span></div>'
     +'<div>'+esc(r.student_name)+': '+esc(it.label)+(r.size?' ('+esc(r.size)+')':'')+', K'+r.amount+(r.ref?' <span class="mute">ref '+esc(r.ref)+'</span>':'')+'</div>'
     +'<div class="row">'+(a.email?'<a class="b" href="'+mailUrl(a.email,"BFS receipt "+r.receipt_no,t)+'">Send receipt by email</a>':'')
@@ -592,12 +596,12 @@ function call(url,o){return tok().then(function(t){o.headers=Object.assign({apik
 function rest(p,o){return call(BFS_URL+"/rest/v1/"+p,o||{})}
 function post(p,b,h){return rest(p,{method:"POST",body:JSON.stringify(b),headers:Object.assign({Prefer:"return=minimal"},h||{})})}
 function note(t,e){var m=document.getElementById("pnote");if(m){m.className="msg"+(e?" err":"");m.textContent=t}}
-function stu(){return ST.length?Promise.resolve():rest("students?select=id,student_number,full_name,email,programme,user_id,application_id&status=eq.verified&order=full_name.asc").then(function(d){ST=d||[]})}
+function stu(){return ST.length?Promise.resolve():rest("students?select=id,student_number,full_name,email,programme,user_id,application_id,photo_path&status=eq.verified&order=full_name.asc").then(function(d){ST=d||[]})}
 function ass(){return rest("assessments?select=*&order=created_at.desc").then(function(d){AS=d||[]})}
 var V={
-doc:function(){stu().then(function(){
- B.innerHTML='<div class="card"><h3>Student documents</h3><p class="mute">Upload a file for one student. The student can download it from the Documents page of the portal. Maximum 10 MB.</p><div class="pg"><select id="d_s"><option value="">Student…</option>'+ST.map(function(s){return'<option value="'+s.id+'">'+pe(s.full_name+" ("+s.student_number+")")+"</option>"}).join("")+'</select><select id="d_t"><option>Admission Letter</option><option>Certificate</option><option>Conditions of Admission</option><option>Other</option></select><input id="d_o" placeholder="Name if Other"><input id="d_f" type="file"></div><p><button data-a="docup">Upload</button></p><div id="pnote" class="msg" hidden></div><div id="d_l"></div></div>';
- document.getElementById("d_s").onchange=docList})},
+doc:function(){ST=[];stu().then(function(){
+ B.innerHTML='<div class="card"><h3>Student profile photos</h3><p class="mute">Students upload their own photo in the portal. Choose a student to view it, for example for the BFS Identity Card. Admission letters and NRC copies appear in each student portal automatically.</p><div class="pg"><select id="d_s"><option value="">Student…</option>'+ST.map(function(x){return'<option value="'+x.id+'">'+pe(x.full_name+" ("+x.student_number+")")+"</option>"}).join("")+'</select></div><div id="pnote" class="msg" hidden></div><div id="d_l"></div></div>';
+ document.getElementById("d_s").onchange=function(){var id=this.value,x=ST.find(function(y){return y.id===id}),l=document.getElementById("d_l");l.innerHTML=!x?"":(x.photo_path?'<p><button data-a="docphoto" data-id="'+id+'">View profile photo</button></p>':'<p class="mute">No profile photo uploaded yet.</p>')}})},
 ann:function(){rest("announcements?select=*&order=created_at.desc").then(function(a){
  B.innerHTML='<div class="card"><h3>Post an announcement</h3><input id="a_t" placeholder="Title"><textarea id="a_b" rows="4" placeholder="Message" style="margin-top:8px"></textarea><p><button data-a="annpost">Post</button></p><div id="pnote" class="msg" hidden></div></div>'+
  (a||[]).map(function(x){return'<div class="card"><b>'+pe(x.title)+'</b> <span class="mute">'+fd(x.created_at)+'</span><p style="white-space:pre-wrap">'+pe(x.body)+'</p><button data-a="anndel" data-id="'+x.id+'">Delete</button></div>'}).join("")})},
@@ -616,22 +620,13 @@ log:function(){stu().then(function(){
  var n=ST.filter(function(s){return s.user_id}).length;
  B.innerHTML='<div class="card"><h3>Student logins</h3><p>Students log in at <b>student.html</b> with their student number (or email) and the temporary password. They are then made to choose their own password. No login needs to be created here.</p><p class="mute">'+n+" of "+ST.length+' admitted students have activated their login. A student needs an email on their record.</p></div><div class="card"><table><tr><th>Student</th><th>Email</th><th>Login</th></tr>'+
  ST.map(function(s){return"<tr><td>"+pe(s.full_name)+"<br><small class=mute>"+pe(s.student_number)+"</small></td><td>"+pe(s.email||"— no email —")+"</td><td>"+(s.user_id?"Activated":"Not yet")+"</td></tr>"}).join("")+"</table></div>"})}};
-function docList(){var id=document.getElementById("d_s").value,l=document.getElementById("d_l");if(!id){l.innerHTML="";return}
- rest("student_files?select=id,description,file_name,size_bytes,created_at&student_id=eq."+id+"&order=created_at.desc").then(function(r){l.innerHTML="<table><tr><th>Document</th><th>File</th><th>Added</th><th></th></tr>"+(r||[]).map(function(x){return"<tr><td>"+pe(x.description)+"</td><td>"+pe(x.file_name||"")+"</td><td>"+fd(x.created_at)+'</td><td><button data-a="docdel" data-id="'+x.id+'">Delete</button></td></tr>'}).join("")+"</table>"})}
 function feeList(){var s=ST.find(function(x){return x.id===document.getElementById("f_s").value}),l=document.getElementById("f_l");if(!s||!s.application_id){l.innerHTML=s?'<p class="mute">This student has no application record, so fees cannot be linked.</p>':"";return}
  rest("receipts?select=item,amount,paid_at,ref&application_id=eq."+s.application_id+"&order=paid_at.desc").then(function(r){l.innerHTML="<table><tr><th>Item</th><th>Amount</th><th>Date</th><th>Ref</th></tr>"+(r||[]).map(function(x){return"<tr><td>"+pe(x.item)+"</td><td>K"+x.amount+"</td><td>"+fd(x.paid_at)+"</td><td>"+pe(x.ref||"")+"</td></tr>"}).join("")+"</table>"})}
 function mk(id){return call(BFS_URL+"/functions/v1/student-login",{method:"POST",body:JSON.stringify({student_id:id})}).then(function(r){var s=ST.find(function(x){return x.id===id});s.user_id=s.user_id||"x";
  return"BFS Students Portal login\nName: "+s.full_name+"\nLogin: "+r.email+" (or student number "+s.student_number+")\nTemporary password: "+r.password})}
 var A={
-docup:function(){var sid=document.getElementById("d_s").value,f=document.getElementById("d_f").files[0];if(!sid||!f)return note("Choose a student and a file.",1);
- if(f.size>10485760)return note("The file is too large (maximum 10 MB).",1);
- var t=document.getElementById("d_t").value,desc=t==="Other"?(document.getElementById("d_o").value.trim()||f.name):t,path=sid+"/"+Date.now()+"-"+f.name.replace(/[^A-Za-z0-9._-]/g,"_");
- note("Uploading…");tok().then(function(k){return fetch(BFS_URL+"/storage/v1/object/student-files/"+path,{method:"POST",headers:{apikey:BFS_KEY,Authorization:"Bearer "+k,"Content-Type":f.type||"application/octet-stream"},body:f})})
- .then(function(r){if(!r.ok)return r.text().then(function(x){throw new Error(x)});return post("student_files",{student_id:sid,description:desc,file_path:path,file_name:f.name,size_bytes:f.size})})
- .then(function(){note("Uploaded.");document.getElementById("d_f").value="";docList()}).catch(function(e){note(e.message,1)})},
-docdel:function(i){if(!confirm("Delete this document?"))return;
- rest("student_files?select=file_path&id=eq."+i).then(function(r){var p=r&&r[0]&&r[0].file_path;return tok().then(function(k){return p?fetch(BFS_URL+"/storage/v1/object/student-files/"+p,{method:"DELETE",headers:{apikey:BFS_KEY,Authorization:"Bearer "+k}}):0})})
- .then(function(){return rest("student_files?id=eq."+i,{method:"DELETE"})}).then(docList)},
+docphoto:function(i){var x=ST.find(function(y){return y.id===i});if(!x||!x.photo_path)return;var w=window.open("","_blank");
+ sb.storage.from("student-photos").createSignedUrl(x.photo_path,300).then(function(r){if(r.error||!r.data){if(w)w.close();return note("Could not open the photo.",1)}w.location=r.data.signedUrl})},
 annpost:function(){var t=document.getElementById("a_t").value.trim(),b=document.getElementById("a_b").value.trim();if(!t||!b)return note("Enter a title and a message.",1);post("announcements",{title:t,body:b}).then(V.ann).catch(function(e){note(e.message,1)})},
 anndel:function(i){if(confirm("Delete this announcement?"))rest("announcements?id=eq."+i,{method:"DELETE"}).then(V.ann)},
 asspost:function(){var c=document.getElementById("s_c").value.trim(),t=document.getElementById("s_t").value.trim();if(!c||!t)return note("Enter the course and title.",1);
