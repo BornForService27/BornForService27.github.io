@@ -39,7 +39,13 @@ input{width:100%;padding:11px;border:1px solid var(--line);border-radius:3px;fon
 <label for="id">Student number or email</label><input id="id" autocomplete="username">
 <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password">
 <button id="go" class="btn full">Log in</button><div id="m1" class="msg"></div>
-<p class="mute" style="font-size:.85rem;margin-top:16px">First time? Use the temporary password the school sent you. Forgot it? Ask the BFS office to reset it.</p></section>
+<p class="mute" style="font-size:.85rem;margin-top:16px">First time? Use your student number (or email) and the temporary password the school gave you. You will then choose your own password.</p><p style="margin:10px 0 0"><a href="#" id="fg">Forgot your password?</a></p></section>
+
+<section id="vFg" class="card narrow hide"><h2>Reset your password</h2>
+<p class="mute">Enter the email address on your BFS student record. We will email you a link to choose a new password.</p>
+<label for="fe">Email address</label><input id="fe" type="email" autocomplete="email">
+<button id="fs" class="btn full">Send reset link</button><div id="m3" class="msg"></div>
+<p style="margin:14px 0 0"><a href="#" id="fb">Back to login</a></p></section>
 
 <section id="vPw" class="card narrow hide"><h2>Choose a new password</h2>
 <p class="mute">For your safety, replace the temporary password before continuing.</p>
@@ -56,9 +62,9 @@ input{width:100%;padding:11px;border:1px solid var(--line);border-radius:3px;fon
 <script>
 (function(){
 var URL_="https://qbttclxxyxliiuvyyyqj.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFidHRjbHh4eXhsaWl1dnl5eXFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1OTcyMDgsImV4cCI6MjEwNzE3MzIwOH0.3MHyXKWmRd4RzffvHNpUICjsYmd-NIwspOrbwDQCUbA";
-var sb=supabase.createClient(URL_,KEY),$=function(i){return document.getElementById(i)},me=null;
+var FIRST="BFS1234",sb=supabase.createClient(URL_,KEY),$=function(i){return document.getElementById(i)},me=null;
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-function show(v){["vLogin","vPw","vApp"].forEach(function(x){$(x).classList.toggle("hide",x!==v)});$("out").classList.toggle("hide",v==="vLogin")}
+function show(v){["vLogin","vFg","vPw","vApp"].forEach(function(x){$(x).classList.toggle("hide",x!==v)});$("out").classList.toggle("hide",v==="vLogin"||v==="vFg")}
 function fmt(d){return d?new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"—"}
 function boot(){sb.auth.getSession().then(function(r){if(!r.data.session)return show("vLogin");
  sb.rpc("bfs_link_me").then(function(x){me=x.data;
@@ -66,14 +72,20 @@ function boot(){sb.auth.getSession().then(function(r){if(!r.data.session)return 
   me.must_change?show("vPw"):load()})})}
 $("go").onclick=function(){var id=$("id").value.trim(),pw=$("pw").value,m=$("m1");m.textContent="";
  if(!id||!pw){m.textContent="Enter your login and password.";return}
- var em=id.indexOf("@")>0?Promise.resolve(id):sb.rpc("bfs_email_for",{sn:id}).then(function(r){return r.data});
- em.then(function(e){if(!e){m.textContent="Login or password is not correct.";return}
-  return sb.auth.signInWithPassword({email:e,password:pw}).then(function(r){if(r.error){m.textContent="Login or password is not correct.";return}boot()})})};
+ var bad=function(){m.textContent="Login or password is not correct."};m.textContent="Please wait…";
+ sb.rpc("bfs_login_email",{login_id:id}).then(function(x){var e=x.data;if(!e)return bad();
+  return sb.auth.signInWithPassword({email:e,password:pw}).then(function(r){
+   if(!r.error){m.textContent="";return boot()}
+   if(pw!==FIRST)return bad();
+   return sb.auth.signUp({email:e,password:pw}).then(function(u){
+    if(u.error||!u.data||!u.data.user)return bad();
+    if(!u.data.session){m.textContent="Your account could not be activated yet. Please contact the BFS office.";return}
+    m.textContent="";boot()})})})};
 $("pw").onkeydown=function(e){if(e.key==="Enter")$("go").click()};
 $("sv").onclick=function(){var a=$("p1").value,b=$("p2").value,m=$("m2");m.textContent="";
- if(a.length<8){m.textContent="Use at least 8 characters.";return}if(a!==b){m.textContent="The two passwords do not match.";return}
+ if(a.length<8){m.textContent="Use at least 8 characters.";return}if(a!==b){m.textContent="The two passwords do not match.";return}if(a===FIRST){m.textContent="Choose a different password from the temporary one.";return}
  sb.auth.updateUser({password:a}).then(function(r){if(r.error){m.textContent=r.error.message;return}
-  sb.rpc("bfs_pw_done").then(function(){me.must_change=false;load()})})};
+  sb.rpc("bfs_pw_done").then(function(){REC=false;history.replaceState(null,"",location.pathname);boot()})})};
 $("out").onclick=function(){sb.auth.signOut().then(function(){me=null;$("pw").value="";show("vLogin")})};
 $("tabs").onclick=function(e){var t=e.target.getAttribute("data-t");if(!t)return;
  [].forEach.call($("tabs").children,function(b){b.classList.toggle("on",b===e.target)});
@@ -97,6 +109,15 @@ function load(){show("vApp");
   var fees=[["id_card","BFS Identity Card",100],["tshirt","BFS T-shirt",200],["graduation","Graduation fee ("+(adv?"Advanced Certificate":"Certificate")+")",adv?3000:1500]];
   $("tF").innerHTML="<h3>Fees</h3><p class='mute'>Tuition is free. These are the only fees.</p><div class='tw'><table><tr><th>Item</th><th>Amount</th><th>Status</th></tr>"+fees.map(function(f){var p=paid[f[0]];
    return"<tr><td>"+esc(f[1])+"</td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(p?'<span class="ok">Paid</span> <small class="mute">'+fmt(p.paid_at)+"</small>":'<span class="bad">Not paid</span>')+"</td></tr>"}).join("")+"</table></div>"})}
-boot();
+var REC=/type=recovery/.test(location.hash);
+$("fg").onclick=function(e){e.preventDefault();$("m3").textContent="";show("vFg")};
+$("fb").onclick=function(e){e.preventDefault();show("vLogin")};
+$("fs").onclick=function(){var em=$("fe").value.trim(),m=$("m3");if(em.indexOf("@")<1){m.style.color="";m.textContent="Enter your email address.";return}
+ m.style.color="";m.textContent="Sending…";
+ sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname}).then(function(){m.style.color="var(--ok)";m.textContent="If this email belongs to a BFS student, a password reset link has been sent. Please check your inbox and spam folder."})};
+sb.auth.onAuthStateChange(function(ev){if(ev==="PASSWORD_RECOVERY"){REC=true;show("vPw")}});
+if(/error_code=otp_expired|error=access_denied/.test(location.hash)){history.replaceState(null,"",location.pathname);show("vLogin");$("m1").textContent="That reset link has expired or was already used. Please request a new one."}
+else if(REC){sb.auth.getSession().then(function(r){if(r.data.session)show("vPw")})}
+else boot();
 })();
 </script></body></html>
