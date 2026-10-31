@@ -70,7 +70,7 @@ function boot(){sb.auth.getSession().then(function(r){if(!r.data.session)return 
  sb.rpc("bfs_link_me").then(function(x){me=x.data;
   if(x.error||!me||!me.id){sb.auth.signOut();show("vLogin");$("m1").textContent="No admitted student record matches this account. Contact the BFS office.";return}
   me.must_change?show("vPw"):load()})})}
-$("go").onclick=function(){var id=$("id").value.trim(),pw=$("pw").value,m=$("m1");m.textContent="";
+$("go").onclick=function(){var id=$("id").value.trim(),pw=$("pw").value,m=$("m1");if(pw.trim().toLowerCase()===FIRST.toLowerCase())pw=FIRST;m.textContent="";
  if(!id||!pw){m.textContent="Enter your login and password.";return}
  var bad=function(){m.textContent="Login or password is not correct."};m.textContent="Please wait…";
  sb.rpc("bfs_login_email",{login_id:id}).then(function(x){if(x.error){m.textContent="Setup problem: "+x.error.message;return}var e=x.data;if(!e)return bad();
@@ -78,7 +78,7 @@ $("go").onclick=function(){var id=$("id").value.trim(),pw=$("pw").value,m=$("m1"
    if(!r.error){m.textContent="";return boot()}
    if(pw!==FIRST)return bad();
    return sb.auth.signUp({email:e,password:pw}).then(function(u){
-    if(u.error){m.textContent=/already|registered/i.test(u.error.message)?"Login or password is not correct.":"Could not activate: "+u.error.message;return}if(!u.data||!u.data.user)return bad();
+    if(u.error){m.textContent=/already|registered/i.test(u.error.message)?"An account already exists for this student. Use the password you chose, or click Forgot your password.":"Could not activate: "+u.error.message;return}if(!u.data||!u.data.user)return bad();
     if(!u.data.session){m.textContent="Your account could not be activated yet. Please contact the BFS office.";return}
     m.textContent="";boot()})})})};
 $("pw").onkeydown=function(e){if(e.key==="Enter")$("go").click()};
