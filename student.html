@@ -62,7 +62,7 @@ input{width:100%;padding:11px;border:1px solid var(--line);border-radius:3px;fon
 <script>
 (function(){
 var URL_="https://qbttclxxyxliiuvyyyqj.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFidHRjbHh4eXhsaWl1dnl5eXFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1OTcyMDgsImV4cCI6MjEwNzE3MzIwOH0.3MHyXKWmRd4RzffvHNpUICjsYmd-NIwspOrbwDQCUbA";
-var FIRST="BFS1234",sb=supabase.createClient(URL_,KEY),$=function(i){return document.getElementById(i)},me=null;
+var FIRST="BFS1234",CUR="",sb=supabase.createClient(URL_,KEY),$=function(i){return document.getElementById(i)},me=null;
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function show(v){["vLogin","vFg","vPw","vApp"].forEach(function(x){$(x).classList.toggle("hide",x!==v)});$("out").classList.toggle("hide",v==="vLogin"||v==="vFg")}
 function fmt(d){return d?new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"—"}
@@ -70,7 +70,7 @@ function boot(){sb.auth.getSession().then(function(r){if(!r.data.session)return 
  sb.rpc("bfs_link_me").then(function(x){me=x.data;
   if(x.error||!me||!me.id){sb.auth.signOut();show("vLogin");$("m1").textContent="No admitted student record matches this account. Contact the BFS office.";return}
   me.must_change?show("vPw"):load()})})}
-$("go").onclick=function(){var id=$("id").value.trim(),pw=$("pw").value,m=$("m1");if(pw.trim().toLowerCase()===FIRST.toLowerCase())pw=FIRST;m.textContent="";
+$("go").onclick=function(){var id=$("id").value.trim(),pw=$("pw").value,m=$("m1");if(pw.trim().toLowerCase()===FIRST.toLowerCase())pw=FIRST;CUR=pw;m.textContent="";
  if(!id||!pw){m.textContent="Enter your login and password.";return}
  var bad=function(){m.textContent="Login or password is not correct."};m.textContent="Please wait…";
  sb.rpc("bfs_login_email",{login_id:id}).then(function(x){if(x.error){m.textContent="Setup problem: "+x.error.message;return}var e=x.data;if(!e)return bad();
@@ -84,7 +84,7 @@ $("go").onclick=function(){var id=$("id").value.trim(),pw=$("pw").value,m=$("m1"
 $("pw").onkeydown=function(e){if(e.key==="Enter")$("go").click()};
 $("sv").onclick=function(){var a=$("p1").value,b=$("p2").value,m=$("m2");m.textContent="";
  if(a.length<8){m.textContent="Use at least 8 characters.";return}if(a!==b){m.textContent="The two passwords do not match.";return}if(a===FIRST){m.textContent="Choose a different password from the temporary one.";return}
- sb.auth.updateUser({password:a}).then(function(r){if(r.error){m.textContent=r.error.message;return}
+ sb.auth.updateUser(CUR?{password:a,current_password:CUR}:{password:a}).then(function(r){if(r.error){m.textContent=r.error.message;return}
   sb.rpc("bfs_pw_done").then(function(){REC=false;history.replaceState(null,"",location.pathname);boot()})})};
 $("out").onclick=function(){sb.auth.signOut().then(function(){me=null;$("pw").value="";show("vLogin")})};
 $("tabs").onclick=function(e){var t=e.target.getAttribute("data-t");if(!t)return;
