@@ -76,7 +76,7 @@ label{display:block;font-weight:600;margin:12px 0 4px}
   <section id="portal" hidden>
     <style>.pt2{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.pt2 button{background:#fff;color:var(--ink);border-color:var(--line)}.pt2 button.on{background:var(--head);color:#fff;border-color:var(--head)}#pbody table{width:100%;border-collapse:collapse}#pbody th,#pbody td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);font-size:.92rem}#pbody td input{padding:6px;max-width:110px}.pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}</style>
     <h2>Students Portal</h2>
-    <div class="pt2" id="ptabs"><button class="on" data-v="ann">Announcements</button><button data-v="ass">Assessments</button><button data-v="gr">Grades</button><button data-v="fee">Fees</button><button data-v="log">Logins</button></div>
+    <div class="pt2" id="ptabs"><button class="on" data-v="ann">Announcements</button><button data-v="ass">Assessments</button><button data-v="gr">Grades</button><button data-v="fee">Fees</button><button data-v="doc">Documents</button><button data-v="log">Logins</button></div>
     <div id="pbody"></div>
   </section>
 
@@ -595,6 +595,9 @@ function note(t,e){var m=document.getElementById("pnote");if(m){m.className="msg
 function stu(){return ST.length?Promise.resolve():rest("students?select=id,student_number,full_name,email,programme,user_id,application_id&status=eq.verified&order=full_name.asc").then(function(d){ST=d||[]})}
 function ass(){return rest("assessments?select=*&order=created_at.desc").then(function(d){AS=d||[]})}
 var V={
+doc:function(){stu().then(function(){
+ B.innerHTML='<div class="card"><h3>Student documents</h3><p class="mute">Upload a file for one student. The student can download it from the Documents page of the portal. Maximum 10 MB.</p><div class="pg"><select id="d_s"><option value="">Student…</option>'+ST.map(function(s){return'<option value="'+s.id+'">'+pe(s.full_name+" ("+s.student_number+")")+"</option>"}).join("")+'</select><select id="d_t"><option>Admission Letter</option><option>Certificate</option><option>Conditions of Admission</option><option>Other</option></select><input id="d_o" placeholder="Name if Other"><input id="d_f" type="file"></div><p><button data-a="docup">Upload</button></p><div id="pnote" class="msg" hidden></div><div id="d_l"></div></div>';
+ document.getElementById("d_s").onchange=docList})},
 ann:function(){rest("announcements?select=*&order=created_at.desc").then(function(a){
  B.innerHTML='<div class="card"><h3>Post an announcement</h3><input id="a_t" placeholder="Title"><textarea id="a_b" rows="4" placeholder="Message" style="margin-top:8px"></textarea><p><button data-a="annpost">Post</button></p><div id="pnote" class="msg" hidden></div></div>'+
  (a||[]).map(function(x){return'<div class="card"><b>'+pe(x.title)+'</b> <span class="mute">'+fd(x.created_at)+'</span><p style="white-space:pre-wrap">'+pe(x.body)+'</p><button data-a="anndel" data-id="'+x.id+'">Delete</button></div>'}).join("")})},
@@ -613,11 +616,22 @@ log:function(){stu().then(function(){
  var n=ST.filter(function(s){return s.user_id}).length;
  B.innerHTML='<div class="card"><h3>Student logins</h3><p>Students log in at <b>student.html</b> with their student number (or email) and the temporary password. They are then made to choose their own password. No login needs to be created here.</p><p class="mute">'+n+" of "+ST.length+' admitted students have activated their login. A student needs an email on their record.</p></div><div class="card"><table><tr><th>Student</th><th>Email</th><th>Login</th></tr>'+
  ST.map(function(s){return"<tr><td>"+pe(s.full_name)+"<br><small class=mute>"+pe(s.student_number)+"</small></td><td>"+pe(s.email||"— no email —")+"</td><td>"+(s.user_id?"Activated":"Not yet")+"</td></tr>"}).join("")+"</table></div>"})}};
+function docList(){var id=document.getElementById("d_s").value,l=document.getElementById("d_l");if(!id){l.innerHTML="";return}
+ rest("student_files?select=id,description,file_name,size_bytes,created_at&student_id=eq."+id+"&order=created_at.desc").then(function(r){l.innerHTML="<table><tr><th>Document</th><th>File</th><th>Added</th><th></th></tr>"+(r||[]).map(function(x){return"<tr><td>"+pe(x.description)+"</td><td>"+pe(x.file_name||"")+"</td><td>"+fd(x.created_at)+'</td><td><button data-a="docdel" data-id="'+x.id+'">Delete</button></td></tr>'}).join("")+"</table>"})}
 function feeList(){var s=ST.find(function(x){return x.id===document.getElementById("f_s").value}),l=document.getElementById("f_l");if(!s||!s.application_id){l.innerHTML=s?'<p class="mute">This student has no application record, so fees cannot be linked.</p>':"";return}
  rest("receipts?select=item,amount,paid_at,ref&application_id=eq."+s.application_id+"&order=paid_at.desc").then(function(r){l.innerHTML="<table><tr><th>Item</th><th>Amount</th><th>Date</th><th>Ref</th></tr>"+(r||[]).map(function(x){return"<tr><td>"+pe(x.item)+"</td><td>K"+x.amount+"</td><td>"+fd(x.paid_at)+"</td><td>"+pe(x.ref||"")+"</td></tr>"}).join("")+"</table>"})}
 function mk(id){return call(BFS_URL+"/functions/v1/student-login",{method:"POST",body:JSON.stringify({student_id:id})}).then(function(r){var s=ST.find(function(x){return x.id===id});s.user_id=s.user_id||"x";
  return"BFS Students Portal login\nName: "+s.full_name+"\nLogin: "+r.email+" (or student number "+s.student_number+")\nTemporary password: "+r.password})}
 var A={
+docup:function(){var sid=document.getElementById("d_s").value,f=document.getElementById("d_f").files[0];if(!sid||!f)return note("Choose a student and a file.",1);
+ if(f.size>10485760)return note("The file is too large (maximum 10 MB).",1);
+ var t=document.getElementById("d_t").value,desc=t==="Other"?(document.getElementById("d_o").value.trim()||f.name):t,path=sid+"/"+Date.now()+"-"+f.name.replace(/[^A-Za-z0-9._-]/g,"_");
+ note("Uploading…");tok().then(function(k){return fetch(BFS_URL+"/storage/v1/object/student-files/"+path,{method:"POST",headers:{apikey:BFS_KEY,Authorization:"Bearer "+k,"Content-Type":f.type||"application/octet-stream"},body:f})})
+ .then(function(r){if(!r.ok)return r.text().then(function(x){throw new Error(x)});return post("student_files",{student_id:sid,description:desc,file_path:path,file_name:f.name,size_bytes:f.size})})
+ .then(function(){note("Uploaded.");document.getElementById("d_f").value="";docList()}).catch(function(e){note(e.message,1)})},
+docdel:function(i){if(!confirm("Delete this document?"))return;
+ rest("student_files?select=file_path&id=eq."+i).then(function(r){var p=r&&r[0]&&r[0].file_path;return tok().then(function(k){return p?fetch(BFS_URL+"/storage/v1/object/student-files/"+p,{method:"DELETE",headers:{apikey:BFS_KEY,Authorization:"Bearer "+k}}):0})})
+ .then(function(){return rest("student_files?id=eq."+i,{method:"DELETE"})}).then(docList)},
 annpost:function(){var t=document.getElementById("a_t").value.trim(),b=document.getElementById("a_b").value.trim();if(!t||!b)return note("Enter a title and a message.",1);post("announcements",{title:t,body:b}).then(V.ann).catch(function(e){note(e.message,1)})},
 anndel:function(i){if(confirm("Delete this announcement?"))rest("announcements?id=eq."+i,{method:"DELETE"}).then(V.ann)},
 asspost:function(){var c=document.getElementById("s_c").value.trim(),t=document.getElementById("s_t").value.trim();if(!c||!t)return note("Enter the course and title.",1);
