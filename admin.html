@@ -71,7 +71,14 @@ label{display:block;font-weight:600;margin:12px 0 4px}
 </div>
 
 <div id="app" hidden>
-  <div class="tabs"><button class="on" data-t="apps">Applications</button><button data-t="reg">Registrations<span id="gbadge"></span></button><button data-t="stu">Students</button><button data-t="rec">Receipts</button><button data-t="bin" title="Recycle bin" aria-label="Recycle bin" style="margin-left:auto;display:inline-flex;align-items:center;gap:6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg><span id="bbadge"></span></button></div>
+  <div class="tabs"><button class="on" data-t="apps">Applications</button><button data-t="reg">Registrations<span id="gbadge"></span></button><button data-t="stu">Students</button><button data-t="rec">Receipts</button><button data-t="portal">Portal</button><button data-t="bin" title="Recycle bin" aria-label="Recycle bin" style="margin-left:auto;display:inline-flex;align-items:center;gap:6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg><span id="bbadge"></span></button></div>
+
+  <section id="portal" hidden>
+    <style>.pt2{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.pt2 button{background:#fff;color:var(--ink);border-color:var(--line)}.pt2 button.on{background:var(--head);color:#fff;border-color:var(--head)}#pbody table{width:100%;border-collapse:collapse}#pbody th,#pbody td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);font-size:.92rem}#pbody td input{padding:6px;max-width:110px}.pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}</style>
+    <h2>Students Portal</h2>
+    <div class="pt2" id="ptabs"><button class="on" data-v="ann">Announcements</button><button data-v="ass">Assessments</button><button data-v="gr">Grades</button><button data-v="fee">Fees</button><button data-v="log">Logins</button></div>
+    <div id="pbody"></div>
+  </section>
 
   <section id="regs" hidden>
     <p class="mute">Existing students who registered on the website. Check each one against your records, then verify. Verified students move into their start year under Students.</p>
@@ -393,7 +400,7 @@ $("list").addEventListener("click",function(e){var dl=e.target.getAttribute&&e.t
 
 document.querySelectorAll(".tabs button").forEach(function(b){b.onclick=function(){
   document.querySelectorAll(".tabs button").forEach(function(x){x.classList.toggle("on",x===b)});
-  var t=b.getAttribute("data-t");$("apps").hidden=t!=="apps";$("rec").hidden=t!=="rec";$("stu").hidden=t!=="stu";$("regs").hidden=t!=="reg";$("bin").hidden=t!=="bin"}});
+  var t=b.getAttribute("data-t");$("apps").hidden=t!=="apps";$("rec").hidden=t!=="rec";$("stu").hidden=t!=="stu";$("regs").hidden=t!=="reg";$("bin").hidden=t!=="bin";$("portal").hidden=t!=="portal";if(t==="portal"&&window.bfsPortal)bfsPortal()}});
 
 
 var stuRows=null,stuProg="All",syncBusy=false,tried={},binReceipts=[];
@@ -573,6 +580,62 @@ $("rlist").addEventListener("click",function(e){var t=e.target,pid=t.getAttribut
   softDel("receipts",id,"deleted_at",loadReceipts)
 });
 init();
+</script>
+<script>
+(function(){
+var B=$("portal")&&document.getElementById("pbody"),ST=[],AS=[],cur="ann";
+var pe=function(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
+var fd=function(d){return d?new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"—"};
+function tok(){return sb.auth.getSession().then(function(r){return r.data.session.access_token})}
+function call(url,o){return tok().then(function(t){o.headers=Object.assign({apikey:BFS_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json"},o.headers||{});
+ return fetch(url,o).then(function(r){return r.text().then(function(x){var j=null;try{j=x?JSON.parse(x):null}catch(e){}if(!r.ok)throw new Error((j&&(j.error||j.message))||x||r.statusText);return j})})})}
+function rest(p,o){return call(BFS_URL+"/rest/v1/"+p,o||{})}
+function post(p,b,h){return rest(p,{method:"POST",body:JSON.stringify(b),headers:Object.assign({Prefer:"return=minimal"},h||{})})}
+function note(t,e){var m=document.getElementById("pnote");if(m){m.className="msg"+(e?" err":"");m.textContent=t}}
+function stu(){return ST.length?Promise.resolve():rest("students?select=id,student_number,full_name,email,programme,user_id,application_id&status=eq.verified&order=full_name.asc").then(function(d){ST=d||[]})}
+function ass(){return rest("assessments?select=*&order=created_at.desc").then(function(d){AS=d||[]})}
+var V={
+ann:function(){rest("announcements?select=*&order=created_at.desc").then(function(a){
+ B.innerHTML='<div class="card"><h3>Post an announcement</h3><input id="a_t" placeholder="Title"><textarea id="a_b" rows="4" placeholder="Message" style="margin-top:8px"></textarea><p><button data-a="annpost">Post</button></p><div id="pnote" class="msg" hidden></div></div>'+
+ (a||[]).map(function(x){return'<div class="card"><b>'+pe(x.title)+'</b> <span class="mute">'+fd(x.created_at)+'</span><p style="white-space:pre-wrap">'+pe(x.body)+'</p><button data-a="anndel" data-id="'+x.id+'">Delete</button></div>'}).join("")})},
+ass:function(){ass().then(function(){
+ B.innerHTML='<div class="card"><h3>New assignment, test or exam</h3><div class="pg"><input id="s_c" placeholder="Course"><input id="s_t" placeholder="Title"><select id="s_k"><option value="assignment">Assignment</option><option value="test">Test</option><option value="exam">Exam</option></select><input id="s_d" type="date"><input id="s_m" type="number" value="100" placeholder="Max mark"></div><p><button data-a="asspost">Add</button></p><div id="pnote" class="msg" hidden></div></div><div class="card"><table><tr><th>Course</th><th>Title</th><th>Type</th><th>Due</th><th>Max</th><th></th></tr>'+
+ AS.map(function(x){return"<tr><td>"+pe(x.course)+"</td><td>"+pe(x.title)+"</td><td>"+x.kind+"</td><td>"+fd(x.due_date)+"</td><td>"+x.max_mark+'</td><td><button data-a="assdel" data-id="'+x.id+'">Delete</button></td></tr>'}).join("")+"</table></div>"})},
+gr:function(){Promise.all([stu(),ass()]).then(function(){
+ B.innerHTML='<div class="card"><h3>Enter grades</h3><select id="g_a"><option value="">Choose an assessment…</option>'+AS.map(function(x){return'<option value="'+x.id+'">'+pe(x.course+" — "+x.title+" ("+x.kind+")")+"</option>"}).join("")+'</select><div id="g_t"></div><div id="pnote" class="msg" hidden></div></div>';
+ document.getElementById("g_a").onchange=function(){var id=this.value,t=document.getElementById("g_t");if(!id){t.innerHTML="";return}
+  rest("grades?select=student_id,mark&assessment_id=eq."+id).then(function(g){var m={};(g||[]).forEach(function(x){m[x.student_id]=x.mark});
+   t.innerHTML="<table><tr><th>Student</th><th>No.</th><th>Mark</th></tr>"+ST.map(function(s){return"<tr><td>"+pe(s.full_name)+"</td><td>"+pe(s.student_number)+'</td><td><input type="number" step="any" data-s="'+s.id+'" value="'+(m[s.id]!=null?m[s.id]:"")+'"></td></tr>'}).join("")+'</table><p><button data-a="grsave">Save marks</button> <span class="mute">Blank boxes are left unchanged.</span></p>'})}})},
+fee:function(){stu().then(function(){
+ B.innerHTML='<div class="card"><h3>Record a fee payment</h3><div class="pg"><select id="f_s"><option value="">Student…</option>'+ST.map(function(s){return'<option value="'+s.id+'">'+pe(s.full_name+" ("+s.student_number+")")+"</option>"}).join("")+'</select><select id="f_i"><option value="id_card">ID card (K100)</option><option value="tshirt">T-shirt (K200)</option><option value="graduation">Graduation fee</option></select><input id="f_r" placeholder="Reference (optional)"></div><p><button data-a="feesave">Record payment</button></p><div id="pnote" class="msg" hidden></div><div id="f_l"></div></div>';
+ document.getElementById("f_s").onchange=feeList})},
+log:function(){stu().then(function(){
+ B.innerHTML='<div class="card"><h3>Student logins</h3><p class="mute">A login uses the email on the student\'s record. A new random temporary password is shown once; send it to the student. They must change it on first login.</p><p><button data-a="logall">Create logins for everyone without one</button></p><div id="pnote" class="msg" hidden></div><div id="l_out"></div></div><div class="card"><table><tr><th>Student</th><th>Email</th><th>Login</th><th></th></tr>'+
+ ST.map(function(s){return"<tr><td>"+pe(s.full_name)+"<br><small class=mute>"+pe(s.student_number)+"</small></td><td>"+pe(s.email||"— no email —")+"</td><td>"+(s.user_id?"Created":"Not yet")+'</td><td><button data-a="logone" data-id="'+s.id+'">'+(s.user_id?"Reset password":"Create login")+"</button></td></tr>"}).join("")+"</table></div>"})}};
+function feeList(){var s=ST.find(function(x){return x.id===document.getElementById("f_s").value}),l=document.getElementById("f_l");if(!s||!s.application_id){l.innerHTML=s?'<p class="mute">This student has no application record, so fees cannot be linked.</p>':"";return}
+ rest("receipts?select=item,amount,paid_at,ref&application_id=eq."+s.application_id+"&order=paid_at.desc").then(function(r){l.innerHTML="<table><tr><th>Item</th><th>Amount</th><th>Date</th><th>Ref</th></tr>"+(r||[]).map(function(x){return"<tr><td>"+pe(x.item)+"</td><td>K"+x.amount+"</td><td>"+fd(x.paid_at)+"</td><td>"+pe(x.ref||"")+"</td></tr>"}).join("")+"</table>"})}
+function mk(id){return call(BFS_URL+"/functions/v1/student-login",{method:"POST",body:JSON.stringify({student_id:id})}).then(function(r){var s=ST.find(function(x){return x.id===id});s.user_id=s.user_id||"x";
+ return"BFS Students Portal login\nName: "+s.full_name+"\nLogin: "+r.email+" (or student number "+s.student_number+")\nTemporary password: "+r.password})}
+var A={
+annpost:function(){var t=document.getElementById("a_t").value.trim(),b=document.getElementById("a_b").value.trim();if(!t||!b)return note("Enter a title and a message.",1);post("announcements",{title:t,body:b}).then(V.ann).catch(function(e){note(e.message,1)})},
+anndel:function(i){if(confirm("Delete this announcement?"))rest("announcements?id=eq."+i,{method:"DELETE"}).then(V.ann)},
+asspost:function(){var c=document.getElementById("s_c").value.trim(),t=document.getElementById("s_t").value.trim();if(!c||!t)return note("Enter the course and title.",1);
+ post("assessments",{course:c,title:t,kind:document.getElementById("s_k").value,due_date:document.getElementById("s_d").value||null,max_mark:+document.getElementById("s_m").value||100}).then(V.ass).catch(function(e){note(e.message,1)})},
+assdel:function(i){if(confirm("Delete this assessment and all its marks?"))rest("assessments?id=eq."+i,{method:"DELETE"}).then(V.ass)},
+grsave:function(){var a=document.getElementById("g_a").value,rows=[];[].forEach.call(document.querySelectorAll("#g_t input[data-s]"),function(i){if(i.value!=="")rows.push({assessment_id:a,student_id:i.getAttribute("data-s"),mark:+i.value})});
+ if(!rows.length)return note("Enter at least one mark.",1);post("grades?on_conflict=assessment_id,student_id",rows,{Prefer:"resolution=merge-duplicates,return=minimal"}).then(function(){note("Saved "+rows.length+" mark(s).")}).catch(function(e){note(e.message,1)})},
+feesave:function(){var s=ST.find(function(x){return x.id===document.getElementById("f_s").value}),it=document.getElementById("f_i").value;if(!s||!s.application_id)return note("Choose a student with an application record.",1);
+ var adv=/advanced/i.test(s.programme||""),amt={id_card:100,tshirt:200,graduation:adv?3000:1500}[it];
+ post("receipts",{application_id:s.application_id,student_name:s.full_name,item:it,amount:amt,ref:document.getElementById("f_r").value.trim()||null}).then(function(){note("Recorded K"+amt+".");feeList()}).catch(function(e){note(e.message,1)})},
+logone:function(i){note("Working…");mk(i).then(function(t){note("Done. Copy and send this to the student:");document.getElementById("l_out").innerHTML='<textarea rows="5" readonly onclick="this.select()">'+pe(t)+"</textarea>"}).catch(function(e){note(e.message,1)})},
+logall:function(){var todo=ST.filter(function(s){return!s.user_id&&s.email}),out=[],p=Promise.resolve();if(!todo.length)return note("Everyone with an email already has a login.");
+ note("Creating "+todo.length+" login(s)…");todo.forEach(function(s){p=p.then(function(){return mk(s.id).then(function(t){out.push(t)}).catch(function(e){out.push("FAILED: "+s.full_name+" — "+e.message)})})});
+ p.then(function(){note("Done. Send each student their own details:");document.getElementById("l_out").innerHTML='<textarea rows="12" readonly onclick="this.select()">'+pe(out.join("\n\n"))+"</textarea>"})}};
+function go(v){cur=v;[].forEach.call(document.querySelectorAll("#ptabs button"),function(b){b.classList.toggle("on",b.getAttribute("data-v")===v)});B.innerHTML="<p class=mute>Loading…</p>";V[v]()}
+document.getElementById("ptabs").onclick=function(e){var v=e.target.getAttribute("data-v");if(v)go(v)};
+B.onclick=function(e){var a=e.target.getAttribute("data-a");if(a&&A[a])A[a](e.target.getAttribute("data-id"))};
+window.bfsPortal=function(){ST=[];go(cur)};
+})();
 </script>
 </body>
 </html>

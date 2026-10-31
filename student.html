@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Students Portal | Born For Service School of Ministry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--teal:#1AA89E;--head:#0F8F86;--ink:#1B2433;--mute:#5B6475;--bg:#fff;--alt:#EEF1F6;--line:#D9DEE6;--btn:#2A2626;--onbtn:#fff;--ok:#117a3d;--bad:#b3261e;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#E8ECF3;--mute:#A4ADBD;--bg:#12161F;--alt:#1B2230;--line:#2D3647;--btn:#1AA89E;--onbtn:#0b1018;--head:#3CC8BE;--ok:#58d48b;--bad:#ff8a80;color-scheme:dark}}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;font:16px/1.55 Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg)}
+h1,h2,h3{font-family:Lora,Georgia,serif;color:var(--head);margin:0 0 .4em}
+.wrap{max-width:900px;margin:0 auto;padding:0 18px}
+header{background:var(--alt);border-bottom:1px solid var(--line)}header .wrap{display:flex;align-items:center;gap:12px;min-height:64px}
+.brand{font:700 1.1rem Lora,serif;color:var(--head);text-decoration:none;margin-right:auto}.brand small{display:block;font:400 .72rem Inter;color:var(--mute)}
+.card{border:1px solid var(--teal);border-radius:4px;padding:20px;background:var(--bg);margin:20px 0}
+.narrow{max-width:420px;margin:32px auto}
+label{display:block;font-weight:500;margin:12px 0 4px;font-size:.92rem}
+input{width:100%;padding:11px;border:1px solid var(--line);border-radius:3px;font:inherit;background:var(--bg);color:var(--ink)}
+.btn{display:inline-block;padding:11px 22px;border-radius:2px;border:2px solid var(--btn);background:var(--btn);color:var(--onbtn);font:500 1rem Inter;cursor:pointer;text-decoration:none}
+.btn.o{background:transparent;color:var(--ink);border-color:var(--ink)}.btn.sm{padding:7px 14px;font-size:.88rem}.full{width:100%;margin-top:18px}
+.msg{margin-top:12px;font-size:.92rem;color:var(--bad)}.hide{display:none!important}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin:18px 0 0;border-bottom:1px solid var(--line)}
+.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 12px;font:500 .95rem Inter;color:var(--mute);cursor:pointer;white-space:nowrap}
+.tabs button.on{color:var(--head);border-color:var(--teal)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}.grid div{border:1px solid var(--line);border-radius:4px;padding:12px;background:var(--alt)}
+.grid small{color:var(--mute);display:block;font-size:.8rem}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.92rem}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}th{color:var(--mute);font-weight:500}
+.ok{color:var(--ok);font-weight:600}.bad{color:var(--bad);font-weight:600}.mute{color:var(--mute)}
+.ann{border-bottom:1px solid var(--line);padding:12px 0}.ann:last-child{border:0}.ann small{color:var(--mute)}.ann p{margin:.3em 0 0;white-space:pre-wrap}
+</style></head><body>
+<header><div class="wrap"><a class="brand" href="index.html">Born For Service<small>Students Portal</small></a>
+<a class="btn o sm" href="index.html">Main site</a><button id="out" class="btn sm hide">Log out</button></div></header>
+<main class="wrap">
+
+<section id="vLogin" class="card narrow hide"><h2>Student login</h2>
+<p class="mute">Use your student number or email and your password.</p>
+<label for="id">Student number or email</label><input id="id" autocomplete="username">
+<label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password">
+<button id="go" class="btn full">Log in</button><div id="m1" class="msg"></div>
+<p class="mute" style="font-size:.85rem;margin-top:16px">First time? Use the temporary password the school sent you. Forgot it? Ask the BFS office to reset it.</p></section>
+
+<section id="vPw" class="card narrow hide"><h2>Choose a new password</h2>
+<p class="mute">For your safety, replace the temporary password before continuing.</p>
+<label for="p1">New password (at least 8 characters)</label><input id="p1" type="password" autocomplete="new-password">
+<label for="p2">Repeat new password</label><input id="p2" type="password" autocomplete="new-password">
+<button id="sv" class="btn full">Save and continue</button><div id="m2" class="msg"></div></section>
+
+<section id="vApp" class="hide">
+<div class="card"><h2 id="hi"></h2><div class="grid" id="info"></div></div>
+<div class="tabs" id="tabs"><button class="on" data-t="a">Announcements</button><button data-t="g">Assessments &amp; grades</button><button data-t="f">Fees</button></div>
+<div class="card" id="tA"></div><div class="card hide" id="tG"></div><div class="card hide" id="tF"></div>
+</section>
+</main>
+<script>
+(function(){
+var URL_="https://qbttclxxyxliiuvyyyqj.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFidHRjbHh4eXhsaWl1dnl5eXFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1OTcyMDgsImV4cCI6MjEwNzE3MzIwOH0.3MHyXKWmRd4RzffvHNpUICjsYmd-NIwspOrbwDQCUbA";
+var sb=supabase.createClient(URL_,KEY),$=function(i){return document.getElementById(i)},me=null;
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function show(v){["vLogin","vPw","vApp"].forEach(function(x){$(x).classList.toggle("hide",x!==v)});$("out").classList.toggle("hide",v==="vLogin")}
+function fmt(d){return d?new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"—"}
+function boot(){sb.auth.getSession().then(function(r){if(!r.data.session)return show("vLogin");
+ sb.rpc("bfs_link_me").then(function(x){me=x.data;
+  if(x.error||!me||!me.id){sb.auth.signOut();show("vLogin");$("m1").textContent="No admitted student record matches this account. Contact the BFS office.";return}
+  me.must_change?show("vPw"):load()})})}
+$("go").onclick=function(){var id=$("id").value.trim(),pw=$("pw").value,m=$("m1");m.textContent="";
+ if(!id||!pw){m.textContent="Enter your login and password.";return}
+ var em=id.indexOf("@")>0?Promise.resolve(id):sb.rpc("bfs_email_for",{sn:id}).then(function(r){return r.data});
+ em.then(function(e){if(!e){m.textContent="Login or password is not correct.";return}
+  return sb.auth.signInWithPassword({email:e,password:pw}).then(function(r){if(r.error){m.textContent="Login or password is not correct.";return}boot()})})};
+$("pw").onkeydown=function(e){if(e.key==="Enter")$("go").click()};
+$("sv").onclick=function(){var a=$("p1").value,b=$("p2").value,m=$("m2");m.textContent="";
+ if(a.length<8){m.textContent="Use at least 8 characters.";return}if(a!==b){m.textContent="The two passwords do not match.";return}
+ sb.auth.updateUser({password:a}).then(function(r){if(r.error){m.textContent=r.error.message;return}
+  sb.rpc("bfs_pw_done").then(function(){me.must_change=false;load()})})};
+$("out").onclick=function(){sb.auth.signOut().then(function(){me=null;$("pw").value="";show("vLogin")})};
+$("tabs").onclick=function(e){var t=e.target.getAttribute("data-t");if(!t)return;
+ [].forEach.call($("tabs").children,function(b){b.classList.toggle("on",b===e.target)});
+ [["a","tA"],["g","tG"],["f","tF"]].forEach(function(p){$(p[1]).classList.toggle("hide",p[0]!==t)})};
+function load(){show("vApp");
+ var st={verified:"Admitted",pending:"Pending",rejected:"Not admitted"}[me.status]||me.status;
+ $("hi").textContent="Welcome, "+(me.full_name||"student");
+ $("info").innerHTML=[["Student number",me.student_number],["Programme",me.programme],["Registration status",st],["Intake",me.intake_year]].map(function(p){return"<div><small>"+p[0]+"</small>"+esc(p[1]||"—")+"</div>"}).join("");
+ Promise.all([sb.from("announcements").select("*").order("created_at",{ascending:false}),
+  sb.from("assessments").select("*").order("due_date",{ascending:true}),
+  sb.from("grades").select("assessment_id,mark"),
+  sb.from("receipts").select("item,amount,paid_at")]).then(function(r){
+  var an=r[0].data||[],as=r[1].data||[],gr=r[2].data||[],rc=r[3].data||[];
+  $("tA").innerHTML="<h3>Announcements</h3>"+(an.length?an.map(function(a){return'<div class="ann"><b>'+esc(a.title)+"</b> <small>"+fmt(a.created_at)+"</small><p>"+esc(a.body)+"</p></div>"}).join(""):'<p class="mute">No announcements yet.</p>');
+  var gm={};gr.forEach(function(g){gm[g.assessment_id]=g.mark});
+  $("tG").innerHTML="<h3>Assessments &amp; grades</h3><p class='mute'>Pass mark: 50%.</p>"+(as.length?'<div class="tw"><table><tr><th>Course</th><th>Assessment</th><th>Type</th><th>Due</th><th>Mark</th><th>Result</th></tr>'+as.map(function(a){
+   var m=gm[a.id],has=m!=null,pct=has?m/a.max_mark*100:0;
+   return"<tr><td>"+esc(a.course)+"</td><td>"+esc(a.title)+"</td><td>"+esc(a.kind)+"</td><td>"+fmt(a.due_date)+"</td><td>"+(has?esc(m)+" / "+esc(a.max_mark):'<span class="mute">Not yet marked</span>')+"</td><td>"+(has?(pct>=50?'<span class="ok">Pass</span>':'<span class="bad">Fail</span>'):"—")+"</td></tr>"}).join("")+"</table></div>":'<p class="mute">No assessments posted yet.</p>');
+  var paid={};rc.forEach(function(x){paid[x.item]=x});
+  var adv=/advanced/i.test(me.programme||"");
+  var fees=[["id_card","BFS Identity Card",100],["tshirt","BFS T-shirt",200],["graduation","Graduation fee ("+(adv?"Advanced Certificate":"Certificate")+")",adv?3000:1500]];
+  $("tF").innerHTML="<h3>Fees</h3><p class='mute'>Tuition is free. These are the only fees.</p><div class='tw'><table><tr><th>Item</th><th>Amount</th><th>Status</th></tr>"+fees.map(function(f){var p=paid[f[0]];
+   return"<tr><td>"+esc(f[1])+"</td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(p?'<span class="ok">Paid</span> <small class="mute">'+fmt(p.paid_at)+"</small>":'<span class="bad">Not paid</span>')+"</td></tr>"}).join("")+"</table></div>"})}
+boot();
+})();
+</script></body></html>
