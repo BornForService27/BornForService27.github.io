@@ -73,12 +73,12 @@ function boot(){sb.auth.getSession().then(function(r){if(!r.data.session)return 
 $("go").onclick=function(){var id=$("id").value.trim(),pw=$("pw").value,m=$("m1");m.textContent="";
  if(!id||!pw){m.textContent="Enter your login and password.";return}
  var bad=function(){m.textContent="Login or password is not correct."};m.textContent="Please wait…";
- sb.rpc("bfs_login_email",{login_id:id}).then(function(x){var e=x.data;if(!e)return bad();
+ sb.rpc("bfs_login_email",{login_id:id}).then(function(x){if(x.error){m.textContent="Setup problem: "+x.error.message;return}var e=x.data;if(!e)return bad();
   return sb.auth.signInWithPassword({email:e,password:pw}).then(function(r){
    if(!r.error){m.textContent="";return boot()}
    if(pw!==FIRST)return bad();
    return sb.auth.signUp({email:e,password:pw}).then(function(u){
-    if(u.error||!u.data||!u.data.user)return bad();
+    if(u.error){m.textContent=/already|registered/i.test(u.error.message)?"Login or password is not correct.":"Could not activate: "+u.error.message;return}if(!u.data||!u.data.user)return bad();
     if(!u.data.session){m.textContent="Your account could not be activated yet. Please contact the BFS office.";return}
     m.textContent="";boot()})})})};
 $("pw").onkeydown=function(e){if(e.key==="Enter")$("go").click()};
