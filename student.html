@@ -112,7 +112,7 @@ $("cs").onclick=function(){var c=$("c0").value,a=$("c1").value,b=$("c2").value,m
  if(a!==b){m.textContent="The two passwords do not match.";return}if(a===FIRST||a===c){m.textContent="Choose a different password.";return}
  sb.auth.signInWithPassword({email:me.email,password:c}).then(function(r){if(r.error){m.textContent="Your current password is not correct.";return}
   sb.auth.updateUser({password:a,current_password:c}).then(function(u){if(u.error){m.textContent=u.error.message;return}m.style.color="var(--ok)";m.textContent="Your password has been changed.";$("c0").value=$("c1").value=$("c2").value=""})})};
-$("tD").onclick=function(e){var p=e.target.getAttribute("data-p");if(!p)return;var b=e.target;if(b.getAttribute("data-b")==="letter"){var d=admissionPdf(me);if(d)d.save(letterFile(me));return}b.disabled=true;
+$("tD").onclick=function(e){var p=e.target.getAttribute("data-p");if(!p)return;var b=e.target;if(b.getAttribute("data-b")==="receipt"){var rr=RCL.filter(function(x){return String(x.id)===p})[0],dd=rr&&receiptPdf(rr);if(dd)dd.save(receiptFile(rr));return}if(b.getAttribute("data-b")==="letter"){var d=admissionPdf(me);if(d)d.save(letterFile(me));return}b.disabled=true;
  sb.storage.from(b.getAttribute("data-b")||"student-files").createSignedUrl(p,60,{download:b.getAttribute("data-n")||true}).then(function(r){b.disabled=false;if(r.error||!r.data){alert("Could not download this file. Please try again.");return}
   var a=document.createElement("a");a.href=r.data.signedUrl;a.download="";document.body.appendChild(a);a.click();a.remove()})};
 var PAY_NUMBER="+260 975 153 242";
@@ -175,6 +175,49 @@ function admissionPdf(a){
   y+=5;d.setFontSize(9);d.setTextColor(100,105,115);d.text("Please quote reference BFS/ADM/"+a.student_number+" in all communication with BFS.",105,y,{align:"center"});
   d._endY=y;return d;
 }
+var RCL=[];function receiptApp(){return me}
+var FEES={id_card:{label:"BFS Identity Card",amount:100},tshirt:{label:"BFS T-shirt",amount:200}};
+function receiptFile(r){return "BFS-Receipt-"+r.receipt_no+"-"+String(r.student_name||"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"")+".pdf"}
+function receiptPdf(r){
+  var J=window.jspdf;if(!J){alert("The PDF tool could not load. Check your internet connection and refresh the page.");return null}
+  var a=receiptApp(r),it=FEES[r.item]||{label:r.item},pg=PROG[a.programme],d=new J.jsPDF({unit:"mm",format:"a5"}),teal=[15,143,134];
+  d.setFillColor(teal[0],teal[1],teal[2]);d.rect(0,0,148,4,"F");
+  d.addImage(LOGO,"JPEG",12,10,24,24);
+  d.setTextColor(teal[0],teal[1],teal[2]);d.setFont("helvetica","bold");d.setFontSize(13);d.text("BORN FOR SERVICE",40,18);d.text("SCHOOL OF MINISTRY",40,24);
+  d.setTextColor(60);d.setFont("helvetica","italic");d.setFontSize(8);d.text("Created for Good Works (Ephesians 2:10)",40,29);
+  d.setFont("helvetica","normal");d.text("Lusaka, Zambia  |  Bornforservice27@gmail.com",40,33.5);
+  d.setDrawColor(teal[0],teal[1],teal[2]);d.setLineWidth(.6);d.line(12,39,136,39);
+  d.setTextColor(20);d.setFont("helvetica","bold");d.setFontSize(15);d.text("OFFICIAL RECEIPT",74,50,{align:"center"});
+  d.setFontSize(9);d.text("Receipt No: "+r.receipt_no,12,58);d.text("Date: "+fmtDate(r.paid_at),136,58,{align:"right"});
+  var rows=[["Received from",r.student_name],["Student number",a.student_number||"-"],["Programme",pg?pg.name:"-"],["Phone / WhatsApp",a.whatsapp||a.phone||"-"]];
+  if(a.email)rows.push(["Email",a.email]);
+  rows.push(["Payment for",it.label+(r.size?" (size "+r.size+")":"")],["Amount paid","K"+Number(r.amount).toFixed(2)],["Paid to","Born For Service School of Ministry"]);
+  if(r.ref)rows.push(["Reference",r.ref]);
+  var y=63;d.setLineWidth(.2);
+  rows.forEach(function(row){
+    var lines=d.splitTextToSize(String(row[1]),76),h=Math.max(8,lines.length*4.6+3.4);
+    d.setDrawColor(150);d.setFillColor(243,246,244);d.rect(12,y,46,h,"FD");d.rect(58,y,78,h);
+    d.setTextColor(30);d.setFont("helvetica","bold");d.setFontSize(9);d.text(row[0],14,y+5.4);
+    d.setFont("helvetica",row[0]==="Amount paid"?"bold":"normal");d.text(lines,60,y+5.4);y+=h;
+  });
+  d.setDrawColor(teal[0],teal[1],teal[2]);d.setLineWidth(.8);d.roundedRect(12,y+7,34,12,2,2);
+  d.setTextColor(teal[0],teal[1],teal[2]);d.setFont("helvetica","bold");d.setFontSize(14);d.text("PAID",29,y+15.3,{align:"center"});
+  d.setTextColor(20);d.setFontSize(10);d.text("Amount received: K"+Number(r.amount).toFixed(2),136,y+15.3,{align:"right"});
+  d.setDrawColor(teal[0],teal[1],teal[2]);d.setLineWidth(.4);d.line(12,193,136,193);
+  d.setTextColor(60);d.setFont("helvetica","normal");d.setFontSize(8);
+  d.text("Thank you. May God bless you as you serve.",74,198,{align:"center"});
+  d.text("Issued by Born For Service School of Ministry.",74,202.5,{align:"center"});
+  return d;
+}
+function autoReceipt(r){var a=receiptApp(r);
+ if(!MAIL_URL||!a.email){savePdf(r);toast(a.email?"The receipt was downloaded.":"No email address is saved for "+r.student_name+", so the receipt was downloaded instead.",1);return}
+ var d=receiptPdf(r);if(!d)return;toast("Sending the receipt to "+a.email+"...");
+ var b64=d.output("datauristring").split("base64,")[1];
+ return sb.auth.getSession().then(function(s){var tok=s.data&&s.data.session&&s.data.session.access_token;if(!tok)throw new Error("Please sign in again");
+  return fetch(MAIL_URL,{method:"POST",body:JSON.stringify({token:tok,to:a.email,subject:"Payment receipt "+r.receipt_no+" | Born For Service School of Ministry",body:receiptText(r),filename:receiptFile(r),pdf:b64})})})
+ .then(function(x){return x.json()}).then(function(j){if(!j||!j.ok)throw new Error((j&&j.error)||"the mailer did not accept it");
+  toast("Receipt emailed to "+a.email+".");sb.from("receipts").update({emailed_at:new Date().toISOString()}).eq("id",r.id).then(function(){})})
+ .catch(function(e){toast("The receipt could not be emailed ("+(e&&e.message||"error")+"). It was downloaded instead.",1);savePdf(r)})}
 function setPhoto(){var h=$("ph");if(!me.photo_path)return;sb.storage.from("student-photos").createSignedUrl(me.photo_path,3600).then(function(r){if(r.data&&r.data.signedUrl)h.innerHTML='<img alt="Profile photo" src="'+r.data.signedUrl+'">'})}
 function upPhoto(){var f=this.files[0],m=$("pm");m.style.color="";m.textContent="";if(!f)return;
  if(!/^image\//.test(f.type)){m.textContent="Please choose a photo (JPG or PNG).";return}
@@ -194,10 +237,11 @@ function load(){show("vApp");$("cu").textContent=me.student_number;
  Promise.all([sb.from("announcements").select("*").order("created_at",{ascending:false}),
   sb.from("assessments").select("*").order("due_date",{ascending:true}),
   sb.from("grades").select("assessment_id,mark"),
-  sb.from("receipts").select("item,amount,paid_at")]).then(function(r){
-  var an=r[0].data||[],as=r[1].data||[],gr=r[2].data||[],rc=r[3].data||[],fl=[];
+  sb.from("receipts").select("*")]).then(function(r){
+  var an=r[0].data||[],as=r[1].data||[],gr=r[2].data||[],rc=(r[3].data||[]).filter(function(x){return!x.deleted_at}),fl=[];RCL=rc;
   if(me.nrc_path)fl.unshift({description:"NRC / Passport copy (submitted with your application)",file_name:me.nrc_path.split("/").pop(),file_path:me.nrc_path,bucket:"nrc"});
   if(me.status==="verified"&&me.student_number&&PROG[me.programme])fl.unshift({description:"Admission Letter",file_name:letterFile(me),file_path:"letter",bucket:"letter",created_at:me.admitted_at});
+  rc.forEach(function(x){fl.push({description:"Receipt "+x.receipt_no+": "+((FEES[x.item]||{}).label||x.item),file_name:receiptFile(x),file_path:String(x.id),bucket:"receipt",created_at:x.paid_at})});
   $("tD").innerHTML=fl.length?'<div class="tw"><table><tr><th>Document</th><th>File</th><th>Date added</th><th>Size</th><th></th></tr>'+fl.map(function(f){return"<tr><td>"+esc(f.description)+"</td><td>"+esc(f.file_name||"")+"</td><td>"+fmt(f.created_at)+"</td><td>"+(f.size_bytes?Math.max(.1,f.size_bytes/1048576).toFixed(1)+" MB":"")+'</td><td><button class="btn sm" data-p="'+esc(f.file_path)+'" data-b="'+(f.bucket||"student-files")+'" data-n="'+esc(f.file_name||"")+'">Download</button></td></tr>'}).join("")+"</table></div>":'<p class="mute">No documents have been added for you yet.</p>';
   $("tA").innerHTML=(an.length?an.map(function(a){return'<div class="ann"><b>'+esc(a.title)+"</b> <small>"+fmt(a.created_at)+"</small><p>"+esc(a.body)+"</p></div>"}).join(""):'<p class="mute">No announcements yet.</p>');
   var gm={};gr.forEach(function(g){gm[g.assessment_id]=g.mark});
@@ -207,7 +251,7 @@ function load(){show("vApp");$("cu").textContent=me.student_number;
   var paid={};rc.forEach(function(x){paid[x.item]=x});
   var adv=/advanced/i.test(me.programme||"");
   var fees=[["id_card","BFS Identity Card",100],["tshirt","BFS T-shirt",200],["graduation","Graduation fee ("+(adv?"Advanced Certificate":"Certificate")+")",adv?3000:1500]];
-  $("tF").innerHTML="<p class='mute'>Tuition is free. These are the only fees.</p><div class='tw'><table><tr><th>Item</th><th>Amount</th><th>Status</th></tr>"+fees.map(function(f){var p=paid[f[0]];
+  $("tF").innerHTML="<p class='mute'>Tuition is free. These are the only fees.</p><p><a class='btn sm' href='pay.html'>Pay now</a></p><div class='tw'><table><tr><th>Item</th><th>Amount</th><th>Status</th></tr>"+fees.map(function(f){var p=paid[f[0]];
    return"<tr><td>"+esc(f[1])+"</td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(p?'<span class="ok">Paid</span> <small class="mute">'+fmt(p.paid_at)+"</small>":'<span class="bad">Not paid</span>')+"</td></tr>"}).join("")+"</table></div>"})}
 
 var REC=/type=recovery/.test(location.hash);

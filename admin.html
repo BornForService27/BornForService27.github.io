@@ -196,7 +196,7 @@ function acceptText(a){
 function receiptApp(r){return apps.filter(function(x){return x.id===r.application_id})[0]||(r.student_id?(stuRows||[]).filter(function(x){return x.id===r.student_id})[0]:null)||{}}
 function receiptText(r){
   var it=FEES[r.item]||{label:r.item},a=receiptApp(r);
-  return "Dear "+r.student_name+",\n\nThank you. We confirm that we have received your payment of K"+r.amount+" for the "+it.label+(r.size?" (size "+r.size+")":"")+", paid by Airtel Money"+(r.ref?" (reference "+r.ref+")":"")+".\n\nReceipt No: "+r.receipt_no+"\nDate: "+fmtDate(r.paid_at)+(a.student_number?"\nStudent number: "+a.student_number:"")+"\n\nPlease find your official receipt below.\n\nMay God bless you.\n\nBorn For Service School of Ministry";
+  return "Dear "+r.student_name+",\n\nThank you. We confirm that we have received your payment of K"+r.amount+" for the "+it.label+(r.size?" (size "+r.size+")":"")+""+(r.ref?" (reference "+r.ref+")":"")+".\n\nReceipt No: "+r.receipt_no+"\nDate: "+fmtDate(r.paid_at)+(a.student_number?"\nStudent number: "+a.student_number:"")+"\n\nYour official receipt is attached to this email. You can also download it at any time from the Documents page of your Students Portal.\n\nMay God bless you.\n\nBorn For Service School of Ministry";
 }
 function receiptFile(r){return "BFS-Receipt-"+r.receipt_no+"-"+String(r.student_name||"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"")+".pdf"}
 function receiptPdf(r){
@@ -206,13 +206,13 @@ function receiptPdf(r){
   d.addImage(LOGO,"JPEG",12,10,24,24);
   d.setTextColor(teal[0],teal[1],teal[2]);d.setFont("helvetica","bold");d.setFontSize(13);d.text("BORN FOR SERVICE",40,18);d.text("SCHOOL OF MINISTRY",40,24);
   d.setTextColor(60);d.setFont("helvetica","italic");d.setFontSize(8);d.text("Created for Good Works (Ephesians 2:10)",40,29);
-  d.setFont("helvetica","normal");d.text("Lusaka, Zambia  |  "+PAY_NUMBER+"  |  Bornforservice27@gmail.com",40,33.5);
+  d.setFont("helvetica","normal");d.text("Lusaka, Zambia  |  Bornforservice27@gmail.com",40,33.5);
   d.setDrawColor(teal[0],teal[1],teal[2]);d.setLineWidth(.6);d.line(12,39,136,39);
   d.setTextColor(20);d.setFont("helvetica","bold");d.setFontSize(15);d.text("OFFICIAL RECEIPT",74,50,{align:"center"});
   d.setFontSize(9);d.text("Receipt No: "+r.receipt_no,12,58);d.text("Date: "+fmtDate(r.paid_at),136,58,{align:"right"});
   var rows=[["Received from",r.student_name],["Student number",a.student_number||"-"],["Programme",pg?pg.name:"-"],["Phone / WhatsApp",a.whatsapp||a.phone||"-"]];
   if(a.email)rows.push(["Email",a.email]);
-  rows.push(["Payment for",it.label+(r.size?" (size "+r.size+")":"")],["Amount paid","K"+Number(r.amount).toFixed(2)],["Paid by","Airtel Money to "+PAY_NUMBER]);
+  rows.push(["Payment for",it.label+(r.size?" (size "+r.size+")":"")],["Amount paid","K"+Number(r.amount).toFixed(2)],["Paid to","Born For Service School of Ministry"]);
   if(r.ref)rows.push(["Reference",r.ref]);
   var y=63;d.setLineWidth(.2);
   rows.forEach(function(row){
@@ -230,6 +230,15 @@ function receiptPdf(r){
   d.text("Issued by Born For Service School of Ministry.",74,202.5,{align:"center"});
   return d;
 }
+function autoReceipt(r){var a=receiptApp(r);
+ if(!MAIL_URL||!a.email){savePdf(r);toast(a.email?"The receipt was downloaded.":"No email address is saved for "+r.student_name+", so the receipt was downloaded instead.",1);return}
+ var d=receiptPdf(r);if(!d)return;toast("Sending the receipt to "+a.email+"...");
+ var b64=d.output("datauristring").split("base64,")[1];
+ return sb.auth.getSession().then(function(s){var tok=s.data&&s.data.session&&s.data.session.access_token;if(!tok)throw new Error("Please sign in again");
+  return fetch(MAIL_URL,{method:"POST",body:JSON.stringify({token:tok,to:a.email,subject:"Payment receipt "+r.receipt_no+" | Born For Service School of Ministry",body:receiptText(r),filename:receiptFile(r),pdf:b64})})})
+ .then(function(x){return x.json()}).then(function(j){if(!j||!j.ok)throw new Error((j&&j.error)||"the mailer did not accept it");
+  toast("Receipt emailed to "+a.email+".");sb.from("receipts").update({emailed_at:new Date().toISOString()}).eq("id",r.id).then(function(){})})
+ .catch(function(e){toast("The receipt could not be emailed ("+(e&&e.message||"error")+"). It was downloaded instead.",1);savePdf(r)})}
 function savePdf(r){var d=receiptPdf(r);if(d)d.save(receiptFile(r))}
 function letterFile(a){return "Admission letter - "+String(a.full_name||"").replace(/[\\\/:*?"<>|]+/g," ").replace(/\s+/g," ").trim()+".pdf"}
 function admissionPdf(a){
@@ -564,7 +573,7 @@ $("rf").addEventListener("submit",function(e){e.preventDefault();
   if(item==="tshirt"&&!size){show("rmsg","Choose the T-shirt size.",1);return}
   sb.from("receipts").insert(Object.assign({application_id:isS?(a.application_id||null):a.id,student_name:a.full_name,item:item,amount:FEES[item].amount,size:item==="tshirt"?size:null,ref:$("rr").value.trim()||null},isS?{student_id:a.id}:{})).select().single().then(function(r){
     if(r.error){show("rmsg",r.error.code==="23505"?"A payment for this item is already recorded for this student.":"Could not save the payment.",1)}
-    else{show("rmsg","Payment recorded. Receipt "+r.data.receipt_no+" was created as a PDF and downloaded. Use the buttons below to send it.");$("rf").reset();$("szw").hidden=true;savePdf(r.data);loadReceipts()}
+    else{show("rmsg","Payment recorded. Receipt "+r.data.receipt_no+" is being emailed to the student automatically and now shows in their portal.");$("rf").reset();$("szw").hidden=true;autoReceipt(r.data);loadReceipts()}
   })
 });
 function renderReceipts(){
