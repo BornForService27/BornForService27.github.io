@@ -45,7 +45,7 @@ input,select{width:100%;padding:11px;border:1px solid var(--line);border-radius:
 var U="https://qbttclxxyxliiuvyyyqj.supabase.co",K="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFidHRjbHh4eXhsaWl1dnl5eXFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1OTcyMDgsImV4cCI6MjEwNzE3MzIwOH0.3MHyXKWmRd4RzffvHNpUICjsYmd-NIwspOrbwDQCUbA",H={apikey:K,Authorization:"Bearer "+K,"Content-Type":"application/json"};
 var $=function(i){return document.getElementById(i)},AMT={id_card:100,tshirt:200},PFX={AIRTEL:["97","77"],MTN:["96","76"],ZAMTEL:["95","75"]},NM={AIRTEL:"Airtel",MTN:"MTN",ZAMTEL:"Zamtel"};
 var item="id_card",net="",ok=false,busy=false;
-function post(p,b){return fetch(U+p,{method:"POST",headers:H,body:JSON.stringify(b)}).then(function(r){return r.json().catch(function(){return null}).then(function(j){return{ok:r.ok,j:j}})})}
+function post(p,b){return fetch(U+p,{method:"POST",headers:H,body:JSON.stringify(b)}).then(function(r){return r.json().catch(function(){return null}).then(function(j){return{ok:r.ok,status:r.status,j:j}})})}
 function view(v){["vForm","vWait","vDone","vFail"].forEach(function(x){$(x).classList.toggle("hide",x!==v)})}
 function upd(){$("am").value="K"+AMT[item];$("go").textContent="Pay K"+AMT[item];$("szw").classList.toggle("hide",item!=="tshirt")}
 [].forEach.call(document.querySelectorAll(".opt"),function(b){b.onclick=function(){if(b.disabled)return;item=b.getAttribute("data-i");[].forEach.call(document.querySelectorAll(".opt"),function(x){x.classList.toggle("on",x===b)});upd()}});
@@ -65,7 +65,7 @@ $("go").onclick=function(){var m=$("m");m.textContent="";if(busy)return;
  if(PFX[net].indexOf(loc.slice(0,2))<0){m.textContent="This number does not look like an "+NM[net]+" number. Check the network you chose.";return}
  busy=true;$("go").disabled=true;
  post("/functions/v1/bfs-pay",{action:"start",studentNumber:sn,item:item,size:$("sz").value,network:net,phone:"0"+loc}).then(function(r){
-  if(!r.ok||!r.j||!r.j.depositId){busy=false;$("go").disabled=false;m.textContent=(r.j&&r.j.error)||"The payment could not be started. Please try again.";return}
+  if(!r.ok||!r.j||!r.j.depositId){busy=false;$("go").disabled=false;m.textContent=(r.j&&(r.j.error||r.j.message))||("The payment could not be started. Please try again. (code "+r.status+")");return}
   $("wp").textContent="0"+loc;view("vWait");poll(r.j.depositId)}).catch(function(){busy=false;$("go").disabled=false;m.textContent="No connection. Please try again."})};
 function poll(id){var n=0,t=setInterval(function(){n++;
  post("/functions/v1/bfs-pay",{depositId:id}).then(function(r){var s=r.j&&r.j.status;
