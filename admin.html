@@ -144,6 +144,10 @@ var SIGN="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAaQAAADmCAYAAACaq/HmAACo
 var SIGNER={name:"Brother Christopher Tandeo",title:"Founder and Overseer"};
 var PROG={Certificate:{name:"Certificate in Biblical Studies and Christian Ministry",length:"1 year",fee:"K1,500"},"Advanced Certificate":{name:"Advanced Certificate in Biblical Studies and Christian Ministry",length:"2 years",fee:"K3,000"}};
 var FEES={id_card:{label:"BFS Identity Card",amount:100},tshirt:{label:"BFS T-shirt",amount:200}};
+function feeOf(i){return FEES[i]||(/^graduation/.test(i||"")?{label:"Graduation fee (instalment)",amount:0}:{label:i})}
+function gradInfo(r){if(!/^graduation/.test(r.item||""))return null;var a=receiptApp(r),total=/advanced/i.test(a.programme||"")?3000:1500,paid=0;
+ receipts.forEach(function(x){if(/^graduation/.test(x.item)&&String(x.paid_at)<=String(r.paid_at)&&(x.id===r.id||(r.student_id&&x.student_id===r.student_id)||(r.application_id&&x.application_id===r.application_id)))paid+=Number(x.amount)});
+ return{total:total,paid:paid,remaining:Math.max(0,total-paid)}}
 
 var sb=null,apps=[],receipts=[];
 
@@ -195,13 +199,13 @@ function acceptText(a){
 }
 function receiptApp(r){return apps.filter(function(x){return x.id===r.application_id})[0]||(r.student_id?(stuRows||[]).filter(function(x){return x.id===r.student_id})[0]:null)||{}}
 function receiptText(r){
-  var it=FEES[r.item]||{label:r.item},a=receiptApp(r);
+  var it=feeOf(r.item),a=receiptApp(r);
   return "Dear "+r.student_name+",\n\nThank you. We confirm that we have received your payment of K"+r.amount+" for the "+it.label+(r.size?" (size "+r.size+")":"")+""+(r.ref?" (reference "+r.ref+")":"")+".\n\nReceipt No: "+r.receipt_no+"\nDate: "+fmtDate(r.paid_at)+(a.student_number?"\nStudent number: "+a.student_number:"")+"\n\nYour official receipt is attached to this email. You can also download it at any time from the Documents page of your Students Portal.\n\nMay God bless you.\n\nBorn For Service School of Ministry";
 }
 function receiptFile(r){return "BFS-Receipt-"+r.receipt_no+"-"+String(r.student_name||"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"")+".pdf"}
 function receiptPdf(r){
   var J=window.jspdf;if(!J){alert("The PDF tool could not load. Check your internet connection and refresh the page.");return null}
-  var a=receiptApp(r),it=FEES[r.item]||{label:r.item},pg=PROG[a.programme],d=new J.jsPDF({unit:"mm",format:"a5"}),teal=[15,143,134];
+  var a=receiptApp(r),it=feeOf(r.item),pg=PROG[a.programme],d=new J.jsPDF({unit:"mm",format:"a5"}),teal=[15,143,134];
   d.setFillColor(teal[0],teal[1],teal[2]);d.rect(0,0,148,4,"F");
   d.addImage(LOGO,"JPEG",12,10,24,24);
   d.setTextColor(teal[0],teal[1],teal[2]);d.setFont("helvetica","bold");d.setFontSize(13);d.text("BORN FOR SERVICE",40,18);d.text("SCHOOL OF MINISTRY",40,24);
@@ -213,7 +217,7 @@ function receiptPdf(r){
   var rows=[["Received from",r.student_name],["Student number",a.student_number||"-"],["Programme",pg?pg.name:"-"],["Phone / WhatsApp",a.whatsapp||a.phone||"-"]];
   if(a.email)rows.push(["Email",a.email]);
   rows.push(["Payment for",it.label+(r.size?" (size "+r.size+")":"")],["Amount paid","K"+Number(r.amount).toFixed(2)],["Paid to","Born For Service School of Ministry"]);
-  if(r.ref)rows.push(["Reference",r.ref]);
+  if(r.ref)rows.push(["Reference",r.ref]);var gi=gradInfo(r);if(gi)rows.push(["Fee total","K"+gi.total.toFixed(2)],["Paid to date","K"+gi.paid.toFixed(2)],["Balance remaining","K"+gi.remaining.toFixed(2)]);
   var y=63;d.setLineWidth(.2);
   rows.forEach(function(row){
     var lines=d.splitTextToSize(String(row[1]),76),h=Math.max(8,lines.length*4.6+3.4);
@@ -578,7 +582,7 @@ $("rf").addEventListener("submit",function(e){e.preventDefault();
 });
 function renderReceipts(){
   $("rlist").innerHTML=receipts.length?receipts.map(function(r){
-    var a=receiptApp(r),it=FEES[r.item]||{label:r.item},t=receiptText(r),wa=a.whatsapp||a.phone||"";
+    var a=receiptApp(r),it=feeOf(r.item),t=receiptText(r),wa=a.whatsapp||a.phone||"";
     return '<div class="card"><div class="row"><b style="flex:1">'+esc(r.receipt_no)+'</b><span class="mute">'+fmtDate(r.paid_at)+'</span></div>'
     +'<div>'+esc(r.student_name)+': '+esc(it.label)+(r.size?' ('+esc(r.size)+')':'')+', K'+r.amount+(r.ref?' <span class="mute">ref '+esc(r.ref)+'</span>':'')+'</div>'
     +'<div class="row">'+(a.email?'<a class="b" href="'+mailUrl(a.email,"BFS receipt "+r.receipt_no,t)+'">Send receipt by email</a>':'')

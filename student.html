@@ -42,7 +42,7 @@ input{width:100%;padding:11px;border:1px solid var(--line);border-radius:3px;fon
 .banner{background:var(--ban);color:#fff;padding:14px 20px;font:600 1.25rem Inter,sans-serif;border-radius:2px;margin-bottom:14px}
 .pi{display:grid;grid-template-columns:1fr 220px;gap:20px;align-items:start}.pi th{width:150px;color:var(--mute);font-weight:500}
 .stat{border:1px solid var(--line);border-radius:3px;text-align:center;overflow:hidden}.s1{background:var(--ban);color:#fff;font-weight:600;padding:8px}.s2{padding:14px 10px;font-weight:600;background:var(--alt)}
-.nw{max-width:380px}.ph{height:230px;display:flex;align-items:center;justify-content:center;background:var(--alt)}.ph img{width:100%;height:100%;object-fit:cover}.s3{padding:10px;text-align:center}.s3 .msg{margin-top:6px}
+.nw{max-width:380px}.bar{height:6px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--teal)}.ph{height:230px;display:flex;align-items:center;justify-content:center;background:var(--alt)}.ph img{width:100%;height:100%;object-fit:cover}.s3{padding:10px;text-align:center}.s3 .msg{margin-top:6px}
 @media(max-width:760px){.lay{grid-template-columns:1fr}#menu{flex-direction:row;overflow-x:auto}#menu button{white-space:nowrap;border-bottom:0;border-right:1px solid var(--line)}.pi{grid-template-columns:1fr}.hn{font-size:.95rem}}
 </style>
 </head><body>
@@ -177,10 +177,14 @@ function admissionPdf(a){
 }
 var RCL=[];function receiptApp(){return me}
 var FEES={id_card:{label:"BFS Identity Card",amount:100},tshirt:{label:"BFS T-shirt",amount:200}};
+function feeOf(i){return FEES[i]||(/^graduation/.test(i||"")?{label:"Graduation fee (instalment)",amount:0}:{label:i})}
+function gradInfo(r){if(!/^graduation/.test(r.item||""))return null;var total=/advanced/i.test(me.programme||"")?3000:1500,paid=0;
+ RCL.forEach(function(x){if(/^graduation/.test(x.item)&&(x.id===r.id||String(x.paid_at)<=String(r.paid_at)))paid+=Number(x.amount)});
+ return{total:total,paid:paid,remaining:Math.max(0,total-paid)}}
 function receiptFile(r){return "BFS-Receipt-"+r.receipt_no+"-"+String(r.student_name||"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"")+".pdf"}
 function receiptPdf(r){
   var J=window.jspdf;if(!J){alert("The PDF tool could not load. Check your internet connection and refresh the page.");return null}
-  var a=receiptApp(r),it=FEES[r.item]||{label:r.item},pg=PROG[a.programme],d=new J.jsPDF({unit:"mm",format:"a5"}),teal=[15,143,134];
+  var a=receiptApp(r),it=feeOf(r.item),pg=PROG[a.programme],d=new J.jsPDF({unit:"mm",format:"a5"}),teal=[15,143,134];
   d.setFillColor(teal[0],teal[1],teal[2]);d.rect(0,0,148,4,"F");
   d.addImage(LOGO,"JPEG",12,10,24,24);
   d.setTextColor(teal[0],teal[1],teal[2]);d.setFont("helvetica","bold");d.setFontSize(13);d.text("BORN FOR SERVICE",40,18);d.text("SCHOOL OF MINISTRY",40,24);
@@ -192,7 +196,7 @@ function receiptPdf(r){
   var rows=[["Received from",r.student_name],["Student number",a.student_number||"-"],["Programme",pg?pg.name:"-"],["Phone / WhatsApp",a.whatsapp||a.phone||"-"]];
   if(a.email)rows.push(["Email",a.email]);
   rows.push(["Payment for",it.label+(r.size?" (size "+r.size+")":"")],["Amount paid","K"+Number(r.amount).toFixed(2)],["Paid to","Born For Service School of Ministry"]);
-  if(r.ref)rows.push(["Reference",r.ref]);
+  if(r.ref)rows.push(["Reference",r.ref]);var gi=gradInfo(r);if(gi)rows.push(["Fee total","K"+gi.total.toFixed(2)],["Paid to date","K"+gi.paid.toFixed(2)],["Balance remaining","K"+gi.remaining.toFixed(2)]);
   var y=63;d.setLineWidth(.2);
   rows.forEach(function(row){
     var lines=d.splitTextToSize(String(row[1]),76),h=Math.max(8,lines.length*4.6+3.4);
@@ -241,7 +245,7 @@ function load(){show("vApp");$("cu").textContent=me.student_number;
   var an=r[0].data||[],as=r[1].data||[],gr=r[2].data||[],rc=(r[3].data||[]).filter(function(x){return!x.deleted_at}),fl=[];RCL=rc;
   if(me.nrc_path)fl.unshift({description:"NRC / Passport copy (submitted with your application)",file_name:me.nrc_path.split("/").pop(),file_path:me.nrc_path,bucket:"nrc"});
   if(me.status==="verified"&&me.student_number&&PROG[me.programme])fl.unshift({description:"Admission Letter",file_name:letterFile(me),file_path:"letter",bucket:"letter",created_at:me.admitted_at});
-  rc.forEach(function(x){fl.push({description:"Receipt "+x.receipt_no+": "+((FEES[x.item]||{}).label||x.item),file_name:receiptFile(x),file_path:String(x.id),bucket:"receipt",created_at:x.paid_at})});
+  rc.forEach(function(x){fl.push({description:"Receipt "+x.receipt_no+": "+(feeOf(x.item).label),file_name:receiptFile(x),file_path:String(x.id),bucket:"receipt",created_at:x.paid_at})});
   $("tD").innerHTML=fl.length?'<div class="tw"><table><tr><th>Document</th><th>File</th><th>Date added</th><th>Size</th><th></th></tr>'+fl.map(function(f){return"<tr><td>"+esc(f.description)+"</td><td>"+esc(f.file_name||"")+"</td><td>"+fmt(f.created_at)+"</td><td>"+(f.size_bytes?Math.max(.1,f.size_bytes/1048576).toFixed(1)+" MB":"")+'</td><td><button class="btn sm" data-p="'+esc(f.file_path)+'" data-b="'+(f.bucket||"student-files")+'" data-n="'+esc(f.file_name||"")+'">Download</button></td></tr>'}).join("")+"</table></div>":'<p class="mute">No documents have been added for you yet.</p>';
   $("tA").innerHTML=(an.length?an.map(function(a){return'<div class="ann"><b>'+esc(a.title)+"</b> <small>"+fmt(a.created_at)+"</small><p>"+esc(a.body)+"</p></div>"}).join(""):'<p class="mute">No announcements yet.</p>');
   var gm={};gr.forEach(function(g){gm[g.assessment_id]=g.mark});
@@ -252,6 +256,8 @@ function load(){show("vApp");$("cu").textContent=me.student_number;
   var adv=/advanced/i.test(me.programme||"");
   var fees=[["id_card","BFS Identity Card",100],["tshirt","BFS T-shirt",200],["graduation","Graduation fee ("+(adv?"Advanced Certificate":"Certificate")+")",adv?3000:1500]];
   $("tF").innerHTML="<p class='mute'>Tuition is free. These are the only fees.</p><p><a class='btn sm' href='pay.html'>Pay now</a></p><div class='tw'><table><tr><th>Item</th><th>Amount</th><th>Status</th></tr>"+fees.map(function(f){var p=paid[f[0]];
+   if(f[0]==="graduation"){var gp=0;rc.forEach(function(x){if(/^graduation/.test(x.item))gp+=Number(x.amount)});var rm=Math.max(0,f[2]-gp),pc=Math.min(100,Math.round(gp/f[2]*100));
+    return"<tr><td>"+esc(f[1])+"<br><small class='mute'>Can be paid in instalments</small></td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(rm<=0?'<span class="ok">Fully paid</span>':'<span class="bad">Balance K'+rm.toLocaleString("en-US")+'</span> <small class="mute">(paid K'+gp.toLocaleString("en-US")+")</small>")+'<div class="bar"><i style="width:'+pc+'%"></i></div></td></tr>'}
    return"<tr><td>"+esc(f[1])+"</td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(p?'<span class="ok">Paid</span> <small class="mute">'+fmt(p.paid_at)+"</small>":'<span class="bad">Not paid</span>')+"</td></tr>"}).join("")+"</table></div>"})}
 
 var REC=/type=recovery/.test(location.hash);
