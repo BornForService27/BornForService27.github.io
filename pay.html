@@ -35,9 +35,9 @@ input,select{width:100%;padding:11px;border:1px solid var(--line);border-radius:
 <label for="ph">Mobile money number</label><input id="ph" type="tel" inputmode="tel" placeholder="e.g. 0971234567" autocomplete="tel">
 <div id="amw"><label for="am">Amount</label><input id="am" value="K100" readonly></div><div id="gbox" class="hide"><div id="gsum" class="gs"></div><div class="bar"><i id="gbar"></i></div><label for="ga">Amount to pay now (K)</label><input id="ga" type="number" inputmode="numeric" min="1" step="1"><p class="mute" style="margin-top:6px"><a href="#" id="gfull">Pay the full balance</a></p></div>
 <button id="go" class="btn">Pay K100</button><div id="m" class="msg"></div>
-<p class="mute" style="margin-top:14px">Payment is for admitted students. <a href="index.html">Back to main site</a></p></section>
+<p class="mute" style="margin-top:14px">Payment is for admitted students. <a href="student.html">Back to Students Portal</a></p></section>
 <section id="vWait" class="card c hide"><div class="sp"></div><h2>Check your phone</h2><p>A payment prompt has been sent to <b id="wp"></b>. Enter your mobile money PIN to approve it.</p><p class="mute">Please keep this page open. This can take up to two minutes.</p></section>
-<section id="vDone" class="card c hide"><h2 class="ok">Payment received</h2><p>Thank you. Your receipt has been emailed to you, and you can also find it in your <a href="student.html">Students Portal</a> under Documents.</p><p><a href="index.html">Back to main site</a></p></section>
+<section id="vDone" class="card c hide"><h2 class="ok">Payment received</h2><p>Thank you. Your receipt has been emailed to you, and you can also find it in your <a href="student.html">Students Portal</a> under Documents.</p><p><a href="student.html">Back to Students Portal</a></p></section>
 <section id="vFail" class="card c hide"><h2 style="color:var(--bad)">Payment not completed</h2><p id="fm">The payment was not approved.</p><button id="again" class="btn">Try again</button></section>
 </main>
 <script>
@@ -79,6 +79,7 @@ function poll(id){var n=0,t=setInterval(function(){n++;
   else if(s==="failed"){clearInterval(t);$("fm").textContent="The payment was cancelled, declined or timed out. You have not been charged.";view("vFail")}
   else if(n>=40){clearInterval(t);$("fm").textContent="We have not received confirmation yet. If you approved the payment, your receipt will be emailed to you shortly and will appear in your Students Portal.";$("again").classList.add("hide");view("vFail")}})},4000)}
 $("again").onclick=function(){busy=false;$("go").disabled=false;view("vForm")};
+var q=(location.search.match(/[?&]sn=([^&]+)/)||[])[1];if(q){$("sn").value=decodeURIComponent(q);$("sn").onchange()}
 upd();
 })();
 </script></body></html>
