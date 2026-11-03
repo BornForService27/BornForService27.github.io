@@ -70,7 +70,7 @@ input{width:100%;padding:11px;border:1px solid var(--line);border-radius:3px;fon
 
 <section id="vApp" class="hide">
 <div class="cu">Current user: <span id="cu"></span></div>
-<div class="lay"><nav id="menu"><button class="on" data-t="p">Personal Information</button><button data-t="a">Announcements</button><button data-t="g">Assessments &amp; Grades</button><button data-t="f">Fees</button><button id="payBtn">Make Payment</button><button data-t="d">Documents</button><button data-t="c">Change Password</button><button id="out">Logout</button></nav>
+<div class="lay"><nav id="menu"><button class="on" data-t="p">Personal Information</button><button data-t="a">Announcements</button><button data-t="g">Assessments &amp; Grades</button><button data-t="f">Fees</button><button data-t="d">Documents</button><button data-t="c">Change Password</button><button id="out">Logout</button></nav>
 <div><div class="crumb" id="crumb"></div><div id="tP"></div><div id="tA" class="hide"></div><div id="tG" class="hide"></div><div id="tF" class="hide"></div><div id="tD" class="hide"></div>
 <div id="tC" class="hide nw"><label for="c0">Current password</label><input id="c0" type="password" autocomplete="current-password"><label for="c1">New password (at least 8 characters)</label><input id="c1" type="password" autocomplete="new-password"><label for="c2">Repeat new password</label><input id="c2" type="password" autocomplete="new-password"><button id="cs" class="btn full">Save password</button><div id="m4" class="msg"></div></div></div></div>
 </section>
@@ -107,7 +107,6 @@ var TT={p:"Personal Information",a:"Announcements",g:"Assessments & Grades",f:"F
 function go(t){[].forEach.call($("menu").children,function(b){if(b.id!=="out")b.classList.toggle("on",b.getAttribute("data-t")===t)});
  Object.keys(PN).forEach(function(k){$(PN[k]).classList.toggle("hide",k!==t)});$("crumb").textContent="Home > "+TT[t]}
 $("menu").onclick=function(e){var t=e.target.getAttribute("data-t");if(t)go(t)};
-$("payBtn").onclick=function(){location.href="pay.html?sn="+encodeURIComponent(me.student_number)};
 $("cs").onclick=function(){var c=$("c0").value,a=$("c1").value,b=$("c2").value,m=$("m4");m.style.color="";
  if(!c){m.textContent="Enter your current password.";return}if(a.length<8){m.textContent="Use at least 8 characters.";return}
  if(a!==b){m.textContent="The two passwords do not match.";return}if(a===FIRST||a===c){m.textContent="Choose a different password.";return}
@@ -256,9 +255,9 @@ function load(){show("vApp");$("cu").textContent=me.student_number;
   var paid={};rc.forEach(function(x){paid[x.item]=x});
   var adv=/advanced/i.test(me.programme||"");
   var fees=[["id_card","BFS Identity Card",100],["tshirt","BFS T-shirt",200],["graduation","Graduation fee ("+(adv?"Advanced Certificate":"Certificate")+")",adv?3000:1500]];
-  $("tF").innerHTML="<p class='mute'>Tuition is free. These are the only fees.</p><p><a class='btn sm' href='pay.html?sn="+encodeURIComponent(me.student_number)+"'>Make payment</a></p><div class='tw'><table><tr><th>Item</th><th>Amount</th><th>Status</th></tr>"+fees.map(function(f){var p=paid[f[0]];
+  $("tF").innerHTML="<p class='mute'>Tuition is free. These are the only fees.</p><p class='mute'>To pay, follow the payment instructions in your admission letter or on the BFS website. Your receipt appears here and under Documents once your payment is recorded.</p><div class='tw'><table><tr><th>Item</th><th>Amount</th><th>Status</th></tr>"+fees.map(function(f){var p=paid[f[0]];
    if(f[0]==="graduation"){var gp=0;rc.forEach(function(x){if(/^graduation/.test(x.item))gp+=Number(x.amount)});var rm=Math.max(0,f[2]-gp),pc=Math.min(100,Math.round(gp/f[2]*100));
-    return"<tr><td>"+esc(f[1])+"<br><small class='mute'>Can be paid in instalments</small></td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(rm<=0?'<span class="ok">Fully paid</span>':'<span class="bad">Balance K'+rm.toLocaleString("en-US")+'</span> <small class="mute">(paid K'+gp.toLocaleString("en-US")+")</small>")+'<div class="bar"><i style="width:'+pc+'%"></i></div></td></tr>'}
+    return"<tr><td>"+esc(f[1])+"</td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(rm<=0?'<span class="ok">Fully paid</span>':'<span class="bad">Balance K'+rm.toLocaleString("en-US")+'</span> <small class="mute">(paid K'+gp.toLocaleString("en-US")+")</small>")+'<div class="bar"><i style="width:'+pc+'%"></i></div></td></tr>'}
    return"<tr><td>"+esc(f[1])+"</td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(p?'<span class="ok">Paid</span> <small class="mute">'+fmt(p.paid_at)+"</small>":'<span class="bad">Not paid</span>')+"</td></tr>"}).join("")+"</table></div>"})}
 
 var REC=/type=recovery/.test(location.hash);
