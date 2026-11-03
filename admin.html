@@ -342,29 +342,29 @@ $("lprint").onclick=function(){window.print()};
 function show(id,msg,err){var m=$(id);m.hidden=!msg;m.className="msg"+(err?" err":"");m.textContent=msg||""}
 
 function init(){
-  if(!BFS_URL||!BFS_KEY){show("lmsg","This page is not connected yet. Check the two settings at the top of the script in admin.html.",1);return}
+  if(!BFS_URL||!BFS_KEY){show("lmsg","Could not connect right now. Please try again later.",1);return}
   try{sb=makeClient();sb.auth.getSession().then(function(r){if(r.data&&r.data.session)enter()}).catch(function(){})}
-  catch(err){show("lmsg","Page error: "+err.message,1)}
+  catch(err){show("lmsg","Something went wrong. Please refresh the page and try again.",1)}
 }
 $("lf").addEventListener("submit",function(e){e.preventDefault();
-  if(!sb){show("lmsg","This page is not connected yet. Check the two settings at the top of the script in admin.html.",1);return}
+  if(!sb){show("lmsg","Could not connect right now. Please try again later.",1);return}
   show("lmsg","Signing in...");
   sb.auth.signInWithPassword({email:$("e").value.trim(),password:$("p").value}).then(function(r){
-    if(r.error){var m=r.error.message||"";show("lmsg",/confirm/i.test(m)?"This login's email is not confirmed yet. In Supabase open Authentication, then Users, and confirm it.":"Email or password is not correct.",1)}
+    if(r.error){var m=r.error.message||"";show("lmsg","Email or password is not correct.",1)}
     else{enter()}
-  }).catch(function(){show("lmsg","Could not reach the database. Check your internet connection and the settings at the top of admin.html.",1)})
+  }).catch(function(){show("lmsg","Could not connect. Please check your internet connection and try again.",1)})
 });
-window.addEventListener("error",function(ev){show("lmsg","Page error: "+ev.message,1)});
+window.addEventListener("error",function(ev){if(!$("login").hidden)show("lmsg","Something went wrong. Please refresh the page and try again.",1)});
 $("out").onclick=function(){sb.auth.signOut().then(function(){location.reload()})};
 
 function backToLogin(msg){$("app").hidden=true;$("out").hidden=true;$("login").hidden=false;show("lmsg",msg,1);if(sb)sb.auth.signOut()}
 function enter(){
   sb.from("admins").select("user_id").then(function(r){
-    if(r.error){backToLogin(r.error.status===404||/admins/.test(r.error.message||"")?"The database is not set up yet. Run the setup script from the guide (Part 2) in the Supabase SQL Editor.":"Could not check your access: "+r.error.message);return}
-    if(!r.data||!r.data.length){backToLogin("You signed in, but this login is not an administrator yet. In the Supabase SQL Editor, run the line from Part 4 of the guide, with this login's email address.");return}
+    if(r.error){backToLogin("Something went wrong. Please try again.");return}
+    if(!r.data||!r.data.length){backToLogin("Email or password is not correct.");return}
     $("login").hidden=true;$("app").hidden=false;$("out").hidden=false;show("lmsg","");
     loadApps().then(loadReceipts).then(loadStudents)
-  }).catch(function(){backToLogin("Could not reach the database. Check your internet connection and the settings at the top of admin.html.")})
+  }).catch(function(){backToLogin("Could not connect. Please check your internet connection and try again.")})
 }
 function loadApps(){
   return sb.from("applications").select("*").order("created_at",{ascending:false}).then(function(r){
