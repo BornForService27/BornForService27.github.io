@@ -76,7 +76,7 @@ label{display:block;font-weight:600;margin:12px 0 4px}
   <section id="portal" hidden>
     <style>.pt2{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.pt2 button{background:#fff;color:var(--ink);border-color:var(--line)}.pt2 button.on{background:var(--head);color:#fff;border-color:var(--head)}#pbody table{width:100%;border-collapse:collapse}#pbody th,#pbody td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);font-size:.92rem}#pbody td input{padding:6px;max-width:110px}.pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}</style>
     <h2>Students Portal</h2>
-    <div class="pt2" id="ptabs"><button class="on" data-v="ann">Announcements</button><button data-v="ass">Assessments</button><button data-v="gr">Grades</button><button data-v="fee">Fees</button><button data-v="doc">Photos</button><button data-v="log">Logins</button></div>
+    <div class="pt2" id="ptabs"><button class="on" data-v="ann">Announcements</button><button data-v="les">Lessons</button><button data-v="ass">Assessments</button><button data-v="gr">Grades</button><button data-v="fee">Fees</button><button data-v="doc">Photos</button><button data-v="log">Logins</button></div>
     <div id="pbody"></div>
   </section>
 
@@ -612,6 +612,10 @@ function note(t,e){var m=document.getElementById("pnote");if(m){m.className="msg
 function stu(){return ST.length?Promise.resolve():rest("students?select=id,student_number,full_name,email,programme,user_id,application_id,photo_path&status=eq.verified&order=full_name.asc").then(function(d){ST=d||[]})}
 function ass(){return rest("assessments?select=*&order=created_at.desc").then(function(d){AS=d||[]})}
 var V={
+les:function(){rest("bfs_courses?select=*&order=sort.asc,created_at.asc").then(function(cs){cs=cs||[];
+ B.innerHTML='<div class="card"><h3>Add a course</h3><div class="pg"><input id="c_t" placeholder="Course name"><input id="c_d" placeholder="Short description (optional)"></div><p><button data-a="cadd">Add course</button></p></div>'+
+ '<div class="card"><h3>Upload audio lessons</h3><div class="pg"><select id="l_c"><option value="">Choose a course…</option>'+cs.map(function(c){return'<option value="'+c.id+'">'+pe(c.title)+"</option>"}).join("")+'</select><input id="l_f" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg,.opus,.aac" multiple></div><p class="mute">You can choose several files at once. Each lesson is named after its file, and you can rename it afterwards. Maximum 50 MB per file.</p><p><button data-a="lup">Upload</button></p><div id="pnote" class="msg" hidden></div></div><div id="l_l"></div>';
+ lesList()}).catch(function(e){B.innerHTML='<div class="msg err">'+pe(e.message)+"</div>"})},
 doc:function(){ST=[];stu().then(function(){
  B.innerHTML='<div class="card"><h3>Student profile photos</h3><p class="mute">Students upload their own photo in the portal. Choose a student to view it, for example for the BFS Identity Card. Admission letters and NRC copies appear in each student portal automatically.</p><div class="pg"><select id="d_s"><option value="">Student…</option>'+ST.map(function(x){return'<option value="'+x.id+'">'+pe(x.full_name+" ("+x.student_number+")")+"</option>"}).join("")+'</select></div><div id="pnote" class="msg" hidden></div><div id="d_l"></div></div>';
  document.getElementById("d_s").onchange=function(){var id=this.value,x=ST.find(function(y){return y.id===id}),l=document.getElementById("d_l");l.innerHTML=!x?"":(x.photo_path?'<p><button data-a="docphoto" data-id="'+id+'">View profile photo</button></p>':'<p class="mute">No profile photo uploaded yet.</p>')}})},
@@ -633,11 +637,32 @@ log:function(){stu().then(function(){
  var n=ST.filter(function(s){return s.user_id}).length;
  B.innerHTML='<div class="card"><h3>Student logins</h3><p>Students log in at <b>student.html</b> with their student number (or email) and the temporary password. They are then made to choose their own password. No login needs to be created here.</p><p class="mute">'+n+" of "+ST.length+' admitted students have activated their login. A student needs an email on their record.</p></div><div class="card"><table><tr><th>Student</th><th>Email</th><th>Login</th></tr>'+
  ST.map(function(s){return"<tr><td>"+pe(s.full_name)+"<br><small class=mute>"+pe(s.student_number)+"</small></td><td>"+pe(s.email||"— no email —")+"</td><td>"+(s.user_id?"Activated":"Not yet")+"</td></tr>"}).join("")+"</table></div>"})}};
+function lesList(){var l=document.getElementById("l_l");if(!l)return;
+ Promise.all([rest("bfs_courses?select=*&order=sort.asc,created_at.asc"),rest("bfs_lessons?select=*&order=sort.asc,created_at.asc")]).then(function(r){var cs=r[0]||[],ls=r[1]||[];
+  l.innerHTML=cs.map(function(c){var x=ls.filter(function(y){return y.course_id===c.id});
+   return'<div class="card"><div style="display:flex;gap:8px;align-items:center"><h3 style="margin:0;flex:1">'+pe(c.title)+'</h3><button data-a="cdel" data-id="'+c.id+'">Delete course</button></div>'+
+   (x.length?"<table><tr><th>Lesson</th><th>Size</th><th></th></tr>"+x.map(function(y){return"<tr><td>"+pe(y.title)+"</td><td>"+(y.size_bytes?(y.size_bytes/1048576).toFixed(1)+" MB":"")+'</td><td><button data-a="lren" data-id="'+y.id+'">Rename</button> <button data-a="ldel" data-id="'+y.id+'">Delete</button></td></tr>'}).join("")+"</table>":'<p class="mute">No lessons yet.</p>')+"</div>"}).join("")})}
+function lesDrop(path){return path?tok().then(function(k){return fetch(BFS_URL+"/storage/v1/object/lesson-audio/"+path,{method:"DELETE",headers:{apikey:BFS_KEY,Authorization:"Bearer "+k}})}):0}
 function feeList(){var s=ST.find(function(x){return x.id===document.getElementById("f_s").value}),l=document.getElementById("f_l");if(!s||!s.application_id){l.innerHTML=s?'<p class="mute">This student has no application record, so fees cannot be linked.</p>':"";return}
  rest("receipts?select=item,amount,paid_at,ref&application_id=eq."+s.application_id+"&order=paid_at.desc").then(function(r){l.innerHTML="<table><tr><th>Item</th><th>Amount</th><th>Date</th><th>Ref</th></tr>"+(r||[]).map(function(x){return"<tr><td>"+pe(x.item)+"</td><td>K"+x.amount+"</td><td>"+fd(x.paid_at)+"</td><td>"+pe(x.ref||"")+"</td></tr>"}).join("")+"</table>"})}
 function mk(id){return call(BFS_URL+"/functions/v1/student-login",{method:"POST",body:JSON.stringify({student_id:id})}).then(function(r){var s=ST.find(function(x){return x.id===id});s.user_id=s.user_id||"x";
  return"BFS Students Portal login\nName: "+s.full_name+"\nLogin: "+r.email+" (or student number "+s.student_number+")\nTemporary password: "+r.password})}
 var A={
+cadd:function(){var t=document.getElementById("c_t").value.trim();if(!t)return note("Enter the course name.",1);
+ post("bfs_courses",{title:t,description:document.getElementById("c_d").value.trim()||null,sort:Math.floor(Date.now()/1000)}).then(V.les).catch(function(e){note(e.message,1)})},
+cdel:function(i){if(!confirm("Delete this course and all its audio lessons? This cannot be undone."))return;
+ rest("bfs_lessons?select=file_path&course_id=eq."+i).then(function(r){return Promise.all((r||[]).map(function(x){return lesDrop(x.file_path)}))}).then(function(){return rest("bfs_courses?id=eq."+i,{method:"DELETE"})}).then(V.les)},
+lup:function(){var c=document.getElementById("l_c").value,fs=[].slice.call(document.getElementById("l_f").files);if(!c||!fs.length)return note("Choose a course and at least one audio file.",1);
+ var big=fs.filter(function(f){return f.size>52428800});if(big.length)return note(big[0].name+" is larger than 50 MB. Please compress it or split it first.",1);
+ var p=Promise.resolve(),done=0,base=Math.floor(Date.now()/1000);
+ fs.forEach(function(f,i){p=p.then(function(){note("Uploading "+(i+1)+" of "+fs.length+": "+f.name+" ...");var path=c+"/"+Date.now()+"-"+f.name.replace(/[^A-Za-z0-9._-]/g,"_");
+  return tok().then(function(k){return fetch(BFS_URL+"/storage/v1/object/lesson-audio/"+path,{method:"POST",headers:{apikey:BFS_KEY,Authorization:"Bearer "+k,"Content-Type":f.type||"audio/mpeg"},body:f})}).then(function(r){if(!r.ok)return r.text().then(function(x){throw new Error(x)});
+   return post("bfs_lessons",{course_id:c,title:f.name.replace(/\.[^.]+$/,"").replace(/_+/g," "),file_path:path,file_name:f.name,size_bytes:f.size,sort:base+i})}).then(function(){done++})})});
+ p.then(function(){note("Uploaded "+done+" lesson(s).");document.getElementById("l_f").value="";lesList()}).catch(function(e){note("Upload stopped after "+done+" file(s): "+e.message,1);lesList()})},
+ldel:function(i){if(!confirm("Delete this lesson?"))return;
+ rest("bfs_lessons?select=file_path&id=eq."+i).then(function(r){return lesDrop(r&&r[0]&&r[0].file_path)}).then(function(){return rest("bfs_lessons?id=eq."+i,{method:"DELETE"})}).then(lesList)},
+lren:function(i){rest("bfs_lessons?select=title&id=eq."+i).then(function(r){var t=prompt("New name for this lesson:",r&&r[0]?r[0].title:"");if(!t||!t.trim())return;
+ return rest("bfs_lessons?id=eq."+i,{method:"PATCH",body:JSON.stringify({title:t.trim()})}).then(lesList)})},
 docphoto:function(i){var x=ST.find(function(y){return y.id===i});if(!x||!x.photo_path)return;var w=window.open("","_blank");
  sb.storage.from("student-photos").createSignedUrl(x.photo_path,300).then(function(r){if(r.error||!r.data){if(w)w.close();return note("Could not open the photo.",1)}w.location=r.data.signedUrl})},
 annpost:function(){var t=document.getElementById("a_t").value.trim(),b=document.getElementById("a_b").value.trim();if(!t||!b)return note("Enter a title and a message.",1);post("announcements",{title:t,body:b}).then(V.ann).catch(function(e){note(e.message,1)})},

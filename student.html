@@ -43,7 +43,7 @@ input{width:100%;padding:11px;border:1px solid var(--line);border-radius:3px;fon
 .banner{background:var(--ban);color:#fff;padding:14px 20px;font:600 1.25rem Inter,sans-serif;border-radius:2px;margin-bottom:14px}
 .pi{display:grid;grid-template-columns:1fr 220px;gap:20px;align-items:start}.pi th{width:150px;color:var(--mute);font-weight:500}
 .stat{border:1px solid var(--line);border-radius:3px;text-align:center;overflow:hidden}.s1{background:var(--ban);color:#fff;font-weight:600;padding:8px}.s2{padding:14px 10px;font-weight:600;background:var(--alt)}
-.nw{max-width:380px}.bar{height:6px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--teal)}.ph{height:230px;display:flex;align-items:center;justify-content:center;background:var(--alt)}.ph img{width:100%;height:100%;object-fit:cover}.s3{padding:10px;text-align:center}.s3 .msg{margin-top:6px}
+.nw{max-width:380px}.crs{border:1px solid var(--line);border-radius:4px;padding:14px 16px;margin-bottom:16px}.crs h3{margin:0 0 4px}.les{border-top:1px solid var(--line);padding:12px 0}.lt{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}.lb{display:flex;gap:8px;flex-wrap:wrap}.bar{height:6px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--teal)}.ph{height:230px;display:flex;align-items:center;justify-content:center;background:var(--alt)}.ph img{width:100%;height:100%;object-fit:cover}.s3{padding:10px;text-align:center}.s3 .msg{margin-top:6px}
 html{color-scheme:light}
 </style>
 </head><body>
@@ -71,8 +71,8 @@ html{color-scheme:light}
 
 <section id="vApp" class="hide">
 <div class="cu">Current user: <span id="cu"></span></div>
-<div class="lay"><nav id="menu"><button class="on" data-t="p">Personal Information</button><button data-t="a">Announcements</button><button data-t="g">Assessments &amp; Grades</button><button data-t="f">Fees</button><button data-t="d">Documents</button><button data-t="c">Change Password</button><button id="out">Logout</button></nav>
-<div><div class="crumb" id="crumb"></div><div id="tP"></div><div id="tA" class="hide"></div><div id="tG" class="hide"></div><div id="tF" class="hide"></div><div id="tD" class="hide"></div>
+<div class="lay"><nav id="menu"><button class="on" data-t="p">Personal Information</button><button data-t="a">Announcements</button><button data-t="l">Lessons</button><button data-t="g">Assessments &amp; Grades</button><button data-t="f">Fees</button><button data-t="d">Documents</button><button data-t="c">Change Password</button><button id="out">Logout</button></nav>
+<div><div class="crumb" id="crumb"></div><div id="tP"></div><div id="tA" class="hide"></div><div id="tL" class="hide"></div><div id="tG" class="hide"></div><div id="tF" class="hide"></div><div id="tD" class="hide"></div>
 <div id="tC" class="hide nw"><label for="c0">Current password</label><input id="c0" type="password" autocomplete="current-password"><label for="c1">New password (at least 8 characters)</label><input id="c1" type="password" autocomplete="new-password"><label for="c2">Repeat new password</label><input id="c2" type="password" autocomplete="new-password"><button id="cs" class="btn full">Save password</button><div id="m4" class="msg"></div></div></div></div>
 </section>
 </main>
@@ -104,7 +104,7 @@ $("sv").onclick=function(){var a=$("p1").value,b=$("p2").value,m=$("m2");m.textC
  sb.auth.updateUser(CUR?{password:a,current_password:CUR}:{password:a}).then(function(r){if(r.error){m.textContent=r.error.message;return}
   sb.rpc("bfs_pw_done").then(function(){REC=false;history.replaceState(null,"",location.pathname);boot()})})};
 $("out").onclick=function(){sb.auth.signOut().then(function(){me=null;$("pw").value="";show("vLogin")})};
-var TT={p:"Personal Information",a:"Announcements",g:"Assessments & Grades",f:"Fees",d:"Documents",c:"Change Password"},PN={p:"tP",a:"tA",g:"tG",f:"tF",d:"tD",c:"tC"};
+var TT={p:"Personal Information",a:"Announcements",l:"Lessons",g:"Assessments & Grades",f:"Fees",d:"Documents",c:"Change Password"},PN={p:"tP",a:"tA",l:"tL",g:"tG",f:"tF",d:"tD",c:"tC"};
 function go(t){[].forEach.call($("menu").children,function(b){if(b.id!=="out")b.classList.toggle("on",b.getAttribute("data-t")===t)});
  Object.keys(PN).forEach(function(k){$(PN[k]).classList.toggle("hide",k!==t)});$("crumb").textContent="Home > "+TT[t]}
 $("menu").onclick=function(e){var t=e.target.getAttribute("data-t");if(t)go(t)};
@@ -223,6 +223,16 @@ function autoReceipt(r){var a=receiptApp(r);
  .then(function(x){return x.json()}).then(function(j){if(!j||!j.ok)throw new Error((j&&j.error)||"the mailer did not accept it");
   toast("Receipt emailed to "+a.email+".");sb.from("receipts").update({emailed_at:new Date().toISOString()}).eq("id",r.id).then(function(){})})
  .catch(function(e){toast("The receipt could not be emailed ("+(e&&e.message||"error")+"). It was downloaded instead.",1);savePdf(r)})}
+function renderLessons(cs,ls){
+ if(!cs.length){$("tL").innerHTML='<p class="mute">No lessons have been added yet.</p>';return}
+ $("tL").innerHTML=cs.map(function(c){var l=ls.filter(function(x){return x.course_id===c.id});
+  return'<div class="crs"><h3>'+esc(c.title)+'</h3>'+(c.description?'<p class="mute">'+esc(c.description)+'</p>':'')+
+  (l.length?l.map(function(x,i){return'<div class="les"><div class="lt"><b>'+(i+1)+'. '+esc(x.title)+'</b><small class="mute">'+(x.size_bytes?Math.max(.1,x.size_bytes/1048576).toFixed(1)+" MB":"")+'</small></div><div class="lb"><button class="btn sm" data-a="play" data-p="'+esc(x.file_path)+'">Listen</button><button class="btn o sm" data-a="dl" data-p="'+esc(x.file_path)+'" data-n="'+esc(x.file_name||x.title)+'">Download</button></div><div class="pl"></div></div>'}).join(""):'<p class="mute">No audio lessons in this course yet.</p>')+'</div>'}).join("")}
+$("tL").onclick=function(e){var b=e.target,a=b.getAttribute("data-a");if(!a)return;var p=b.getAttribute("data-p");b.disabled=true;
+ if(a==="play"){sb.storage.from("lesson-audio").createSignedUrl(p,7200).then(function(r){b.disabled=false;if(r.error||!r.data){alert("Could not load this audio. Please try again.");return}
+  var pl=b.closest(".les").querySelector(".pl");pl.innerHTML='<audio controls preload="none" style="width:100%;margin-top:8px" src="'+r.data.signedUrl+'"></audio>';var au=pl.firstChild;if(au.play)au.play().catch(function(){})})}
+ else{sb.storage.from("lesson-audio").createSignedUrl(p,60,{download:b.getAttribute("data-n")||true}).then(function(r){b.disabled=false;if(r.error||!r.data){alert("Could not download this file. Please try again.");return}
+  var x=document.createElement("a");x.href=r.data.signedUrl;x.download="";document.body.appendChild(x);x.click();x.remove()})}};
 function setPhoto(){var h=$("ph");if(!me.photo_path)return;sb.storage.from("student-photos").createSignedUrl(me.photo_path,3600).then(function(r){if(r.data&&r.data.signedUrl)h.innerHTML='<img alt="Profile photo" src="'+r.data.signedUrl+'">'})}
 function upPhoto(){var f=this.files[0],m=$("pm");m.style.color="";m.textContent="";if(!f)return;
  if(!/^image\//.test(f.type)){m.textContent="Please choose a photo (JPG or PNG).";return}
@@ -242,8 +252,10 @@ function load(){show("vApp");$("cu").textContent=me.student_number;
  Promise.all([sb.from("announcements").select("*").order("created_at",{ascending:false}),
   sb.from("assessments").select("*").order("due_date",{ascending:true}),
   sb.from("grades").select("assessment_id,mark"),
-  sb.from("receipts").select("*")]).then(function(r){
-  var an=r[0].data||[],as=r[1].data||[],gr=r[2].data||[],rc=(r[3].data||[]).filter(function(x){return!x.deleted_at}),fl=[];RCL=rc;
+  sb.from("receipts").select("*"),
+  sb.from("bfs_courses").select("*").order("sort"),
+  sb.from("bfs_lessons").select("*").order("sort")]).then(function(r){
+  var an=r[0].data||[],as=r[1].data||[],gr=r[2].data||[],rc=(r[3].data||[]).filter(function(x){return!x.deleted_at}),fl=[];RCL=rc;renderLessons(r[4].data||[],r[5].data||[]);
   if(me.nrc_path)fl.unshift({description:"NRC / Passport copy (submitted with your application)",file_name:me.nrc_path.split("/").pop(),file_path:me.nrc_path,bucket:"nrc"});
   if(me.status==="verified"&&me.student_number&&PROG[me.programme])fl.unshift({description:"Admission Letter",file_name:letterFile(me),file_path:"letter",bucket:"letter",created_at:me.admitted_at});
   rc.forEach(function(x){fl.push({description:"Receipt "+x.receipt_no+": "+(feeOf(x.item).label),file_name:receiptFile(x),file_path:String(x.id),bucket:"receipt",created_at:x.paid_at})});
