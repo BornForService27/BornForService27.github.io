@@ -76,7 +76,7 @@ label{display:block;font-weight:600;margin:12px 0 4px}
   <section id="portal" hidden>
     <style>.cr2{border:1px solid var(--line);border-radius:4px;padding:12px 14px;margin:10px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cr2 .t{flex:1;min-width:200px}.cr2 small{display:block}.pt2{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.pt2 button{background:#fff;color:var(--ink);border-color:var(--line)}.pt2 button.on{background:var(--head);color:#fff;border-color:var(--head)}#pbody table{width:100%;border-collapse:collapse}#pbody th,#pbody td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);font-size:.92rem}#pbody td input{padding:6px;max-width:110px}.pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px} .pbar{height:16px;border-radius:9px;background:#DDE5E3;overflow:hidden;margin:8px 0 4px} .pbar i{display:block;height:100%;width:0;background:var(--teal);transition:width .15s}</style>
     <h2>Students Portal</h2>
-    <div class="pt2" id="ptabs"><button class="on" data-v="ann">Announcements</button><button data-v="les">Lessons</button><button data-v="ass">Assessments</button><button data-v="gr">Grades</button><button data-v="fee">Fees</button><button data-v="doc">Photos</button><button data-v="log">Logins</button></div>
+    <div class="pt2" id="ptabs"><button class="on" data-v="tl">Timeline</button><button data-v="les">Lessons</button><button data-v="ass">Assessments</button><button data-v="gr">Grades</button><button data-v="fee">Fees</button><button data-v="doc">Photos</button><button data-v="log">Logins</button></div>
     <div id="pbody"></div>
   </section>
 
@@ -600,7 +600,7 @@ init();
 </script>
 <script>
 (function(){
-var B=$("portal")&&document.getElementById("pbody"),ST=[],AS=[],cur="ann",LCUR=null;
+var B=$("portal")&&document.getElementById("pbody"),ST=[],AS=[],cur="tl",LCUR=null,TLP={},TLC=null;
 var pe=function(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
 var fd=function(d){return d?new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"—"};
 function tok(){return sb.auth.getSession().then(function(r){return r.data.session.access_token})}
@@ -612,6 +612,15 @@ function note(t,e){var m=document.getElementById("pnote");if(m){m.hidden=false;m
 function stu(){return ST.length?Promise.resolve():rest("students?select=id,student_number,full_name,email,programme,user_id,application_id,photo_path&status=eq.verified&order=full_name.asc").then(function(d){ST=d||[]})}
 function ass(){return rest("assessments?select=*&order=created_at.desc").then(function(d){AS=d||[]})}
 var V={
+tl:function(){return Promise.all([rest("timeline_posts?select=*&order=pinned.desc,created_at.desc&limit=60"),rest("timeline_comments?select=post_id"),rest("timeline_reactions?select=post_id")]).then(function(r){
+ var ps=r[0]||[],cc={},rr={};(r[1]||[]).forEach(function(x){cc[x.post_id]=(cc[x.post_id]||0)+1});(r[2]||[]).forEach(function(x){rr[x.post_id]=(rr[x.post_id]||0)+1});TLP={};TLC=null;ps.forEach(function(x){TLP[x.id]=x});
+ B.innerHTML='<div class="card"><h3 style="margin-top:0">New timeline post</h3><textarea id="tl_c" rows="4" placeholder="Write a caption (optional)"></textarea>'+
+ '<div class="pg" style="margin-top:8px"><input id="tl_f" type="file" accept="video/*,audio/*,image/*,.mp3,.m4a,.wav,.ogg,.opus,.aac,.mp4,.mov,.m4v,.webm" multiple></div>'+
+ '<p><label style="display:inline;font-weight:400"><input id="tl_p" type="checkbox" style="width:auto;margin-right:6px">Pin to the top of the timeline</label></p>'+
+ '<p class="mute">Add photos, videos and audio, with or without a caption. Maximum 50 MB per file. Photos are resized automatically. MP4 is the best video format.</p>'+
+ '<p><button data-a="tlpost" id="tl_b">Post to timeline</button></p><div id="upg" hidden><div class="pbar"><i id="upbar"></i></div><p class="mute" id="uptxt" style="margin:0 0 8px"></p></div><div id="pnote" class="msg" hidden></div></div>'+
+ '<h3>Posts ('+ps.length+')</h3>'+(ps.length?ps.map(function(x){return tlItem(x,cc,rr)}).join(""):'<p class="mute">No posts yet. Your first post will appear on every admitted student\'s timeline.</p>')
+}).catch(function(e){B.innerHTML='<div class="msg err">'+pe(e.message)+"</div>"})},
 les:function(){if(LCUR)return V.course();
  Promise.all([rest("bfs_courses?select=*&order=sort.asc,created_at.asc"),rest("bfs_lessons?select=id,course_id")]).then(function(r){var cs=r[0]||[],ls=r[1]||[];
   B.innerHTML='<div class="card"><h3 style="margin-top:0">Add a course</h3><div class="pg"><input id="c_t" placeholder="Course name"><input id="c_d" placeholder="Short description (optional)"></div><p><button data-a="cadd">Add course</button></p><div id="pnote" class="msg" hidden></div></div>'+
@@ -626,9 +635,6 @@ course:function(){rest("bfs_courses?select=*&id=eq."+LCUR).then(function(r){var 
 doc:function(){ST=[];stu().then(function(){
  B.innerHTML='<div class="card"><h3>Student profile photos</h3><p class="mute">Students upload their own photo in the portal. Choose a student to view it, for example for the BFS Identity Card. Admission letters and NRC copies appear in each student portal automatically.</p><div class="pg"><select id="d_s"><option value="">Student…</option>'+ST.map(function(x){return'<option value="'+x.id+'">'+pe(x.full_name+" ("+x.student_number+")")+"</option>"}).join("")+'</select></div><div id="pnote" class="msg" hidden></div><div id="d_l"></div></div>';
  document.getElementById("d_s").onchange=function(){var id=this.value,x=ST.find(function(y){return y.id===id}),l=document.getElementById("d_l");l.innerHTML=!x?"":(x.photo_path?'<p><button data-a="docphoto" data-id="'+id+'">View profile photo</button></p>':'<p class="mute">No profile photo uploaded yet.</p>')}})},
-ann:function(){rest("announcements?select=*&order=created_at.desc").then(function(a){
- B.innerHTML='<div class="card"><h3>Post an announcement</h3><input id="a_t" placeholder="Title"><textarea id="a_b" rows="4" placeholder="Message" style="margin-top:8px"></textarea><p><button data-a="annpost">Post</button></p><div id="pnote" class="msg" hidden></div></div>'+
- (a||[]).map(function(x){return'<div class="card"><b>'+pe(x.title)+'</b> <span class="mute">'+fd(x.created_at)+'</span><p style="white-space:pre-wrap">'+pe(x.body)+'</p><button data-a="anndel" data-id="'+x.id+'">Delete</button></div>'}).join("")})},
 ass:function(){ass().then(function(){
  B.innerHTML='<div class="card"><h3>New assignment, test or exam</h3><div class="pg"><input id="s_c" placeholder="Course"><input id="s_t" placeholder="Title"><select id="s_k"><option value="assignment">Assignment</option><option value="test">Test</option><option value="exam">Exam</option></select><input id="s_d" type="date"><input id="s_m" type="number" value="100" placeholder="Max mark"></div><p><button data-a="asspost">Add</button></p><div id="pnote" class="msg" hidden></div></div><div class="card"><table><tr><th>Course</th><th>Title</th><th>Type</th><th>Due</th><th>Max</th><th></th></tr>'+
  AS.map(function(x){return"<tr><td>"+pe(x.course)+"</td><td>"+pe(x.title)+"</td><td>"+x.kind+"</td><td>"+fd(x.due_date)+"</td><td>"+x.max_mark+'</td><td><button data-a="assdel" data-id="'+x.id+'">Delete</button></td></tr>'}).join("")+"</table></div>"})},
@@ -647,6 +653,27 @@ log:function(){stu().then(function(){
 function lesList(){var l=document.getElementById("l_l");if(!l||!LCUR)return;
  rest("bfs_lessons?select=*&course_id=eq."+LCUR+"&order=sort.asc,created_at.asc").then(function(x){x=x||[];
   l.innerHTML='<div class="card"><h3 style="margin-top:0">Lessons in this course ('+x.length+')</h3>'+(x.length?"<table><tr><th>#</th><th>Lesson</th><th>Size</th><th></th></tr>"+x.map(function(y,i){return"<tr><td>"+(i+1)+"</td><td>"+pe(y.title)+"</td><td>"+(y.size_bytes?(y.size_bytes/1048576).toFixed(1)+" MB":"")+'</td><td><button data-a="lren" data-id="'+y.id+'">Rename</button> <button data-a="ldel" data-id="'+y.id+'">Delete</button></td></tr>'}).join("")+"</table>":'<p class="mute">No lessons in this course yet. Choose audio files above and click Upload.</p>')+"</div>"})}
+function tlItem(p,cc,rr){var f=[];(p.media||[]).forEach(function(m){f.push((m.kind==="video"?"\uD83C\uDFAC ":"\uD83C\uDFA7 ")+pe(m.name||m.kind)+(m.size?" ("+(m.size/1048576).toFixed(1)+" MB)":""))});
+ var n=(p.image_paths||[]).length;if(n)f.push("\uD83D\uDDBC "+n+" photo"+(n===1?"":"s"));
+ return'<div class="card"><div class="mute">'+fd(p.created_at)+(p.pinned?" \u00B7 \uD83D\uDCCC Pinned":"")+"</div>"+(p.body?'<p style="white-space:pre-wrap">'+pe(p.body)+"</p>":"")+(f.length?'<p class="mute">'+f.join("<br>")+"</p>":"")+
+ '<p class="mute">'+(rr[p.id]||0)+" reaction(s) \u00B7 "+(cc[p.id]||0)+' comment(s)</p><button data-a="tlpin" data-id="'+p.id+'">'+(p.pinned?"Unpin":"Pin to top")+'</button> <button data-a="tlcm" data-id="'+p.id+'">Comments ('+(cc[p.id]||0)+')</button> <button data-a="tledit" data-id="'+p.id+'">Edit caption</button> <button data-a="tldel" data-id="'+p.id+'">Delete</button><div id="tlc_'+p.id+'"></div></div>'}
+function tlKind(f){var t=f.type||"",n=f.name||"";if(/^video\//.test(t)||/\.(mp4|mov|m4v|webm)$/i.test(n))return"video";if(/^audio\//.test(t)||/\.(mp3|m4a|wav|ogg|opus|aac)$/i.test(n))return"audio";if(/^image\//.test(t)||/\.(jpe?g|png|webp|gif)$/i.test(n))return"image";return null}
+function tlShrink(f){if(!/^image\/(jpeg|png|webp)$/.test(f.type))return Promise.resolve(f);
+ return new Promise(function(res){var im=new Image(),u=URL.createObjectURL(f);im.onload=function(){URL.revokeObjectURL(u);var s=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);
+  var x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
+  c.toBlob(function(b){if(!b||b.size>=f.size){res(f);return}var n=f.name.replace(/\.[^.]+$/,"")+".jpg";try{res(new File([b],n,{type:"image/jpeg"}))}catch(e){res(f)}},"image/jpeg",.85)};
+  im.onerror=function(){URL.revokeObjectURL(u);res(f)};im.src=u})}
+function tlPut(f,path,k,prog){return new Promise(function(res,rej){var x=new XMLHttpRequest();x.open("POST",BFS_URL+"/storage/v1/object/timeline-media/"+path);
+ x.setRequestHeader("apikey",BFS_KEY);x.setRequestHeader("Authorization","Bearer "+k);x.setRequestHeader("Content-Type",f.type||"application/octet-stream");
+ x.upload.onprogress=function(e){if(e.lengthComputable)prog(e.loaded)};
+ x.onload=function(){if(x.status>=200&&x.status<300)res();else{var m="";try{m=JSON.parse(x.responseText).message}catch(e){}rej(new Error(m||("Upload failed (HTTP "+x.status+")")))}};
+ x.onerror=function(){rej(new Error("Network error. Please check your connection and try again."))};x.send(f)})}
+function tlDrop(path){return path?tok().then(function(k){return fetch(BFS_URL+"/storage/v1/object/timeline-media/"+path,{method:"DELETE",headers:{apikey:BFS_KEY,Authorization:"Bearer "+k}})}):0}
+function tlCm(i){var x=document.getElementById("tlc_"+i);if(!x)return;x.innerHTML='<p class="mute">Loading comments...</p>';
+ rest("rpc/bfs_tl_comments",{method:"POST",body:JSON.stringify({p_post:i})}).then(function(c){c=c||[];
+  x.innerHTML='<div style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">'+(c.length?c.map(function(m){return'<div class="cr2"><div class="t"><b>'+pe(m.name)+'</b>'+(m.staff?' <span class="mute">(BFS)</span>':'')+' <small class="mute">'+new Date(m.created_at).toLocaleString("en-GB")+'</small><div style="white-space:pre-wrap;overflow-wrap:anywhere">'+pe(m.body)+'</div></div><button data-a="tlcdel" data-id="'+m.id+'">Delete</button></div>'}).join(""):'<p class="mute">No comments yet.</p>')+
+  '<div class="row"><input id="tlr_'+i+'" maxlength="1000" placeholder="Reply as Born For Service School of Ministry" style="flex:1;min-width:200px"><button data-a="tlreply" data-id="'+i+'">Reply</button></div></div>'
+ }).catch(function(e){x.innerHTML='<div class="msg err">'+pe(e.message)+"</div>"})}
 function lesDrop(path){return path?tok().then(function(k){return fetch(BFS_URL+"/storage/v1/object/lesson-audio/"+path,{method:"DELETE",headers:{apikey:BFS_KEY,Authorization:"Bearer "+k}})}):0}
 function feeList(){var s=ST.find(function(x){return x.id===document.getElementById("f_s").value}),l=document.getElementById("f_l");if(!s||!s.application_id){l.innerHTML=s?'<p class="mute">This student has no application record, so fees cannot be linked.</p>':"";return}
  rest("receipts?select=item,amount,paid_at,ref&application_id=eq."+s.application_id+"&order=paid_at.desc").then(function(r){l.innerHTML="<table><tr><th>Item</th><th>Amount</th><th>Date</th><th>Ref</th></tr>"+(r||[]).map(function(x){return"<tr><td>"+pe(x.item)+"</td><td>K"+x.amount+"</td><td>"+fd(x.paid_at)+"</td><td>"+pe(x.ref||"")+"</td></tr>"}).join("")+"</table>"})}
@@ -659,6 +686,30 @@ cdel:function(i){if(!confirm("Delete this course and all its audio lessons? This
  rest("bfs_lessons?select=file_path&course_id=eq."+i).then(function(r){return Promise.all((r||[]).map(function(x){return lesDrop(x.file_path)}))}).then(function(){return rest("bfs_courses?id=eq."+i,{method:"DELETE"})}).then(V.les)},
 copen:function(i){LCUR=i;V.les()},
 cback:function(){LCUR=null;V.les()},
+tlpost:function(){var inp=document.getElementById("tl_f"),fs=[].slice.call(inp.files),cap=document.getElementById("tl_c").value.trim(),pin=document.getElementById("tl_p").checked;
+ if(!cap&&!fs.length)return note("Write a caption or choose at least one file.",1);
+ var bad=fs.filter(function(f){return!tlKind(f)});if(bad.length)return note(bad[0].name+" is not a photo, video or audio file.",1);
+ var big=fs.filter(function(f){return tlKind(f)!=="image"&&f.size>52428800});if(big.length)return note(big[0].name+" is larger than 50 MB. Please compress it first.",1);
+ var btn=document.getElementById("tl_b"),g=document.getElementById("upg"),bar=document.getElementById("upbar"),tx=document.getElementById("uptxt"),pn=document.getElementById("pnote");
+ var up=[],imgs=[],med=[],posted=false;btn.disabled=true;inp.disabled=true;pn.hidden=true;g.hidden=false;bar.style.width="0%";tx.textContent="Preparing...";
+ function fin(){btn.disabled=false;inp.disabled=false}
+ var p=Promise.resolve();
+ fs.forEach(function(f,i){p=p.then(function(){var k=tlKind(f);tx.textContent="Preparing file "+(i+1)+" of "+fs.length+": "+f.name+"...";
+  return(k==="image"?tlShrink(f):Promise.resolve(f)).then(function(h){if(h.size>52428800)throw new Error(f.name+" is larger than 50 MB.");
+   var path="timeline/"+Date.now()+"-"+Math.random().toString(36).slice(2,6)+"-"+h.name.replace(/[^A-Za-z0-9._-]/g,"_");
+   return tok().then(function(t){return tlPut(h,path,t,function(l){var one=h.size?Math.round(l/h.size*100):100;bar.style.width=Math.round((i+(h.size?l/h.size:1))/fs.length*100)+"%";tx.textContent="Uploading file "+(i+1)+" of "+fs.length+": "+f.name+" ("+one+"%). Please keep this page open."})}).then(function(){
+    up.push(path);if(k==="image")imgs.push(path);else med.push({path:path,kind:k,name:f.name,size:h.size})})})})});
+ p.then(function(){tx.textContent="Posting...";return post("timeline_posts",{body:cap,image_paths:imgs,media:med,pinned:pin})}).then(function(){posted=true;return V.tl()}).then(function(){note("Posted to the timeline. Students will see it now.")})
+  .catch(function(e){fin();g.hidden=true;if(!posted){up.forEach(tlDrop);note("The post was not published: "+e.message,1)}else note(e.message,1)})},
+tlcm:function(i){var open=TLC;if(open){var o=document.getElementById("tlc_"+open);if(o)o.innerHTML=""}if(open===i){TLC=null;return}TLC=i;tlCm(i)},
+tlreply:function(i){var f=document.getElementById("tlr_"+i),t=f&&f.value.trim();if(!t)return;f.disabled=true;
+ rest("rpc/bfs_tl_comment",{method:"POST",body:JSON.stringify({p_post:i,p_body:t})}).then(function(){tlCm(i)}).catch(function(e){f.disabled=false;note(e.message,1)})},
+tlcdel:function(c){if(!confirm("Delete this comment?"))return;
+ rest("rpc/bfs_tl_del_comment",{method:"POST",body:JSON.stringify({p_id:c})}).then(function(){if(TLC)tlCm(TLC)}).catch(function(e){note(e.message,1)})},
+tlpin:function(i){var x=TLP[i];if(!x)return;rest("timeline_posts?id=eq."+i,{method:"PATCH",body:JSON.stringify({pinned:!x.pinned})}).then(V.tl).catch(function(e){note(e.message,1)})},
+tledit:function(i){var x=TLP[i];if(!x)return;var t=prompt("Edit the caption:",x.body||"");if(t===null)return;rest("timeline_posts?id=eq."+i,{method:"PATCH",body:JSON.stringify({body:t.trim()})}).then(V.tl).catch(function(e){note(e.message,1)})},
+tldel:function(i){if(!confirm("Delete this post with its photos, video, audio, reactions and comments? This cannot be undone."))return;
+ rest("rpc/bfs_tl_delete_post",{method:"POST",body:JSON.stringify({p_id:i})}).then(function(r){return Promise.all((r||[]).map(tlDrop))}).then(V.tl).catch(function(e){note(e.message,1)})},
 lup:function(){var c=LCUR,inp=document.getElementById("l_f"),fs=[].slice.call(inp.files);if(!c||!fs.length)return note("Choose at least one audio file.",1);
  var big=fs.filter(function(f){return f.size>52428800});if(big.length)return note(big[0].name+" is larger than 50 MB. Please compress it or split it first.",1);
  var btn=document.getElementById("l_b"),g=document.getElementById("upg"),bar=document.getElementById("upbar"),tx=document.getElementById("uptxt"),pn=document.getElementById("pnote");
@@ -686,8 +737,6 @@ lren:function(i){rest("bfs_lessons?select=title&id=eq."+i).then(function(r){var 
  return rest("bfs_lessons?id=eq."+i,{method:"PATCH",body:JSON.stringify({title:t.trim()})}).then(lesList)})},
 docphoto:function(i){var x=ST.find(function(y){return y.id===i});if(!x||!x.photo_path)return;var w=window.open("","_blank");
  sb.storage.from("student-photos").createSignedUrl(x.photo_path,300).then(function(r){if(r.error||!r.data){if(w)w.close();return note("Could not open the photo.",1)}w.location=r.data.signedUrl})},
-annpost:function(){var t=document.getElementById("a_t").value.trim(),b=document.getElementById("a_b").value.trim();if(!t||!b)return note("Enter a title and a message.",1);post("announcements",{title:t,body:b}).then(V.ann).catch(function(e){note(e.message,1)})},
-anndel:function(i){if(confirm("Delete this announcement?"))rest("announcements?id=eq."+i,{method:"DELETE"}).then(V.ann)},
 asspost:function(){var c=document.getElementById("s_c").value.trim(),t=document.getElementById("s_t").value.trim();if(!c||!t)return note("Enter the course and title.",1);
  post("assessments",{course:c,title:t,kind:document.getElementById("s_k").value,due_date:document.getElementById("s_d").value||null,max_mark:+document.getElementById("s_m").value||100}).then(V.ass).catch(function(e){note(e.message,1)})},
 assdel:function(i){if(confirm("Delete this assessment and all its marks?"))rest("assessments?id=eq."+i,{method:"DELETE"}).then(V.ass)},

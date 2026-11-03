@@ -56,6 +56,11 @@ input{width:100%;padding:11px;border:1px solid var(--line);border-radius:3px;fon
 .cin{display:flex;gap:8px;margin-top:12px;align-items:center}.cin input{border-radius:20px;background:var(--alt);border-color:transparent}
 .tlnew{position:sticky;top:8px;z-index:6;background:var(--head);color:#fff;text-align:center;padding:9px;border-radius:22px;cursor:pointer;margin-bottom:12px;font-weight:600}
 .pin{color:var(--head);font-size:.78rem;font-weight:600}.tlmore{text-align:center;margin:6px 0 24px}
+.post video{width:100%;max-height:560px;background:#000;display:block}
+.post .au{padding:10px 14px;background:var(--alt)}.post .au b{display:block;font-size:.88rem;margin-bottom:6px;overflow-wrap:anywhere}.post .au audio{width:100%}
+.post .dlx{padding:8px 14px 10px;border-top:1px solid var(--line);font-size:.9rem}.post .dlx a{display:block;padding:5px 0;color:var(--head);overflow-wrap:anywhere}
+.tlbar{display:flex;gap:8px;margin:0 0 14px}
+.post .ac button{font-size:.85rem!important;padding:11px 2px!important}
 .tlb{position:fixed;inset:0;background:rgba(0,0,0,.88);display:grid;place-items:center;z-index:99;cursor:zoom-out}.tlb img{max-width:94vw;max-height:90vh}
 </style><style>
 :root{--ban:#0F8F86}
@@ -99,8 +104,8 @@ html{color-scheme:light}
 
 <section id="vApp" class="hide">
 <div class="cu">Current user: <span id="cu"></span></div>
-<div class="lay"><nav id="menu"><button class="on" data-t="t">Timeline</button><button data-t="p">Personal Information</button><button data-t="a">Announcements</button><button data-t="l">Lessons</button><button data-t="g">Assessments &amp; Grades</button><button data-t="f">Fees</button><button data-t="d">Documents</button><button data-t="c">Change Password</button><button id="out">Logout</button></nav>
-<div><div class="crumb" id="crumb"></div><div id="tT" class="hide"></div><div id="tP"></div><div id="tA" class="hide"></div><div id="tL" class="hide"></div><div id="tG" class="hide"></div><div id="tF" class="hide"></div><div id="tD" class="hide"></div>
+<div class="lay"><nav id="menu"><button class="on" data-t="t">Timeline</button><button data-t="p">Personal Information</button><button data-t="l">Lessons</button><button data-t="g">Assessments &amp; Grades</button><button data-t="f">Fees</button><button data-t="d">Documents</button><button data-t="c">Change Password</button><button id="out">Logout</button></nav>
+<div><div class="crumb" id="crumb"></div><div id="tT" class="hide"></div><div id="tP"></div><div id="tL" class="hide"></div><div id="tG" class="hide"></div><div id="tF" class="hide"></div><div id="tD" class="hide"></div>
 <div id="tC" class="hide nw"><label for="c0">Current password</label><input id="c0" type="password" autocomplete="current-password"><label for="c1">New password (at least 8 characters)</label><input id="c1" type="password" autocomplete="new-password"><label for="c2">Repeat new password</label><input id="c2" type="password" autocomplete="new-password"><button id="cs" class="btn full">Save password</button><div id="m4" class="msg"></div></div></div></div>
 </section>
 </main>
@@ -132,7 +137,7 @@ $("sv").onclick=function(){var a=$("p1").value,b=$("p2").value,m=$("m2");m.textC
  sb.auth.updateUser(CUR?{password:a,current_password:CUR}:{password:a}).then(function(r){if(r.error){m.textContent=r.error.message;return}
   sb.rpc("bfs_pw_done").then(function(){REC=false;history.replaceState(null,"",location.pathname);boot()})})};
 $("out").onclick=function(){sb.auth.signOut().then(function(){me=null;$("pw").value="";show("vLogin")})};
-var TT={t:"Timeline",p:"Personal Information",a:"Announcements",l:"Lessons",g:"Assessments & Grades",f:"Fees",d:"Documents",c:"Change Password"},PN={t:"tT",p:"tP",a:"tA",l:"tL",g:"tG",f:"tF",d:"tD",c:"tC"};
+var TT={t:"Timeline",p:"Personal Information",l:"Lessons",g:"Assessments & Grades",f:"Fees",d:"Documents",c:"Change Password"},PN={t:"tT",p:"tP",l:"tL",g:"tG",f:"tF",d:"tD",c:"tC"};
 function go(t){[].forEach.call($("menu").children,function(b){if(b.id!=="out")b.classList.toggle("on",b.getAttribute("data-t")===t)});
  Object.keys(PN).forEach(function(k){$(PN[k]).classList.toggle("hide",k!==t)});$("crumb").textContent="Home > "+TT[t]}
 $("menu").onclick=function(e){var t=e.target.getAttribute("data-t");if(t)go(t)};
@@ -284,36 +289,42 @@ function upPhoto(){var f=this.files[0],m=$("pm");m.style.color="";m.textContent=
 /* ---- Timeline ---- */
 var TL=(function(){
 var EMO={like:"\uD83D\uDC4D",love:"\u2764\uFE0F",amen:"\uD83D\uDE4F",praise:"\uD83D\uDE4C"},LBL={like:"Like",love:"Love",amen:"Amen",praise:"Praise"};
-var P={},CM={},IM={},oldest=null,more=false,busy=false,timer=null,lp=false,lpt=null,topSeen=null,PAGE=10;
+var P={},CM={},IM={},mode="all",oldest=null,more=false,busy=false,timer=null,lp=false,lpt=null,topSeen=null,PAGE=10;
 function ago(d){var s=Math.floor((Date.now()-new Date(d))/1000);if(s<60)return"Just now";if(s<3600)return Math.floor(s/60)+" min";if(s<86400)return Math.floor(s/3600)+" h";if(s<604800)return Math.floor(s/86400)+" d";return fmt(d)}
 function lk(t){return esc(t).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>')}
 function logo(){var i=document.querySelector("header img");return i?i.src:""}
 function col(n){var h=0;n=String(n);for(var i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))%360;return"hsl("+h+",45%,40%)"}
 function ini(n){var a=String(n).trim().split(/\s+/);return((a[0]||"").charAt(0)+(a.length>1?a[a.length-1].charAt(0):"")).toUpperCase()}
 function sum(r){var k=Object.keys(r||{}).filter(function(x){return r[x]>0}).sort(function(a,b){return r[b]-r[a]}),n=0;k.forEach(function(x){n+=Number(r[x])});return{n:n,top:k.slice(0,3).map(function(x){return EMO[x]}).join("")}}
-function signed(ps){var paths=[];ps.forEach(function(p){(p.image_paths||[]).forEach(function(x){if(!IM[x])paths.push(x)})});if(!paths.length)return Promise.resolve();
- return sb.storage.from("timeline-media").createSignedUrls(paths,3600).then(function(r){(r.data||[]).forEach(function(o){if(o&&o.signedUrl)IM[o.path]=o.signedUrl})}).catch(function(){})}
+function base(x){return String(x).split("/").pop().replace(/^\d{10,}-[a-z0-9]{3,6}-/,"")}
+function files(p){var f=[];(p.media||[]).forEach(function(m){f.push({path:m.path,name:m.name||base(m.path)})});(p.image_paths||[]).forEach(function(x){f.push({path:x,name:base(x)})});return f.filter(function(x){return IM[x.path]})}
+function dlUrl(f){var u=IM[f.path];return u+(u.indexOf("?")>-1?"&":"?")+"download="+encodeURIComponent(f.name)}
+function signed(ps){var paths=[];ps.forEach(function(p){(p.image_paths||[]).concat((p.media||[]).map(function(m){return m.path})).forEach(function(x){if(x&&!IM[x]&&paths.indexOf(x)<0)paths.push(x)})});if(!paths.length)return Promise.resolve();
+ return sb.storage.from("timeline-media").createSignedUrls(paths,21600).then(function(r){(r.data||[]).forEach(function(o){if(o&&o.signedUrl)IM[o.path]=o.signedUrl})}).catch(function(){})}
+function mediaHtml(p){var h="";(p.media||[]).forEach(function(m){var u=IM[m.path];if(!u)return;
+ if(m.kind==="video")h+='<video controls playsinline preload="metadata" src="'+u+'#t=0.1"></video>';
+ else if(m.kind==="audio")h+='<div class="au"><b>\uD83C\uDFA7 '+esc(m.name||"Audio")+'</b><audio controls preload="none" src="'+u+'"></audio></div>'});return h}
 function card(p){var im=p.image_paths||[],ims=im.map(function(x){return IM[x]?'<img loading="lazy" alt="Post photo" src="'+IM[x]+'" data-act="img">':""}).join(""),n=Math.min(im.length,4);
  return'<article class="post" id="po_'+p.id+'"><div class="tph"><img class="av" src="'+logo()+'" alt=""><div class="who"><b>Born For Service School of Ministry</b><small>'+(p.pinned?'<span class="pin">\uD83D\uDCCC Pinned</span> \u00B7 ':"")+'<span title="'+esc(new Date(p.created_at).toLocaleString())+'">'+ago(p.created_at)+'</span></small></div></div>'+
- (p.body?'<div class="pb">'+lk(p.body)+'</div>':"")+(ims?'<div class="im n'+n+'">'+ims+'</div>':"")+
+ (p.body?'<div class="pb">'+lk(p.body)+'</div>':"")+mediaHtml(p)+(ims?'<div class="im n'+n+'">'+ims+'</div>':"")+
  '<div class="st"><span id="rs_'+p.id+'"></span><span id="cc_'+p.id+'" data-act="cm" data-id="'+p.id+'" style="cursor:pointer"></span></div>'+
- '<div class="ac"><div class="rw"><div class="pk">'+Object.keys(EMO).map(function(k){return'<button data-act="react" data-id="'+p.id+'" data-k="'+k+'" title="'+LBL[k]+'" aria-label="'+LBL[k]+'">'+EMO[k]+"</button>"}).join("")+'</div><button data-act="like" data-id="'+p.id+'" id="lb_'+p.id+'"></button></div><button data-act="cm" data-id="'+p.id+'">\uD83D\uDCAC Comment</button></div>'+
+ '<div class="ac"><div class="rw"><div class="pk">'+Object.keys(EMO).map(function(k){return'<button data-act="react" data-id="'+p.id+'" data-k="'+k+'" title="'+LBL[k]+'" aria-label="'+LBL[k]+'">'+EMO[k]+"</button>"}).join("")+'</div><button data-act="like" data-id="'+p.id+'" id="lb_'+p.id+'"></button></div><button data-act="cm" data-id="'+p.id+'">\uD83D\uDCAC Comment</button>'+(files(p).length?'<button data-act="dl" data-id="'+p.id+'">\u2B07 Download</button>':"")+'<button data-act="save" data-id="'+p.id+'" id="sv_'+p.id+'"></button></div><div class="dlx hide" id="dx_'+p.id+'"></div>'+
  '<div class="cmx hide" id="cx_'+p.id+'"></div></article>'}
 function upd(id){var p=P[id],s=sum(p.reactions);$("rs_"+id).innerHTML=s.n?"<span>"+s.top+" "+s.n+"</span>":"";$("cc_"+id).textContent=p.comments?p.comments+(Number(p.comments)===1?" comment":" comments"):"";
- var b=$("lb_"+id);b.className=p.mine?"on":"";b.innerHTML=p.mine?EMO[p.mine]+" "+LBL[p.mine]:"\uD83D\uDC4D Like"}
+ var b=$("lb_"+id);b.className=p.mine?"on":"";var sv=$("sv_"+id);if(sv){sv.className=p.saved?"on":"";sv.textContent=p.saved?"\uD83D\uDD16 Saved":"\uD83D\uDD16 Save"}b.innerHTML=p.mine?EMO[p.mine]+" "+LBL[p.mine]:"\uD83D\uDC4D Like"}
 function page(first){if(busy)return Promise.resolve(null);busy=true;
- return sb.rpc("bfs_tl_feed",{p_before:first?null:oldest,p_limit:PAGE}).then(function(x){if(x.error)throw x.error;var ps=x.data||[];return signed(ps).then(function(){busy=false;return ps})}).catch(function(e){busy=false;throw e})}
+ return sb.rpc(mode==="saved"?"bfs_tl_saved":"bfs_tl_feed",{p_before:first?null:oldest,p_limit:PAGE}).then(function(x){if(x.error)throw x.error;var ps=x.data||[];return signed(ps).then(function(){busy=false;return ps})}).catch(function(e){busy=false;throw e})}
 function load(first){var f=$("tlFeed"),m=$("tlMore");if(first){f.innerHTML='<p class="mute">Loading the timeline\u2026</p>';m.innerHTML=""}
  page(first).then(function(ps){if(ps===null)return;if(first){f.innerHTML="";P={}}
   var reg=0;ps.forEach(function(p){P[p.id]=p;f.insertAdjacentHTML("beforeend",card(p));upd(p.id);if(!p.pinned){reg++;oldest=p.created_at;if(first&&(!topSeen||p.created_at>topSeen))topSeen=p.created_at}});
-  if(first&&!ps.length)f.innerHTML='<div class="card"><p class="mute" style="margin:0">No posts yet. Posts from Born For Service School of Ministry will appear here.</p></div>';
+  if(first&&!ps.length)f.innerHTML='<div class="card"><p class="mute" style="margin:0">'+(mode==="saved"?"You have not saved any posts yet. Tap Save on a post to keep it here.":"No posts yet. Posts from Born For Service School of Ministry will appear here.")+'</p></div>';
   more=reg>=PAGE;m.innerHTML=more?'<button class="btn o" data-act="more">Load more posts</button>':(ps.length?'<p class="mute">You are all caught up.</p>':"")})
  .catch(function(){if(first)f.innerHTML='<div class="card"><p class="mute" style="margin:0">The timeline could not be loaded. Please check your connection and try again.</p><p><button class="btn sm" data-act="refresh">Try again</button></p></div>'})}
-function check(){if(document.hidden||$("tT").classList.contains("hide")||!$("tlNew"))return;
+function check(){if(mode!=="all"||document.hidden||$("tT").classList.contains("hide")||!$("tlNew"))return;
  sb.rpc("bfs_tl_feed",{p_before:null,p_limit:1}).then(function(x){var ps=(x&&x.data)||[],t=null;ps.forEach(function(p){if(!p.pinned&&(!t||p.created_at>t))t=p.created_at});if(t&&topSeen&&t>topSeen)$("tlNew").classList.remove("hide")})}
-function start(){var t=$("tT");clearInterval(timer);P={};CM={};oldest=null;topSeen=null;
+function start(){var t=$("tT");clearInterval(timer);P={};CM={};oldest=null;topSeen=null;mode="all";
  if(me.status!=="verified"){t.innerHTML='<p class="mute">The timeline is available to admitted students.</p>';return}
- t.innerHTML='<div class="tl"><div id="tlNew" class="tlnew hide" data-act="refresh">New posts. Tap to refresh.</div><div id="tlFeed"></div><div id="tlMore" class="tlmore"></div></div>';
+ t.innerHTML='<div class="tl"><div class="tlbar"><button class="btn sm" id="tbAll" data-act="vall">All posts</button><button class="btn o sm" id="tbSaved" data-act="vsaved">\uD83D\uDD16 Saved</button></div><div id="tlNew" class="tlnew hide" data-act="refresh">New posts. Tap to refresh.</div><div id="tlFeed"></div><div id="tlMore" class="tlmore"></div></div>';
  load(true);timer=setInterval(check,60000)}
 function react(id,k){var p=P[id],oldMine=p.mine,oldR=JSON.parse(JSON.stringify(p.reactions||{}));p.reactions=p.reactions||{};
  if(p.mine)p.reactions[p.mine]=Math.max(0,(p.reactions[p.mine]||0)-1);
@@ -333,6 +344,14 @@ function send(id){var i=$("ci_"+id),t=i.value.trim();if(!t)return;i.disabled=tru
 function cdel(cid,pid){if(!confirm("Delete your comment?"))return;
  sb.rpc("bfs_tl_del_comment",{p_id:cid}).then(function(r){if(r.error)return;CM[pid]=(CM[pid]||[]).filter(function(c){return c.id!==cid});P[pid].comments=Math.max(0,Number(P[pid].comments||0)-1);drawCm(pid);upd(pid)})}
 function lightbox(src){var d=document.createElement("div");d.className="tlb";d.innerHTML='<img alt="" src="'+src+'">';d.onclick=function(){d.remove()};document.body.appendChild(d)}
+function setMode(m){if(m===mode)return;mode=m;P={};CM={};oldest=null;topSeen=null;$("tbAll").className="btn sm"+(m==="all"?"":" o");$("tbSaved").className="btn sm"+(m==="saved"?"":" o");$("tlNew").classList.add("hide");load(true)}
+function save(id){var p=P[id],old=!!p.saved;p.saved=!old;upd(id);
+ sb.rpc("bfs_tl_save",{p_post:id}).then(function(r){if(r.error||typeof r.data!=="boolean"){p.saved=old;upd(id);return}p.saved=r.data;upd(id);
+  if(mode==="saved"&&!p.saved){var el=$("po_"+id);if(el)el.remove();if(!document.querySelector("#tlFeed .post"))$("tlFeed").innerHTML='<div class="card"><p class="mute" style="margin:0">You have not saved any posts yet. Tap Save on a post to keep it here.</p></div>'}})}
+function dl(id){var f=files(P[id]),x=$("dx_"+id);if(!f.length)return;
+ if(f.length===1){var a=document.createElement("a");a.href=dlUrl(f[0]);a.download=f[0].name;document.body.appendChild(a);a.click();a.remove();return}
+ if(!x.classList.contains("hide")){x.classList.add("hide");return}
+ x.innerHTML=f.map(function(y){return'<a href="'+esc(dlUrl(y))+'" download="'+esc(y.name)+'">\u2B07 '+esc(y.name)+"</a>"}).join("");x.classList.remove("hide")}
 var T=$("tT");
 T.addEventListener("click",function(e){var b=e.target.closest?e.target.closest("[data-act]"):null;if(!b)return;var a=b.getAttribute("data-act"),id=b.getAttribute("data-id");
  if(a==="like"){if(lp){lp=false;return}react(id,P[id].mine?null:"like")}
@@ -342,6 +361,10 @@ T.addEventListener("click",function(e){var b=e.target.closest?e.target.closest("
  else if(a==="cdel")cdel(id,b.getAttribute("data-p"));
  else if(a==="more")load(false);
  else if(a==="refresh")start();
+ else if(a==="save")save(id);
+ else if(a==="dl")dl(id);
+ else if(a==="vall")setMode("all");
+ else if(a==="vsaved")setMode("saved");
  else if(a==="img")lightbox(b.src)});
 T.addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.id&&e.target.id.indexOf("ci_")===0){e.preventDefault();send(e.target.id.slice(3))}});
 T.addEventListener("touchstart",function(e){var b=e.target.closest?e.target.closest('[data-act="like"]'):null;if(!b)return;clearTimeout(lpt);lpt=setTimeout(function(){var w=b.closest(".rw");if(w){w.classList.add("open");lp=true}},450)},{passive:true});
@@ -356,18 +379,16 @@ function load(){show("vApp");$("cu").textContent=me.student_number;
  $("tP").innerHTML='<div class="banner">Name: '+esc((me.full_name||"").toUpperCase())+'</div><div class="pi"><div>'+tb([["Student number",me.student_number],["Gender",me.gender],["NRC",me.nrc_number],["Date of birth",me.date_of_birth?fmt(me.date_of_birth):""],["Intake",me.intake_year],["Programme",me.programme],["Registration status",st]])+'<h3 style="margin-top:22px">Contact Information</h3>'+tb([["Mobile phone",me.phone],["Email",me.email],["Address",me.address],["Province",me.province],["Church",me.church]])+'</div><div class="stat"><div class="s1">'+(me.status==="verified"?"ACTIVE ACCOUNT":esc(st).toUpperCase())+'</div><div id="ph" class="ph"><span class="mute">No photo yet</span></div><div class="s3"><label class="btn o sm" for="pf" style="cursor:pointer">'+(me.photo_path?"Change photo":"Upload photo")+'</label><input id="pf" type="file" accept="image/*" class="hide"><div id="pm" class="msg"></div></div></div></div>';
  $("pf").onchange=upPhoto;setPhoto();
  go("t");TL.start();
- Promise.all([sb.from("announcements").select("*").order("created_at",{ascending:false}),
-  sb.from("assessments").select("*").order("due_date",{ascending:true}),
+ Promise.all([sb.from("assessments").select("*").order("due_date",{ascending:true}),
   sb.from("grades").select("assessment_id,mark"),
   sb.from("receipts").select("*"),
   sb.from("bfs_courses").select("*").order("sort"),
   sb.from("bfs_lessons").select("*").order("sort")]).then(function(r){
-  var an=r[0].data||[],as=r[1].data||[],gr=r[2].data||[],rc=(r[3].data||[]).filter(function(x){return!x.deleted_at}),fl=[];RCL=rc;renderLessons(r[4].data||[],r[5].data||[]);
+  var as=r[0].data||[],gr=r[1].data||[],rc=(r[2].data||[]).filter(function(x){return!x.deleted_at}),fl=[];RCL=rc;renderLessons(r[3].data||[],r[4].data||[]);
   if(me.nrc_path)fl.unshift({description:"NRC / Passport copy (submitted with your application)",file_name:me.nrc_path.split("/").pop(),file_path:me.nrc_path,bucket:"nrc"});
   if(me.status==="verified"&&me.student_number&&PROG[me.programme])fl.unshift({description:"Admission Letter",file_name:letterFile(me),file_path:"letter",bucket:"letter",created_at:me.admitted_at});
   rc.forEach(function(x){fl.push({description:"Receipt "+x.receipt_no+": "+(feeOf(x.item).label),file_name:receiptFile(x),file_path:String(x.id),bucket:"receipt",created_at:x.paid_at})});
   $("tD").innerHTML=fl.length?'<div class="tw"><table><tr><th>Document</th><th>File</th><th>Date added</th><th>Size</th><th></th></tr>'+fl.map(function(f){return"<tr><td>"+esc(f.description)+"</td><td>"+esc(f.file_name||"")+"</td><td>"+fmt(f.created_at)+"</td><td>"+(f.size_bytes?Math.max(.1,f.size_bytes/1048576).toFixed(1)+" MB":"")+'</td><td><button class="btn sm" data-p="'+esc(f.file_path)+'" data-b="'+(f.bucket||"student-files")+'" data-n="'+esc(f.file_name||"")+'">Download</button></td></tr>'}).join("")+"</table></div>":'<p class="mute">No documents have been added for you yet.</p>';
-  $("tA").innerHTML=(an.length?an.map(function(a){return'<div class="ann"><b>'+esc(a.title)+"</b> <small>"+fmt(a.created_at)+"</small><p>"+esc(a.body)+"</p></div>"}).join(""):'<p class="mute">No announcements yet.</p>');
   var gm={};gr.forEach(function(g){gm[g.assessment_id]=g.mark});
   $("tG").innerHTML="<p class='mute'>Pass mark: 50%.</p>"+(as.length?'<div class="tw"><table><tr><th>Course</th><th>Assessment</th><th>Type</th><th>Due</th><th>Mark</th><th>Result</th></tr>'+as.map(function(a){
    var m=gm[a.id],has=m!=null,pct=has?m/a.max_mark*100:0;
