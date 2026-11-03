@@ -43,7 +43,8 @@ input{width:100%;padding:11px;border:1px solid var(--line);border-radius:3px;fon
 .banner{background:var(--ban);color:#fff;padding:14px 20px;font:600 1.25rem Inter,sans-serif;border-radius:2px;margin-bottom:14px}
 .pi{display:grid;grid-template-columns:1fr 220px;gap:20px;align-items:start}.pi th{width:150px;color:var(--mute);font-weight:500}
 .stat{border:1px solid var(--line);border-radius:3px;text-align:center;overflow:hidden}.s1{background:var(--ban);color:#fff;font-weight:600;padding:8px}.s2{padding:14px 10px;font-weight:600;background:var(--alt)}
-.nw{max-width:380px}.crs{border:1px solid var(--line);border-radius:4px;padding:14px 16px;margin-bottom:16px}.crs h3{margin:0 0 4px}.les{border-top:1px solid var(--line);padding:12px 0}.lt{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}.lb{display:flex;gap:8px;flex-wrap:wrap}.bar{height:6px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--teal)}.ph{height:230px;display:flex;align-items:center;justify-content:center;background:var(--alt)}.ph img{width:100%;height:100%;object-fit:cover}.s3{padding:10px;text-align:center}.s3 .msg{margin-top:6px}
+.nw{max-width:380px}.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}.ccard{display:flex;flex-direction:column;gap:6px;text-align:left;border:1px solid var(--teal);border-radius:4px;background:var(--bg);padding:16px;cursor:pointer;font:inherit;color:var(--ink)}.ccard:hover,.ccard:focus-visible{background:var(--alt)}.ccard b{font-family:Lora,serif;font-size:1.05rem}.ccard small{color:var(--head);font-weight:600;margin-top:auto;padding-top:6px}
+.crs{border:1px solid var(--line);border-radius:4px;padding:14px 16px;margin-bottom:16px}.crs h3{margin:0 0 4px}.les{border-top:1px solid var(--line);padding:12px 0}.lt{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}.lb{display:flex;gap:8px;flex-wrap:wrap}.bar{height:6px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--teal)}.ph{height:230px;display:flex;align-items:center;justify-content:center;background:var(--alt)}.ph img{width:100%;height:100%;object-fit:cover}.s3{padding:10px;text-align:center}.s3 .msg{margin-top:6px}
 html{color-scheme:light}
 </style>
 </head><body>
@@ -223,12 +224,22 @@ function autoReceipt(r){var a=receiptApp(r);
  .then(function(x){return x.json()}).then(function(j){if(!j||!j.ok)throw new Error((j&&j.error)||"the mailer did not accept it");
   toast("Receipt emailed to "+a.email+".");sb.from("receipts").update({emailed_at:new Date().toISOString()}).eq("id",r.id).then(function(){})})
  .catch(function(e){toast("The receipt could not be emailed ("+(e&&e.message||"error")+"). It was downloaded instead.",1);savePdf(r)})}
-function renderLessons(cs,ls){
- if(!cs.length){$("tL").innerHTML='<p class="mute">No lessons have been added yet.</p>';return}
- $("tL").innerHTML=cs.map(function(c){var l=ls.filter(function(x){return x.course_id===c.id});
-  return'<div class="crs"><h3>'+esc(c.title)+'</h3>'+(c.description?'<p class="mute">'+esc(c.description)+'</p>':'')+
-  (l.length?l.map(function(x,i){return'<div class="les"><div class="lt"><b>'+(i+1)+'. '+esc(x.title)+'</b><small class="mute">'+(x.size_bytes?Math.max(.1,x.size_bytes/1048576).toFixed(1)+" MB":"")+'</small></div><div class="lb"><button class="btn sm" data-a="play" data-p="'+esc(x.file_path)+'">Listen</button><button class="btn o sm" data-a="dl" data-p="'+esc(x.file_path)+'" data-n="'+esc(x.file_name||x.title)+'">Download</button></div><div class="pl"></div></div>'}).join(""):'<p class="mute">No audio lessons in this course yet.</p>')+'</div>'}).join("")}
-$("tL").onclick=function(e){var b=e.target,a=b.getAttribute("data-a");if(!a)return;var p=b.getAttribute("data-p");b.disabled=true;
+var LC=[],LL=[],LSEL=null;
+function renderLessons(cs,ls){LC=cs;LL=ls;LSEL=null;drawLessons()}
+function drawLessons(){
+ var h=$("tL");
+ if(!LC.length){h.innerHTML='<p class="mute">No lessons have been added yet.</p>';return}
+ if(LSEL===null){
+  h.innerHTML='<p class="mute" style="margin-top:0">Choose a course to see its audio lessons.</p><div class="cgrid">'+LC.map(function(c){var n=LL.filter(function(x){return String(x.course_id)===String(c.id)}).length;
+   return'<button type="button" class="ccard" data-a="open" data-c="'+esc(c.id)+'"><b>'+esc(c.title)+'</b>'+(c.description?'<span class="mute">'+esc(c.description)+'</span>':'')+'<small>'+n+' lesson'+(n===1?'':'s')+' &rsaquo;</small></button>'}).join("")+'</div>';return}
+ var c=LC.filter(function(x){return String(x.id)===String(LSEL)})[0];if(!c){LSEL=null;drawLessons();return}
+ var l=LL.filter(function(x){return String(x.course_id)===String(c.id)});
+ h.innerHTML='<button type="button" class="btn o sm" data-a="back">&larr; All courses</button><div class="crs" style="margin-top:12px"><h3>'+esc(c.title)+'</h3>'+(c.description?'<p class="mute">'+esc(c.description)+'</p>':'')+
+  (l.length?l.map(function(x,i){return'<div class="les"><div class="lt"><b>'+(i+1)+'. '+esc(x.title)+'</b><small class="mute">'+(x.size_bytes?Math.max(.1,x.size_bytes/1048576).toFixed(1)+" MB":"")+'</small></div><div class="lb"><button class="btn sm" data-a="play" data-p="'+esc(x.file_path)+'">Listen</button><button class="btn o sm" data-a="dl" data-p="'+esc(x.file_path)+'" data-n="'+esc(x.file_name||x.title)+'">Download</button></div><div class="pl"></div></div>'}).join(""):'<p class="mute">No audio lessons in this course yet.</p>')+'</div>'}
+$("tL").onclick=function(e){var b=e.target.closest("[data-a]");if(!b)return;var a=b.getAttribute("data-a");
+ if(a==="open"){LSEL=b.getAttribute("data-c");drawLessons();$("tL").scrollIntoView({block:"start"});return}
+ if(a==="back"){LSEL=null;drawLessons();$("tL").scrollIntoView({block:"start"});return}
+ var p=b.getAttribute("data-p");b.disabled=true;
  if(a==="play"){sb.storage.from("lesson-audio").createSignedUrl(p,7200).then(function(r){b.disabled=false;if(r.error||!r.data){alert("Could not load this audio. Please try again.");return}
   var pl=b.closest(".les").querySelector(".pl");pl.innerHTML='<audio controls preload="none" style="width:100%;margin-top:8px" src="'+r.data.signedUrl+'"></audio>';var au=pl.firstChild;if(au.play)au.play().catch(function(){})})}
  else{sb.storage.from("lesson-audio").createSignedUrl(p,60,{download:b.getAttribute("data-n")||true}).then(function(r){b.disabled=false;if(r.error||!r.data){alert("Could not download this file. Please try again.");return}
