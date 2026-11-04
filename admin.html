@@ -680,9 +680,11 @@ function tlPut(f,path,k,prog){return new Promise(function(res,rej){var x=new XML
  x.onerror=function(){rej(new Error("Network error. Please check your connection and try again."))};x.send(f)})}
 function tlDrop(path){return path?tok().then(function(k){return fetch(BFS_URL+"/storage/v1/object/timeline-media/"+path,{method:"DELETE",headers:{apikey:BFS_KEY,Authorization:"Bearer "+k}})}):0}
 function tlCm(i){var x=document.getElementById("tlc_"+i);if(!x)return;x.innerHTML='<p class="mute">Loading comments...</p>';
- rest("rpc/bfs_tl_comments",{method:"POST",body:JSON.stringify({p_post:i})}).then(function(c){c=c||[];
-  x.innerHTML='<div style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">'+(c.length?c.map(function(m){return'<div class="cr2"><div class="t"><b>'+pe(m.name)+'</b>'+(m.staff?' <span class="mute">(BFS)</span>':'')+' <small class="mute">'+new Date(m.created_at).toLocaleString("en-GB")+'</small><div style="white-space:pre-wrap;overflow-wrap:anywhere">'+pe(m.body)+'</div></div><button data-a="tlcdel" data-id="'+m.id+'">Delete</button></div>'}).join(""):'<p class="mute">No comments yet.</p>')+
-  '<div class="row"><input id="tlr_'+i+'" maxlength="1000" placeholder="Reply as Born For Service School of Ministry" style="flex:1;min-width:200px"><button data-a="tlreply" data-id="'+i+'">Reply</button></div></div>'
+ rest("rpc/bfs_tl_comments",{method:"POST",body:JSON.stringify({p_post:i})}).then(function(c){c=c||[];var rep={};c.forEach(function(m){if(m.parent_id)(rep[m.parent_id]=rep[m.parent_id]||[]).push(m)});
+  var one=function(m,rp){return'<div class="cr2"'+(rp?' style="margin-left:34px"':'')+'><div class="t"><b>'+pe(m.name)+'</b>'+(m.staff?' <span class="mute">(BFS)</span>':'')+' <small class="mute">'+new Date(m.created_at).toLocaleString("en-GB")+'</small><div style="white-space:pre-wrap;overflow-wrap:anywhere">'+pe(m.body)+'</div></div>'+(rp?'':'<button data-a="tlcrep" data-id="'+m.id+'">Reply</button>')+'<button data-a="tlcdel" data-id="'+m.id+'">Delete</button></div>'},
+  tops=c.filter(function(m){return!m.parent_id});
+  x.innerHTML='<div style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">'+(tops.length?tops.map(function(m){return one(m,false)+(rep[m.id]||[]).map(function(r){return one(r,true)}).join("")}).join(""):'<p class="mute">No comments yet.</p>')+
+  '<div class="row"><input id="tlr_'+i+'" maxlength="1000" placeholder="Write a new comment as Born For Service School of Ministry" style="flex:1;min-width:200px"><button data-a="tlreply" data-id="'+i+'">Comment</button></div></div>'
  }).catch(function(e){x.innerHTML='<div class="msg err">'+pe(e.message)+"</div>"})}
 function gsOpen(t){return"Dear students, below are the official results for "+t+". Each of you will find your personal message in the Students Portal, under Grades."}
 function gsPassMsg(){return"Congratulations to all of you who passed. Your commitment and hard work have paid off. We encourage you to keep studying faithfully and to use what you learn to serve others with excellence."}
@@ -707,7 +709,7 @@ function gsPost(marked){var rows=marked.map(function(r){var x=ST.find(function(y
   blobs.forEach(function(b,i){pr=pr.then(function(){note("Uploading results image "+(i+1)+" of "+blobs.length+"...");
    var nm="BFS-Results-"+slug+(blobs.length>1?"-page"+(i+1):"")+".jpg",path="timeline/"+stamp+"-"+Math.random().toString(36).slice(2,6)+"-"+nm;
    return tok().then(function(t){return tlPut(b,path,t,function(){})}).then(function(){paths.push(path);med.push({path:path,kind:"image",name:nm,size:b.size})})})});
-  return pr.then(function(){return post("timeline_posts",{body:"RESULTS: "+GS.title+"\n\nThe official results are out. Log in to your Students Portal and open Grades to see your mark and your personal message.",image_paths:[],media:med,pinned:false})}).catch(function(e){paths.forEach(tlDrop);throw e})})}
+  return pr.then(function(){return post("timeline_posts",{grade_sheet_id:GS.id,body:"RESULTS: "+GS.title+"\n\nThe official results are out. Log in to your Students Portal and open Grades to see your mark and your personal message.",image_paths:[],media:med,pinned:false})}).catch(function(e){paths.forEach(tlDrop);throw e})})}
 function gsGo(mode){var tlOn=document.getElementById("gs_p").checked;gsBusy(true);note("Saving...");
  gsSave().then(function(c){var marked=c.rows.filter(function(r){return r.mark!=null});
   if(mode!=="save"&&!marked.length)throw new Error("Enter at least one mark first.");
@@ -786,7 +788,8 @@ tlpost:function(){var inp=document.getElementById("tl_f"),fs=[].slice.call(inp.f
 tlcm:function(i){var open=TLC;if(open){var o=document.getElementById("tlc_"+open);if(o)o.innerHTML=""}if(open===i){TLC=null;return}TLC=i;tlCm(i)},
 tlreply:function(i){var f=document.getElementById("tlr_"+i),t=f&&f.value.trim();if(!t)return;f.disabled=true;
  rest("rpc/bfs_tl_comment",{method:"POST",body:JSON.stringify({p_post:i,p_body:t})}).then(function(){tlCm(i)}).catch(function(e){f.disabled=false;note(e.message,1)})},
-tlcdel:function(c){if(!confirm("Delete this comment?"))return;
+tlcrep:function(c){if(!TLC)return;var m=prompt("Write your reply:");if(m===null||!m.trim())return;rest("rpc/bfs_tl_comment",{method:"POST",body:JSON.stringify({p_post:TLC,p_body:m.trim(),p_parent:c})}).then(function(){tlCm(TLC)}).catch(function(e){note(e.message,1)})},
+tlcdel:function(c){if(!confirm("Delete this comment and all replies to it?"))return;
  rest("rpc/bfs_tl_del_comment",{method:"POST",body:JSON.stringify({p_id:c})}).then(function(){if(TLC)tlCm(TLC)}).catch(function(e){note(e.message,1)})},
 tlpin:function(i){var x=TLP[i];if(!x)return;rest("timeline_posts?id=eq."+i,{method:"PATCH",body:JSON.stringify({pinned:!x.pinned})}).then(V.tl).catch(function(e){note(e.message,1)})},
 tledit:function(i){var x=TLP[i];if(!x)return;var t=prompt("Edit the caption:",x.body||"");if(t===null)return;rest("timeline_posts?id=eq."+i,{method:"PATCH",body:JSON.stringify({body:t.trim()})}).then(V.tl).catch(function(e){note(e.message,1)})},
@@ -821,7 +824,7 @@ gscreate:function(){var t=document.getElementById("gs_t").value.trim(),m=Number(
  post("bfs_grade_sheets",{title:t,kind:document.getElementById("gs_k").value,max_mark:m}).then(function(){return rest("bfs_grade_sheets?select=id&title=eq."+encodeURIComponent(t)+"&order=created_at.desc&limit=1")}).then(function(r){GCUR=r&&r[0]?r[0].id:null;go("gr")}).catch(function(e){note(e.message,1)})},
 gsopen:function(i){GCUR=i;go("gr")},
 gsback:function(){GCUR=null;go("gr")},
-gsdel:function(i){if(!confirm("Delete this grade sheet and all its marks? A results post already on the timeline is not removed."))return;rest("bfs_grade_sheets?id=eq."+i,{method:"DELETE"}).then(V.gr).catch(function(e){note(e.message,1)})},
+gsdel:function(i){if(!confirm("Delete this grade sheet? The marks and messages will disappear from every student's portal, and the results image will be removed from the timeline."))return;rest("rpc/bfs_grade_delete_sheet",{method:"POST",body:JSON.stringify({p_id:i})}).then(function(r){return Promise.all((r||[]).map(tlDrop))}).then(V.gr).catch(function(e){note(e.message,1)})},
 gssave:function(){gsGo("save")},
 gspub:function(){if(confirm("Publish these results? Students will see their marks and comments straight away."))gsGo("pub")},
 gsrepost:function(){gsGo("repost")},

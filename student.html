@@ -61,6 +61,7 @@ input{width:100%;padding:11px;border:1px solid var(--line);border-radius:3px;fon
 .post .au{padding:10px 14px;background:var(--alt)}.post .au b{display:block;font-size:.88rem;margin-bottom:6px;overflow-wrap:anywhere}.post .au audio{width:100%}
 .post .dlx{padding:8px 14px 10px;border-top:1px solid var(--line);font-size:.9rem}.post .dlx a{display:block;padding:5px 0;color:var(--head);overflow-wrap:anywhere}
 .tlbar{display:flex;gap:8px;margin:0 0 14px}
+.rps{margin-left:42px}
 .post .ac button{font-size:.85rem!important;padding:11px 2px!important}
 .tlb{position:fixed;inset:0;background:rgba(0,0,0,.88);display:grid;place-items:center;z-index:99;cursor:zoom-out}.tlb img{max-width:94vw;max-height:90vh}
 </style><style>
@@ -141,7 +142,19 @@ $("out").onclick=function(){sb.auth.signOut().then(function(){me=null;$("pw").va
 var TT={t:"Timeline",p:"Personal Information",l:"Lessons",g:"Grades",f:"Fees",d:"Documents",c:"Change Password"},PN={t:"tT",p:"tP",l:"tL",g:"tG",f:"tF",d:"tD",c:"tC"};
 function go(t){[].forEach.call($("menu").children,function(b){if(b.id!=="out")b.classList.toggle("on",b.getAttribute("data-t")===t)});
  Object.keys(PN).forEach(function(k){$(PN[k]).classList.toggle("hide",k!==t)});$("crumb").textContent="Home > "+TT[t]}
-$("menu").onclick=function(e){var t=e.target.getAttribute("data-t");if(t)go(t)};
+function loadGrades(){
+  var KL={assignment:"Assignment",test:"Test",exam:"Exam"};
+  function autoNote(a){var n=(me.full_name||"").trim().split(/\s+/)[0]||"Student",pc=Math.round(a.max_mark?a.mark/a.max_mark*100:0),t=a.title;
+   if(pc>=75)return"Excellent work, "+n+"! You scored "+pc+"% in "+t+". This is an outstanding result. Keep up the discipline and keep serving with excellence.";
+   if(pc>=60)return"Well done, "+n+". You scored "+pc+"% in "+t+", a solid pass. Keep studying faithfully and aim even higher next time.";
+   if(pc>=50)return"Congratulations, "+n+". You have passed "+t+" with "+pc+"%. Keep working steadily and you will grow stronger with every lesson.";
+   if(pc>=40)return n+", you scored "+pc+"% in "+t+" and were close to the pass mark. Please do not be discouraged. Go over the lessons you found hard, ask for help and try again. We believe you can do it.";
+   return n+", please do not be discouraged. This result in "+t+" does not define you or your calling. Go back over the lessons, ask for help where you need it and keep going. We believe in you and we are praying for you."}
+  sb.rpc("bfs_my_grades").then(function(x){var g=(x&&x.data)||[];if(x&&x.error){$("tG").innerHTML='<p class="mute">Your grades could not be loaded. Please try again later.</p>';return}
+   $("tG").innerHTML="<p class='mute'>Pass mark: 50%.</p>"+(g.length?'<div class="tw"><table><tr><th>Date</th><th>Course / Test</th><th>Type</th><th>Mark</th><th>Result</th><th>Message for you</th></tr>'+g.map(function(a){var pct=a.max_mark?a.mark/a.max_mark*100:0;
+    return"<tr><td>"+fmt(a.published_at)+"</td><td>"+esc(a.title)+"</td><td>"+esc(KL[a.kind]||a.kind)+"</td><td>"+esc(a.mark)+" / "+esc(a.max_mark)+" ("+Math.round(pct)+"%)</td><td>"+(pct>=50?'<span class="ok">Pass</span>':'<span class="bad">Fail</span>')+"</td><td>"+esc(a.comment||autoNote(a))+"</td></tr>"}).join("")+"</table></div>":'<p class="mute">No results have been published for you yet.</p>')});
+}
+$("menu").onclick=function(e){var t=e.target.getAttribute("data-t");if(t){go(t);if(t==="g"&&me&&me.status==="verified")loadGrades()}};
 $("cs").onclick=function(){var c=$("c0").value,a=$("c1").value,b=$("c2").value,m=$("m4");m.style.color="";
  if(!c){m.textContent="Enter your current password.";return}if(a.length<8){m.textContent="Use at least 8 characters.";return}
  if(a!==b){m.textContent="The two passwords do not match.";return}if(a===FIRST||a===c){m.textContent="Choose a different password.";return}
@@ -290,7 +303,7 @@ function upPhoto(){var f=this.files[0],m=$("pm");m.style.color="";m.textContent=
 /* ---- Timeline ---- */
 var TL=(function(){
 var EMO={like:"\uD83D\uDC4D",love:"\u2764\uFE0F",amen:"\uD83D\uDE4F",praise:"\uD83D\uDE4C"},LBL={like:"Like",love:"Love",amen:"Amen",praise:"Praise"};
-var P={},CM={},IM={},mode="all",oldest=null,more=false,busy=false,timer=null,lp=false,lpt=null,topSeen=null,PAGE=10;
+var P={},CM={},IM={},RP={},mode="all",oldest=null,more=false,busy=false,timer=null,lp=false,lpt=null,topSeen=null,PAGE=10;
 function ago(d){var s=Math.floor((Date.now()-new Date(d))/1000);if(s<60)return"Just now";if(s<3600)return Math.floor(s/60)+" min";if(s<86400)return Math.floor(s/3600)+" h";if(s<604800)return Math.floor(s/86400)+" d";return fmt(d)}
 function lk(t){return esc(t).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>')}
 function logo(){var i=document.querySelector("header img");return i?i.src:""}
@@ -323,7 +336,10 @@ function load(first){var f=$("tlFeed"),m=$("tlMore");if(first){f.innerHTML='<p c
   more=reg>=PAGE;m.innerHTML=more?'<button class="btn o" data-act="more">Load more posts</button>':(ps.length?'<p class="mute">You are all caught up.</p>':"")})
  .catch(function(){if(first)f.innerHTML='<div class="card"><p class="mute" style="margin:0">The timeline could not be loaded. Please check your connection and try again.</p><p><button class="btn sm" data-act="refresh">Try again</button></p></div>'})}
 function check(){if(mode!=="all"||document.hidden||$("tT").classList.contains("hide")||!$("tlNew"))return;
- sb.rpc("bfs_tl_feed",{p_before:null,p_limit:1}).then(function(x){var ps=(x&&x.data)||[],t=null;ps.forEach(function(p){if(!p.pinned&&(!t||p.created_at>t))t=p.created_at});if(t&&topSeen&&t>topSeen)$("tlNew").classList.remove("hide")})}
+ sb.rpc("bfs_tl_feed",{p_before:null,p_limit:1}).then(function(x){if(!x||x.error)return;var ps=x.data||[],t=null,min=null,ids={},nn=0;
+  ps.forEach(function(p){ids[p.id]=1;if(!p.pinned){nn++;if(!t||p.created_at>t)t=p.created_at;if(!min||p.created_at<min)min=p.created_at}});
+  Object.keys(P).forEach(function(id){if(ids[id])return;var p=P[id];if(p.pinned||nn<6||(min&&p.created_at>=min)){var el=$("po_"+id);if(el)el.remove();delete P[id];delete CM[id]}});
+  if(t&&topSeen&&t>topSeen)$("tlNew").classList.remove("hide")})}
 function start(){var t=$("tT");clearInterval(timer);P={};CM={};oldest=null;topSeen=null;mode="all";
  if(me.status!=="verified"){t.innerHTML='<p class="mute">The timeline is available to admitted students.</p>';return}
  t.innerHTML='<div class="tl"><div class="tlbar"><button class="btn sm" id="tbAll" data-act="vall">All posts</button><button class="btn o sm" id="tbSaved" data-act="vsaved">\uD83D\uDD16 Saved</button></div><div id="tlNew" class="tlnew hide" data-act="refresh">New posts. Tap to refresh.</div><div id="tlFeed"></div><div id="tlMore" class="tlmore"></div></div>';
@@ -333,9 +349,10 @@ function react(id,k){var p=P[id],oldMine=p.mine,oldR=JSON.parse(JSON.stringify(p
  if(k&&k!==oldMine){p.reactions[k]=(p.reactions[k]||0)+1;p.mine=k}else{p.mine=null}
  upd(id);
  sb.rpc("bfs_tl_react",{p_post:id,p_kind:k}).then(function(r){if(r.error||!r.data){p.mine=oldMine;p.reactions=oldR;upd(id);return}p.mine=r.data.mine;p.reactions=r.data.reactions||{};upd(id)})}
-function cmHtml(c,pid){var av=c.staff?'<img class="cav" src="'+logo()+'" alt="">':'<span class="cav" style="background:'+col(c.name)+'">'+esc(ini(c.name))+"</span>";
- return'<div class="cm" id="c_'+c.id+'">'+av+'<div><div class="cb"><b>'+esc(c.name)+(c.staff?' <span class="pin">Admin</span>':"")+"</b>"+lk(c.body)+"</div><small>"+ago(c.created_at)+(c.mine?' <button data-act="cdel" data-id="'+c.id+'" data-p="'+pid+'">Delete</button>':"")+"</small></div></div>"}
-function drawCm(id){var x=$("cx_"+id);x.innerHTML=(CM[id]||[]).map(function(c){return cmHtml(c,id)}).join("")+'<div class="cin"><input id="ci_'+id+'" maxlength="1000" placeholder="Write a comment\u2026" autocomplete="off"><button class="btn sm" data-act="send" data-id="'+id+'">Post</button></div><div class="msg" id="cm_'+id+'"></div>'}
+function cmHtml(c,pid,isRp){var av=c.staff?'<img class="cav" src="'+logo()+'" alt="">':'<span class="cav" style="background:'+col(c.name)+'">'+esc(ini(c.name))+"</span>";
+ return'<div class="cm" id="c_'+c.id+'">'+av+'<div><div class="cb"><b>'+esc(c.name)+(c.staff?' <span class="pin">Admin</span>':"")+"</b>"+lk(c.body)+"</div><small>"+ago(c.created_at)+(!isRp?' <button data-act="crep" data-id="'+c.id+'" data-p="'+pid+'">Reply</button>':"")+(c.mine?' <button data-act="cdel" data-id="'+c.id+'" data-p="'+pid+'">Delete</button>':"")+"</small></div></div>"}
+function drawCm(id){var x=$("cx_"+id),list=CM[id]||[],rep={};list.forEach(function(c){if(c.parent_id)(rep[c.parent_id]=rep[c.parent_id]||[]).push(c)});
+ x.innerHTML=list.filter(function(c){return!c.parent_id}).map(function(c){var rs=rep[c.id]||[];return cmHtml(c,id,false)+(rs.length||RP[id]===c.id?'<div class="rps">'+rs.map(function(r){return cmHtml(r,id,true)}).join("")+(RP[id]===c.id?'<div class="cin"><input id="ri_'+c.id+'" maxlength="1000" placeholder="Write a reply\u2026" autocomplete="off"><button class="btn sm" data-act="rsend" data-id="'+c.id+'" data-p="'+id+'">Reply</button></div>':"")+"</div>":"")}).join("")+'<div class="cin"><input id="ci_'+id+'" maxlength="1000" placeholder="Write a comment\u2026" autocomplete="off"><button class="btn sm" data-act="send" data-id="'+id+'">Post</button></div><div class="msg" id="cm_'+id+'"></div>'}
 function openCm(id){var x=$("cx_"+id);if(!x.classList.contains("hide")){x.classList.add("hide");return}x.classList.remove("hide");
  if(CM[id]){var i=$("ci_"+id);if(i)i.focus();return}
  x.innerHTML='<p class="mute">Loading comments\u2026</p>';
@@ -343,8 +360,12 @@ function openCm(id){var x=$("cx_"+id);if(!x.classList.contains("hide")){x.classL
 function send(id){var i=$("ci_"+id),t=i.value.trim();if(!t)return;i.disabled=true;
  sb.rpc("bfs_tl_comment",{p_post:id,p_body:t}).then(function(r){if(r.error||!r.data){i.disabled=false;$("cm_"+id).textContent="Your comment could not be posted. Please try again.";return}
   CM[id].push(r.data);P[id].comments=Number(P[id].comments||0)+1;drawCm(id);upd(id);$("ci_"+id).focus()})}
-function cdel(cid,pid){if(!confirm("Delete your comment?"))return;
- sb.rpc("bfs_tl_del_comment",{p_id:cid}).then(function(r){if(r.error)return;CM[pid]=(CM[pid]||[]).filter(function(c){return c.id!==cid});P[pid].comments=Math.max(0,Number(P[pid].comments||0)-1);drawCm(pid);upd(pid)})}
+function cdel(cid,pid){if(!confirm("Delete your comment? Any replies to it will be deleted too."))return;
+ sb.rpc("bfs_tl_del_comment",{p_id:cid}).then(function(r){if(r.error)return;var before=(CM[pid]||[]).length;CM[pid]=(CM[pid]||[]).filter(function(c){return c.id!==cid&&c.parent_id!==cid});P[pid].comments=Math.max(0,Number(P[pid].comments||0)-(before-CM[pid].length));drawCm(pid);upd(pid)})}
+function crep(cid,pid){RP[pid]=RP[pid]===cid?null:cid;drawCm(pid);var i=$("ri_"+cid);if(i)i.focus()}
+function rsend(cid,pid){var i=$("ri_"+cid),t=i.value.trim();if(!t)return;i.disabled=true;
+ sb.rpc("bfs_tl_comment",{p_post:pid,p_body:t,p_parent:cid}).then(function(r){if(r.error||!r.data){i.disabled=false;$("cm_"+pid).textContent="Your reply could not be posted. Please try again.";return}
+  CM[pid].push(r.data);P[pid].comments=Number(P[pid].comments||0)+1;RP[pid]=null;drawCm(pid);upd(pid)})}
 function lightbox(src){var d=document.createElement("div");d.className="tlb";d.innerHTML='<img alt="" src="'+src+'">';d.onclick=function(){d.remove()};document.body.appendChild(d)}
 function setMode(m){if(m===mode)return;mode=m;P={};CM={};oldest=null;topSeen=null;$("tbAll").className="btn sm"+(m==="all"?"":" o");$("tbSaved").className="btn sm"+(m==="saved"?"":" o");$("tlNew").classList.add("hide");load(true)}
 function save(id){var p=P[id],old=!!p.saved;p.saved=!old;upd(id);
@@ -361,6 +382,8 @@ T.addEventListener("click",function(e){var b=e.target.closest?e.target.closest("
  else if(a==="cm")openCm(id);
  else if(a==="send")send(id);
  else if(a==="cdel")cdel(id,b.getAttribute("data-p"));
+ else if(a==="crep")crep(id,b.getAttribute("data-p"));
+ else if(a==="rsend")rsend(id,b.getAttribute("data-p"));
  else if(a==="more")load(false);
  else if(a==="refresh")start();
  else if(a==="save")save(id);
@@ -368,7 +391,8 @@ T.addEventListener("click",function(e){var b=e.target.closest?e.target.closest("
  else if(a==="vall")setMode("all");
  else if(a==="vsaved")setMode("saved");
  else if(a==="img")lightbox(b.src)});
-T.addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.id&&e.target.id.indexOf("ci_")===0){e.preventDefault();send(e.target.id.slice(3))}});
+T.addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.id&&e.target.id.indexOf("ci_")===0){e.preventDefault();send(e.target.id.slice(3))}
+  else if(e.key==="Enter"&&e.target.id&&e.target.id.indexOf("ri_")===0){e.preventDefault();var rb=e.target.parentNode.querySelector("[data-act=rsend]");if(rb)rsend(rb.getAttribute("data-id"),rb.getAttribute("data-p"))}});
 T.addEventListener("touchstart",function(e){var b=e.target.closest?e.target.closest('[data-act="like"]'):null;if(!b)return;clearTimeout(lpt);lpt=setTimeout(function(){var w=b.closest(".rw");if(w){w.classList.add("open");lp=true}},450)},{passive:true});
 ["touchend","touchmove","touchcancel"].forEach(function(n){T.addEventListener(n,function(){clearTimeout(lpt)},{passive:true})});
 document.addEventListener("click",function(e){if(!e.target.closest||!e.target.closest(".rw")){[].forEach.call(document.querySelectorAll(".rw.open"),function(w){w.classList.remove("open")})}});
@@ -389,16 +413,7 @@ function load(){show("vApp");$("cu").textContent=me.student_number;
   if(me.status==="verified"&&me.student_number&&PROG[me.programme])fl.unshift({description:"Admission Letter",file_name:letterFile(me),file_path:"letter",bucket:"letter",created_at:me.admitted_at});
   rc.forEach(function(x){fl.push({description:"Receipt "+x.receipt_no+": "+(feeOf(x.item).label),file_name:receiptFile(x),file_path:String(x.id),bucket:"receipt",created_at:x.paid_at})});
   $("tD").innerHTML=fl.length?'<div class="tw"><table><tr><th>Document</th><th>File</th><th>Date added</th><th>Size</th><th></th></tr>'+fl.map(function(f){return"<tr><td>"+esc(f.description)+"</td><td>"+esc(f.file_name||"")+"</td><td>"+fmt(f.created_at)+"</td><td>"+(f.size_bytes?Math.max(.1,f.size_bytes/1048576).toFixed(1)+" MB":"")+'</td><td><button class="btn sm" data-p="'+esc(f.file_path)+'" data-b="'+(f.bucket||"student-files")+'" data-n="'+esc(f.file_name||"")+'">Download</button></td></tr>'}).join("")+"</table></div>":'<p class="mute">No documents have been added for you yet.</p>';
-  var KL={assignment:"Assignment",test:"Test",exam:"Exam"};
-  function autoNote(a){var n=(me.full_name||"").trim().split(/\s+/)[0]||"Student",pc=Math.round(a.max_mark?a.mark/a.max_mark*100:0),t=a.title;
-   if(pc>=75)return"Excellent work, "+n+"! You scored "+pc+"% in "+t+". This is an outstanding result. Keep up the discipline and keep serving with excellence.";
-   if(pc>=60)return"Well done, "+n+". You scored "+pc+"% in "+t+", a solid pass. Keep studying faithfully and aim even higher next time.";
-   if(pc>=50)return"Congratulations, "+n+". You have passed "+t+" with "+pc+"%. Keep working steadily and you will grow stronger with every lesson.";
-   if(pc>=40)return n+", you scored "+pc+"% in "+t+" and were close to the pass mark. Please do not be discouraged. Go over the lessons you found hard, ask for help and try again. We believe you can do it.";
-   return n+", please do not be discouraged. This result in "+t+" does not define you or your calling. Go back over the lessons, ask for help where you need it and keep going. We believe in you and we are praying for you."}
-  sb.rpc("bfs_my_grades").then(function(x){var g=(x&&x.data)||[];if(x&&x.error){$("tG").innerHTML='<p class="mute">Your grades could not be loaded. Please try again later.</p>';return}
-   $("tG").innerHTML="<p class='mute'>Pass mark: 50%.</p>"+(g.length?'<div class="tw"><table><tr><th>Date</th><th>Course / Test</th><th>Type</th><th>Mark</th><th>Result</th><th>Message for you</th></tr>'+g.map(function(a){var pct=a.max_mark?a.mark/a.max_mark*100:0;
-    return"<tr><td>"+fmt(a.published_at)+"</td><td>"+esc(a.title)+"</td><td>"+esc(KL[a.kind]||a.kind)+"</td><td>"+esc(a.mark)+" / "+esc(a.max_mark)+" ("+Math.round(pct)+"%)</td><td>"+(pct>=50?'<span class="ok">Pass</span>':'<span class="bad">Fail</span>')+"</td><td>"+esc(a.comment||autoNote(a))+"</td></tr>"}).join("")+"</table></div>":'<p class="mute">No results have been published for you yet.</p>')});
+  loadGrades();
   var paid={};rc.forEach(function(x){paid[x.item]=x});
   var adv=/advanced/i.test(me.programme||"");
   var fees=[["id_card","BFS Identity Card",100],["tshirt","BFS T-shirt",200],["graduation","Graduation fee ("+(adv?"Advanced Certificate":"Certificate")+")",adv?3000:1500]];
