@@ -418,7 +418,6 @@ function picker(id){return PICK.map(function(k,i){return'<button type="button" d
 function actions(p,v){var id=p.id;
  return'<div class="ax"><div class="rx"><div class="px">'+picker(id)+'</div><button type="button" data-act="like" data-id="'+id+'" data-r="lb"></button></div>'+
   '<button type="button" data-act="'+(v?"vcm":"cm")+'" data-id="'+id+'"><span class="ic">\uD83D\uDCAC</span> Comment</button>'+
-  (files(p).length?'<button type="button" data-act="'+(v?"vdl":"dl")+'" data-id="'+id+'"><span class="ic">\u2B07</span> Download</button>':"")+
   '<button type="button" data-act="save" data-id="'+id+'" data-r="sv"></button></div>'}
 
 function card(p){
