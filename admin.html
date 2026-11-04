@@ -726,7 +726,7 @@ function gsPages(o,logo){
  var pct=function(r){return o.max>0?r.mark/o.max*100:0},np=rows.filter(function(r){return pct(r)>=50}).length,nf=rows.length-np;
  var pages=[];if(rows.length<=FIRST)pages.push(rows);else{pages.push(rows.slice(0,FIRST));for(var i=FIRST;i<rows.length;i+=NEXT)pages.push(rows.slice(i,i+NEXT))}
  var fm=function(n){return String(Math.round(n*100)/100)};
- var today=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+ var dd=new Date(),dn=dd.getDate(),sf=(dn%100>=11&&dn%100<=13)?"th":({1:"st",2:"nd",3:"rd"}[dn%10]||"th"),today=dn+sf+" "+dd.toLocaleDateString("en-GB",{month:"long"})+", "+dd.getFullYear();
  function wrap(ctx,text,maxW){var out=[];String(text).split("\n").forEach(function(par){if(!par.trim()){out.push("");return}var w=par.split(/\s+/),l="";w.forEach(function(x){var t=l?l+" "+x:x;if(ctx.measureText(t).width>maxW&&l){out.push(l);l=x}else l=t});if(l)out.push(l)});return out}
  function fit(ctx,t,maxW){if(ctx.measureText(t).width<=maxW)return t;while(t.length>1&&ctx.measureText(t+"\u2026").width>maxW)t=t.slice(0,-1);return t+"\u2026"}
  function para(ctx,y,text){ctx.font="21px "+SANS;ctx.fillStyle=INK;ctx.textAlign="left";var ls=wrap(ctx,text,W-2*PAD);ls.forEach(function(l,i){ctx.fillText(l,PAD,y+i*32+22)});return y+ls.length*32}
@@ -735,9 +735,9 @@ function gsPages(o,logo){
   ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);ctx.fillStyle=INK;ctx.fillRect(0,0,W,8);y=44;
   if(logo){var lh=firstPg?120:80,lw=logo.width*lh/logo.height;if(lw>380){lw=380;lh=logo.height*lw/logo.width}ctx.drawImage(logo,(W-lw)/2,y,lw,lh);y+=lh+18}
   ctx.textAlign="center";ctx.fillStyle=INK;ctx.font="700 30px "+SERIF;ctx.fillText("BORN FOR SERVICE SCHOOL OF MINISTRY",W/2,y+26);y+=40;
-  ctx.fillStyle=MUTE;ctx.font="18px "+SANS;ctx.fillText("Lusaka, Zambia",W/2,y+18);y+=36;
+  ctx.fillStyle=MUTE;ctx.font="italic 20px "+SERIF;ctx.fillText("Equipping Servants for Greater Works",W/2,y+18);y+=36;
   ctx.fillStyle=INK;ctx.fillRect(PAD,y,W-2*PAD,3);ctx.fillRect(PAD,y+7,W-2*PAD,1);y+=40;
-  ctx.font="700 20px "+SANS;ctx.fillText("OFFICIAL RESULTS",W/2,y+16);y+=40;
+  ctx.font="700 20px "+SANS;ctx.fillText("STUDENTS RESULTS",W/2,y+16);y+=40;
   ctx.font="700 "+(firstPg?38:32)+"px "+SERIF;var tl=wrap(ctx,o.title+(firstPg?"":" (continued)"),W-2*PAD),lh2=firstPg?48:42;tl.forEach(function(l){ctx.fillText(l,W/2,y+lh2-12);y+=lh2});
   ctx.fillStyle=MUTE;ctx.font="19px "+SANS;ctx.fillText(o.kind+"   |   Maximum mark: "+fm(o.max)+"   |   Pass mark: 50%   |   "+today,W/2,y+14);y+=44;
   if(firstPg){y=para(ctx,y,o.opening)+30}
