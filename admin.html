@@ -644,10 +644,13 @@ grsheet:function(){return Promise.all([stu(),rest("bfs_grade_sheets?select=*&id=
   GS=(r[1]||[])[0];if(!GS){GCUR=null;return V.gr()}
   GE={};(r[2]||[]).forEach(function(x){GE[x.student_id]=x});
   B.innerHTML='<p><button data-a="gsback">&larr; All grade sheets</button></p><div class="card"><h3 style="margin-top:0">'+pe(GS.title)+'</h3><p class="mute">'+(KL[GS.kind]||GS.kind)+' \u00B7 out of '+GS.max_mark+' \u00B7 '+(GS.published?"Published. Students can see their marks.":"Draft. Students cannot see it yet.")+'</p>'+
-  (ST.length?'<div style="overflow-x:auto"><table><tr><th>Student</th><th style="width:110px">Mark</th><th>Comment (only that student sees it)</th></tr>'+ST.map(function(x){var e=GE[x.id]||{};return"<tr><td>"+pe(x.full_name)+"<br><small class=mute>"+pe(x.student_number)+'</small></td><td><input type="number" step="any" min="0" max="'+GS.max_mark+'" class="gm" data-s="'+x.id+'" value="'+(e.mark!=null?e.mark:"")+'"></td><td><input type="text" maxlength="500" class="gc" data-c="'+x.id+'" value="'+pe(e.comment||"")+'" placeholder="Comment (optional)"></td></tr>'}).join("")+"</table></div>":'<p class="mute">No admitted students yet.</p>')+
-  '<label>Opening remarks (shown before the results on the timeline image)</label><textarea id="gs_o" rows="4">'+pe(GS.opening||gsOpen(GS.title))+'</textarea>'+
-  '<label>Closing remarks (shown after the results)</label><textarea id="gs_e" rows="7">'+pe(GS.closing||gsClose())+'</textarea>'+
-  '<p><label style="display:inline;font-weight:400"><input id="gs_p" type="checkbox" checked style="width:auto;margin-right:6px">Post the results image on the timeline when publishing</label></p><p class="mute">The timeline image shows each student\'s name and mark. Comments stay private.</p>'+
+  (ST.length?'<div style="overflow-x:auto"><table><tr><th>Student</th><th style="width:110px">Mark</th><th>Personal message to the student (leave blank for an automatic one)</th></tr>'+ST.map(function(x){var e=GE[x.id]||{};return"<tr><td>"+pe(x.full_name)+"<br><small class=mute>"+pe(x.student_number)+'</small></td><td><input type="number" step="any" min="0" max="'+GS.max_mark+'" class="gm" data-s="'+x.id+'" value="'+(e.mark!=null?e.mark:"")+'"></td><td><input type="text" maxlength="500" class="gc" data-c="'+x.id+'" value="'+pe(e.comment||"")+'" placeholder="Blank = automatic message"></td></tr>'}).join("")+"</table></div>":'<p class="mute">No admitted students yet.</p>')+
+  '<h3>Wording on the results image</h3><p class="mute">These are filled in for you. Change them if you wish.</p>'+
+  '<label>Opening remarks</label><textarea id="gs_o" rows="3">'+pe(GS.opening||gsOpen(GS.title))+'</textarea>'+
+  '<label>Message to those who passed (50% and above)</label><textarea id="gs_pm" rows="3">'+pe(GS.pass_msg||gsPassMsg())+'</textarea>'+
+  '<label>Message to those below 50%</label><textarea id="gs_fm" rows="4">'+pe(GS.fail_msg||gsFailMsg())+'</textarea>'+
+  '<label>Closing and signature</label><textarea id="gs_e" rows="3">'+pe(GS.closing||gsClose())+'</textarea>'+
+  '<p><label style="display:inline;font-weight:400"><input id="gs_p" type="checkbox" checked style="width:auto;margin-right:6px">Post the results image on the timeline when publishing</label></p><p class="mute">The timeline image shows each student\'s name, mark and percentage. Personal messages stay private to each student.</p>'+
   '<p>'+(GS.published?'<button data-a="gssave">Save changes</button> <button class="o" data-a="gsrepost">Post results image again</button>':'<button class="o" data-a="gssave">Save draft</button> <button data-a="gspub">Publish results</button>')+'</p><div id="pnote" class="msg" hidden></div></div>'
  }).catch(function(e){B.innerHTML='<div class="msg err">'+pe(e.message)+"</div>"})},
 fee:function(){stu().then(function(){
@@ -681,8 +684,10 @@ function tlCm(i){var x=document.getElementById("tlc_"+i);if(!x)return;x.innerHTM
   x.innerHTML='<div style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">'+(c.length?c.map(function(m){return'<div class="cr2"><div class="t"><b>'+pe(m.name)+'</b>'+(m.staff?' <span class="mute">(BFS)</span>':'')+' <small class="mute">'+new Date(m.created_at).toLocaleString("en-GB")+'</small><div style="white-space:pre-wrap;overflow-wrap:anywhere">'+pe(m.body)+'</div></div><button data-a="tlcdel" data-id="'+m.id+'">Delete</button></div>'}).join(""):'<p class="mute">No comments yet.</p>')+
   '<div class="row"><input id="tlr_'+i+'" maxlength="1000" placeholder="Reply as Born For Service School of Ministry" style="flex:1;min-width:200px"><button data-a="tlreply" data-id="'+i+'">Reply</button></div></div>'
  }).catch(function(e){x.innerHTML='<div class="msg err">'+pe(e.message)+"</div>"})}
-function gsOpen(t){return"Dear students, grace and peace to you. We thank God for the diligence and commitment you have shown in your studies. Below are the results for "+t+". Please read them with a thankful heart, and remember that every mark is a stepping stone in your growth as a servant of Christ."}
-function gsClose(){return"To everyone who did well, congratulations. Keep pressing on and use what you learn to serve others faithfully. To those who have not yet reached the pass mark of 50%, do not be discouraged. Review the lessons, ask for help and try again with fresh determination. Your personal comment from your lecturer is waiting for you in the Students Portal, under Grades.\n\nYou were born for service. God bless you.\n\nBrother Christopher Tandeo\nFounder and Overseer"}
+function gsOpen(t){return"Dear students, below are the official results for "+t+". Each of you will find your personal message in the Students Portal, under Grades."}
+function gsPassMsg(){return"Congratulations to all of you who passed. Your commitment and hard work have paid off. We encourage you to keep studying faithfully and to use what you learn to serve others with excellence."}
+function gsFailMsg(){return"To those who did not reach the 50% pass mark this time, please do not be discouraged. This result does not define you or your calling. Go over the lessons again, ask for help where you need it, and try again with fresh determination. We believe in you and we are walking this journey with you."}
+function gsClose(){return"Brother Christopher Tandeo\nFounder and Overseer"}
 function gsCollect(){var rows=[],clear=[],max=Number(GS.max_mark),err=null;
  ST.forEach(function(x){var m=document.querySelector('.gm[data-s="'+x.id+'"]'),c=document.querySelector('.gc[data-c="'+x.id+'"]');if(!m||!c)return;var mv=m.value.trim(),cv=c.value.trim();
   if(mv===""&&cv===""){if(GE[x.id])clear.push(x.id);return}
@@ -692,63 +697,63 @@ function gsCollect(){var rows=[],clear=[],max=Number(GS.max_mark),err=null;
 function gsSave(){var c=gsCollect();if(c.err)return Promise.reject(new Error(c.err));var p=Promise.resolve();
  if(c.rows.length)p=p.then(function(){return post("bfs_grade_entries?on_conflict=sheet_id,student_id",c.rows,{Prefer:"resolution=merge-duplicates,return=minimal"})});
  if(c.clear.length)p=p.then(function(){return rest("bfs_grade_entries?sheet_id=eq."+GS.id+"&student_id=in.("+c.clear.join(",")+")",{method:"DELETE"})});
- return p.then(function(){var o=document.getElementById("gs_o").value.trim(),e=document.getElementById("gs_e").value.trim();GS.opening=o;GS.closing=e;
-  return rest("bfs_grade_sheets?id=eq."+GS.id,{method:"PATCH",body:JSON.stringify({opening:o||null,closing:e||null})})}).then(function(){return c})}
+ return p.then(function(){var g=function(i){return document.getElementById(i).value.trim()};GS.opening=g("gs_o");GS.pass_msg=g("gs_pm");GS.fail_msg=g("gs_fm");GS.closing=g("gs_e");
+  return rest("bfs_grade_sheets?id=eq."+GS.id,{method:"PATCH",body:JSON.stringify({opening:GS.opening||null,pass_msg:GS.pass_msg||null,fail_msg:GS.fail_msg||null,closing:GS.closing||null})})}).then(function(){return c})}
 function gsBusy(on){[].forEach.call(B.querySelectorAll("button"),function(b){b.disabled=on})}
-function gsPost(marked){var rows=marked.map(function(r){var x=ST.find(function(y){return y.id===r.student_id});return{name:x?x.full_name:"Student",mark:Number(r.mark)}}).sort(function(a,b){return a.name.localeCompare(b.name)});
- note("Designing the results image...");
- return resultImages({title:GS.title,kind:KL[GS.kind]||"Results",max:Number(GS.max_mark),rows:rows,opening:GS.opening||gsOpen(GS.title),closing:GS.closing||gsClose()}).then(function(blobs){
+function gsPost(marked){var rows=marked.map(function(r){var x=ST.find(function(y){return y.id===r.student_id});return{name:x?x.full_name:"Student",mark:Number(r.mark)}});
+ note("Preparing the results image...");
+ return resultImages({title:GS.title,kind:KL[GS.kind]||"Results",max:Number(GS.max_mark),rows:rows,opening:GS.opening||gsOpen(GS.title),passMsg:GS.pass_msg||gsPassMsg(),failMsg:GS.fail_msg||gsFailMsg(),closing:GS.closing||gsClose()}).then(function(blobs){
   var paths=[],med=[],stamp=Date.now(),slug=GS.title.replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40)||"results",pr=Promise.resolve();
   blobs.forEach(function(b,i){pr=pr.then(function(){note("Uploading results image "+(i+1)+" of "+blobs.length+"...");
    var nm="BFS-Results-"+slug+(blobs.length>1?"-page"+(i+1):"")+".jpg",path="timeline/"+stamp+"-"+Math.random().toString(36).slice(2,6)+"-"+nm;
    return tok().then(function(t){return tlPut(b,path,t,function(){})}).then(function(){paths.push(path);med.push({path:path,kind:"image",name:nm,size:b.size})})})});
-  return pr.then(function(){return post("timeline_posts",{body:"\uD83D\uDCCA RESULTS: "+GS.title+"\n\nThe results are out. Congratulations to everyone who worked hard. Log in to your Students Portal and open Grades to see your own mark and your personal comment.",image_paths:[],media:med,pinned:false})}).catch(function(e){paths.forEach(tlDrop);throw e})})}
+  return pr.then(function(){return post("timeline_posts",{body:"RESULTS: "+GS.title+"\n\nThe official results are out. Log in to your Students Portal and open Grades to see your mark and your personal message.",image_paths:[],media:med,pinned:false})}).catch(function(e){paths.forEach(tlDrop);throw e})})}
 function gsGo(mode){var tlOn=document.getElementById("gs_p").checked;gsBusy(true);note("Saving...");
  gsSave().then(function(c){var marked=c.rows.filter(function(r){return r.mark!=null});
   if(mode!=="save"&&!marked.length)throw new Error("Enter at least one mark first.");
   if(mode==="pub")return rest("bfs_grade_sheets?id=eq."+GS.id,{method:"PATCH",body:JSON.stringify({published:true,published_at:new Date().toISOString()})}).then(function(){return marked});
   return marked}).then(function(marked){var posting=mode==="repost"||(mode==="pub"&&tlOn);return posting?gsPost(marked).then(function(){return true}):false})
- .then(function(posted){var msg=mode==="save"?"Saved.":mode==="pub"?"Published. Students can now see their marks and comments in the Students Portal."+(posted?" The results image is on the timeline.":""):"The results image is on the timeline.";
+ .then(function(posted){var msg=mode==="save"?"Saved.":mode==="pub"?"Published. Students can now see their marks and messages in the Students Portal."+(posted?" The results image is on the timeline.":""):"The results image is on the timeline.";
   return V.grsheet().then(function(){note(msg)})})
  .catch(function(e){gsBusy(false);note(e.message,1)})}
 function resultImages(o){return new Promise(function(res,rej){var lg=new Image();lg.onload=function(){try{res(gsPages(o,lg))}catch(e){rej(e)}};lg.onerror=function(){try{res(gsPages(o,null))}catch(e){rej(e)}};lg.src=LOGO})}
 function gsPages(o,logo){
- var W=1080,PAD=64,TEAL="#1AA89E",DK="#0F8F86",INK="#1B2433",MUTE="#5B6475",ALT="#EEF1F6",LINE="#D9DEE6",OK="#117A3D",BAD="#B3261E",SERIF='Georgia,"Times New Roman",serif',SANS='"Segoe UI",Inter,Arial,Helvetica,sans-serif';
- var FIRST=15,NEXT=24,RH=56,rows=o.rows,pages=[];
- if(rows.length<=FIRST)pages.push(rows);else{pages.push(rows.slice(0,FIRST));for(var i=FIRST;i<rows.length;i+=NEXT)pages.push(rows.slice(i,i+NEXT))}
- var isPass=function(r){return o.max>0&&r.mark/o.max*100>=50},passed=rows.filter(isPass).length,avg=rows.length?rows.reduce(function(a,r){return a+r.mark/o.max*100},0)/rows.length:0;
+ var W=1080,PAD=72,INK="#1B2433",MUTE="#5B6475",LINE="#C9CED6",SERIF='Georgia,"Times New Roman",serif',SANS='"Segoe UI",Inter,Arial,Helvetica,sans-serif';
+ var FIRST=16,NEXT=26,RH=50;
+ var rows=o.rows.slice().sort(function(a,b){return b.mark-a.mark||a.name.localeCompare(b.name)});
+ var pct=function(r){return o.max>0?r.mark/o.max*100:0},np=rows.filter(function(r){return pct(r)>=50}).length,nf=rows.length-np;
+ var pages=[];if(rows.length<=FIRST)pages.push(rows);else{pages.push(rows.slice(0,FIRST));for(var i=FIRST;i<rows.length;i+=NEXT)pages.push(rows.slice(i,i+NEXT))}
  var fm=function(n){return String(Math.round(n*100)/100)};
  var today=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
  function wrap(ctx,text,maxW){var out=[];String(text).split("\n").forEach(function(par){if(!par.trim()){out.push("");return}var w=par.split(/\s+/),l="";w.forEach(function(x){var t=l?l+" "+x:x;if(ctx.measureText(t).width>maxW&&l){out.push(l);l=x}else l=t});if(l)out.push(l)});return out}
  function fit(ctx,t,maxW){if(ctx.measureText(t).width<=maxW)return t;while(t.length>1&&ctx.measureText(t+"\u2026").width>maxW)t=t.slice(0,-1);return t+"\u2026"}
- function box(ctx,y,text,color){ctx.font="22px "+SANS;var ls=wrap(ctx,text,W-2*PAD-60),h=ls.length*34+44;
-  ctx.fillStyle="#F2FAF9";ctx.fillRect(PAD,y,W-2*PAD,h);ctx.fillStyle=color;ctx.fillRect(PAD,y,7,h);ctx.fillStyle=INK;ctx.textAlign="left";ctx.font="22px "+SANS;
-  ls.forEach(function(l,i){ctx.fillText(l,PAD+34,y+22+34*i+24)});return y+h}
+ function para(ctx,y,text){ctx.font="21px "+SANS;ctx.fillStyle=INK;ctx.textAlign="left";var ls=wrap(ctx,text,W-2*PAD);ls.forEach(function(l,i){ctx.fillText(l,PAD,y+i*32+22)});return y+ls.length*32}
+ function msg(ctx,y,head,text){ctx.fillStyle=LINE;ctx.fillRect(PAD,y,W-2*PAD,1);y+=26;ctx.fillStyle=INK;ctx.font="700 16px "+SANS;ctx.textAlign="left";ctx.fillText(head,PAD,y+14);y+=30;return para(ctx,y,text)+28}
  function draw(ctx,pi,H){var firstPg=pi===0,last=pi===pages.length-1,y,start=0;for(var k=0;k<pi;k++)start+=pages[k].length;
-  ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);ctx.fillStyle=TEAL;ctx.fillRect(0,0,W,16);y=50;
-  if(logo){var lh=firstPg?150:84,lw=logo.width*lh/logo.height;if(lw>440){lw=440;lh=logo.height*lw/logo.width}ctx.drawImage(logo,(W-lw)/2,y,lw,lh);y+=lh+22}
-  ctx.textAlign="center";ctx.fillStyle=DK;ctx.font="700 "+(firstPg?34:28)+"px "+SERIF;ctx.fillText("BORN FOR SERVICE SCHOOL OF MINISTRY",W/2,y+28);y+=firstPg?46:40;
-  ctx.fillStyle=MUTE;ctx.font="italic 20px "+SERIF;ctx.fillText("Equipping Servants for a Greater Purpose",W/2,y+20);y+=44;
-  ctx.fillStyle=LINE;ctx.fillRect(PAD,y,W-2*PAD,2);y+=40;
-  ctx.fillStyle=TEAL;ctx.font="700 18px "+SANS;ctx.fillText("S T U D E N T   R E S U L T S",W/2,y+14);y+=44;
-  ctx.fillStyle=INK;ctx.font="700 "+(firstPg?46:36)+"px "+SERIF;var tl=wrap(ctx,o.title+(firstPg?"":" (continued)"),W-2*PAD),lh2=firstPg?58:46;tl.forEach(function(l){ctx.fillText(l,W/2,y+lh2-14);y+=lh2});
-  ctx.fillStyle=MUTE;ctx.font="20px "+SANS;ctx.fillText(o.kind+"  \u00B7  Maximum mark "+fm(o.max)+"  \u00B7  Pass mark 50%  \u00B7  "+today,W/2,y+16);y+=48;
-  if(firstPg){y=box(ctx,y,o.opening,TEAL)+34}
-  ctx.fillStyle=DK;ctx.fillRect(PAD,y,W-2*PAD,52);ctx.fillStyle="#fff";ctx.font="700 17px "+SANS;ctx.textAlign="left";ctx.fillText("NO.",PAD+22,y+33);ctx.fillText("STUDENT NAME",PAD+86,y+33);ctx.textAlign="right";ctx.fillText("MARK",W-PAD-200,y+33);ctx.textAlign="center";ctx.fillText("RESULT",W-PAD-86,y+33);y+=52;
-  pages[pi].forEach(function(r,i){if(i%2===1){ctx.fillStyle=ALT;ctx.fillRect(PAD,y,W-2*PAD,RH)}
-   ctx.textAlign="left";ctx.fillStyle=MUTE;ctx.font="20px "+SANS;ctx.fillText(String(start+i+1),PAD+22,y+35);
-   ctx.fillStyle=INK;ctx.font="22px "+SANS;ctx.fillText(fit(ctx,r.name,500),PAD+86,y+36);
-   ctx.textAlign="right";ctx.font="700 22px "+SANS;ctx.fillText(fm(r.mark)+" / "+fm(o.max),W-PAD-200,y+36);
-   var ps=isPass(r);ctx.fillStyle=ps?"#E4F4EA":"#FBE7E5";ctx.beginPath();if(ctx.roundRect)ctx.roundRect(W-PAD-146,y+11,120,34,17);else ctx.rect(W-PAD-146,y+11,120,34);ctx.fill();
-   ctx.fillStyle=ps?OK:BAD;ctx.textAlign="center";ctx.font="700 16px "+SANS;ctx.fillText(ps?"PASS":"FAIL",W-PAD-86,y+34);y+=RH});
-  ctx.fillStyle=LINE;ctx.fillRect(PAD,y,W-2*PAD,2);y+=38;
-  if(last){var tw=(W-2*PAD-32)/3,st=[["STUDENTS MARKED",String(rows.length)],["PASSED",passed+" of "+rows.length],["CLASS AVERAGE",Math.round(avg)+"%"]];
-   st.forEach(function(t,i){var x=PAD+i*(tw+16);ctx.fillStyle=ALT;ctx.fillRect(x,y,tw,96);ctx.fillStyle=DK;ctx.fillRect(x,y,tw,5);ctx.textAlign="center";ctx.fillStyle=MUTE;ctx.font="700 15px "+SANS;ctx.fillText(t[0],x+tw/2,y+36);ctx.fillStyle=INK;ctx.font="700 32px "+SERIF;ctx.fillText(t[1],x+tw/2,y+76)});y+=96+34;
-   y=box(ctx,y,o.closing,DK)+40}
-  else{ctx.textAlign="center";ctx.fillStyle=MUTE;ctx.font="italic 20px "+SERIF;ctx.fillText("Results continue on the next image",W/2,y+10);y+=50}
-  ctx.fillStyle=DK;ctx.fillRect(0,y,W,76);ctx.fillStyle="#fff";ctx.font="18px "+SANS;ctx.textAlign="center";ctx.fillText("Born For Service School of Ministry  \u00B7  Lusaka, Zambia",W/2,y+44);
-  if(pages.length>1){ctx.textAlign="right";ctx.fillText("Page "+(pi+1)+" of "+pages.length,W-PAD,y+44)}
-  ctx.fillStyle=TEAL;ctx.fillRect(0,y+76,W,10);return y+86}
+  ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);ctx.fillStyle=INK;ctx.fillRect(0,0,W,8);y=44;
+  if(logo){var lh=firstPg?120:80,lw=logo.width*lh/logo.height;if(lw>380){lw=380;lh=logo.height*lw/logo.width}ctx.drawImage(logo,(W-lw)/2,y,lw,lh);y+=lh+18}
+  ctx.textAlign="center";ctx.fillStyle=INK;ctx.font="700 30px "+SERIF;ctx.fillText("BORN FOR SERVICE SCHOOL OF MINISTRY",W/2,y+26);y+=40;
+  ctx.fillStyle=MUTE;ctx.font="18px "+SANS;ctx.fillText("Lusaka, Zambia",W/2,y+18);y+=36;
+  ctx.fillStyle=INK;ctx.fillRect(PAD,y,W-2*PAD,3);ctx.fillRect(PAD,y+7,W-2*PAD,1);y+=40;
+  ctx.font="700 20px "+SANS;ctx.fillText("OFFICIAL RESULTS",W/2,y+16);y+=40;
+  ctx.font="700 "+(firstPg?38:32)+"px "+SERIF;var tl=wrap(ctx,o.title+(firstPg?"":" (continued)"),W-2*PAD),lh2=firstPg?48:42;tl.forEach(function(l){ctx.fillText(l,W/2,y+lh2-12);y+=lh2});
+  ctx.fillStyle=MUTE;ctx.font="19px "+SANS;ctx.fillText(o.kind+"   |   Maximum mark: "+fm(o.max)+"   |   Pass mark: 50%   |   "+today,W/2,y+14);y+=44;
+  if(firstPg){y=para(ctx,y,o.opening)+30}
+  ctx.fillStyle=INK;ctx.fillRect(PAD,y,W-2*PAD,46);ctx.fillStyle="#fff";ctx.font="700 16px "+SANS;ctx.textAlign="left";ctx.fillText("NO.",PAD+18,y+29);ctx.fillText("STUDENT NAME",PAD+80,y+29);ctx.textAlign="right";ctx.fillText("MARK",W-PAD-190,y+29);ctx.fillText("PERCENTAGE",W-PAD-18,y+29);y+=46;
+  pages[pi].forEach(function(r,i){var gi=start+i;
+   if(np>0&&nf>0&&gi===np){ctx.fillStyle=INK;ctx.fillRect(PAD,y-3,W-2*PAD,6)}
+   ctx.textAlign="left";ctx.fillStyle=MUTE;ctx.font="20px "+SANS;ctx.fillText(String(gi+1),PAD+18,y+RH/2+7);
+   ctx.fillStyle=INK;ctx.font="21px "+SANS;ctx.fillText(fit(ctx,r.name,520),PAD+80,y+RH/2+7);
+   ctx.textAlign="right";ctx.font="700 21px "+SANS;ctx.fillText(fm(r.mark)+" / "+fm(o.max),W-PAD-190,y+RH/2+7);ctx.font="21px "+SANS;ctx.fillText(Math.round(pct(r))+"%",W-PAD-18,y+RH/2+7);
+   if(!(np>0&&nf>0&&gi+1===np)){ctx.fillStyle=LINE;ctx.fillRect(PAD,y+RH-1,W-2*PAD,1)}
+   y+=RH});
+  ctx.fillStyle=INK;ctx.fillRect(PAD,y,W-2*PAD,2);y+=36;
+  if(last){if(np>0)y=msg(ctx,y,"TO THOSE WHO PASSED",o.passMsg);if(nf>0)y=msg(ctx,y,"TO THOSE WHO DID NOT REACH THE PASS MARK",o.failMsg);
+   ctx.fillStyle=LINE;ctx.fillRect(PAD,y,W-2*PAD,1);y+=30;y=para(ctx,y,o.closing)+16}
+  else{ctx.textAlign="center";ctx.fillStyle=MUTE;ctx.font="italic 19px "+SERIF;ctx.fillText("Results continue on the next page",W/2,y+10);y+=44}
+  y+=18;ctx.fillStyle=INK;ctx.fillRect(PAD,y,W-2*PAD,1);ctx.fillStyle=MUTE;ctx.font="16px "+SANS;ctx.textAlign="left";ctx.fillText("Born For Service School of Ministry  |  Official results",PAD,y+30);
+  if(pages.length>1){ctx.textAlign="right";ctx.fillText("Page "+(pi+1)+" of "+pages.length,W-PAD,y+30)}
+  return y+64}
  return Promise.all(pages.map(function(_,pi){return new Promise(function(res,rej){var c0=document.createElement("canvas");c0.width=W;c0.height=10;var H=draw(c0.getContext("2d"),pi,6000),c=document.createElement("canvas");c.width=W;c.height=H;draw(c.getContext("2d"),pi,H);
   c.toBlob(function(b){b?res(b):rej(new Error("Could not create the results image."))},"image/jpeg",.92)})}))}
 function lesDrop(path){return path?tok().then(function(k){return fetch(BFS_URL+"/storage/v1/object/lesson-audio/"+path,{method:"DELETE",headers:{apikey:BFS_KEY,Authorization:"Bearer "+k}})}):0}
