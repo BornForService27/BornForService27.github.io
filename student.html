@@ -189,10 +189,10 @@ html{color-scheme:light}
 <p style="margin:14px 0 0"><a href="#" id="fb">Back to login</a></p></section>
 
 <section id="vPw" class="card narrow hide"><h2>Choose a new password</h2>
-<p class="mute">For your safety, replace the temporary password before continuing.</p>
+<p class="mute">For your safety, replace the temporary password before continuing.</p><p id="pwwho" class="mute" style="font-size:.85rem;margin-top:-6px"></p>
 <label for="p1">New password (at least 8 characters)</label><input id="p1" type="password" autocomplete="new-password">
 <label for="p2">Repeat new password</label><input id="p2" type="password" autocomplete="new-password">
-<button id="sv" class="btn full">Save and continue</button><div id="m2" class="msg"></div></section>
+<button id="sv" class="btn full">Save and continue</button><div id="m2" class="msg"></div><p style="margin:14px 0 0"><a href="#" id="pwb">Not you? Back to login</a></p></section>
 
 <section id="vApp" class="hide">
 <div class="cu">Current user: <span id="cu"></span></div>
@@ -212,7 +212,7 @@ function fmt(d){return d?new Date(d).toLocaleDateString("en-GB",{day:"numeric",m
 function boot(){sb.auth.getSession().then(function(r){if(!r.data.session)return show("vLogin");
  sb.rpc("bfs_link_me").then(function(x){me=x.data;
   if(x.error||!me||!me.id){sb.auth.signOut();show("vLogin");$("m1").textContent="No admitted student record matches this account. Contact the BFS office.";return}
-  me.must_change?show("vPw"):load()})})}
+  me.must_change?(function(){$("pwwho").textContent="Signed in with student number "+(me.student_number||"")+".";show("vPw")})():load()})})}
 $("go").onclick=function(){var id=$("id").value.trim(),pw=$("pw").value,m=$("m1");if(pw.trim().toLowerCase()===FIRST.toLowerCase())pw=FIRST;CUR=pw;m.textContent="";
  if(!id||!pw){m.textContent="Enter your login and password.";return}
  var bad=function(){m.textContent="Login or password is not correct."};m.textContent="Please wait…";
@@ -591,6 +591,7 @@ function load(){show("vApp");$("cu").textContent=me.student_number;
    return"<tr><td>"+esc(f[1])+"</td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(p?'<span class="ok">Paid</span> <small class="mute">'+fmt(p.paid_at)+"</small>":'<span class="bad">Not paid</span>')+"</td></tr>"}).join("")+"</table></div>"})}
 
 var REC=/type=recovery/.test(location.hash);
+$("pwb").onclick=function(e){e.preventDefault();sb.auth.signOut().then(function(){me=null;CUR="";REC=false;history.replaceState(null,"",location.pathname);$("p1").value=$("p2").value=$("pw").value=$("id").value="";$("m1").textContent="";$("m2").textContent="";show("vLogin")})};
 $("fg").onclick=function(e){e.preventDefault();$("m3").textContent="";show("vFg")};
 $("fb").onclick=function(e){e.preventDefault();show("vLogin")};
 $("fs").onclick=function(){var em=$("fe").value.trim(),m=$("m3");if(em.indexOf("@")<1){m.style.color="";m.textContent="Enter your email address.";return}
