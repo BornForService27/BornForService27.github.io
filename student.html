@@ -599,7 +599,7 @@ function load(){show("vApp");$("cu").textContent=me.student_number;
  Promise.all([sb.from("receipts").select("*"),
   sb.from("bfs_courses").select("*").order("sort"),
   sb.from("bfs_lessons").select("*").order("sort")]).then(function(r){
-  var rc=(r[0].data||[]).filter(function(x){return!x.deleted_at}),fl=[];RCL=rc;renderLessons(r[1].data||[],r[2].data||[]);
+  var rc=(r[0].data||[]).filter(function(x){return!x.deleted_at}),fl=[];RCL=rc;(function(){var mp=me.programme,cs=(r[1].data||[]).filter(function(c){var g=c.programme||"all";return g==="all"||g===mp}),ok={};cs.forEach(function(c){ok[c.id]=1});renderLessons(cs,(r[2].data||[]).filter(function(l){return ok[l.course_id]}))})();
   if(me.nrc_path)fl.unshift({description:"NRC / Passport copy (submitted with your application)",file_name:me.nrc_path.split("/").pop(),file_path:me.nrc_path,bucket:"nrc"});
   if(me.status==="verified"&&me.student_number&&PROG[me.programme])fl.unshift({description:"Admission Letter",file_name:letterFile(me),file_path:"letter",bucket:"letter",created_at:me.admitted_at});
   rc.forEach(function(x){fl.push({description:"Receipt "+x.receipt_no+": "+(feeOf(x.item).label),file_name:receiptFile(x),file_path:String(x.id),bucket:"receipt",created_at:x.paid_at})});
