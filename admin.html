@@ -54,6 +54,28 @@ label{display:block;font-weight:600;margin:12px 0 4px}
 .paper h2{margin:10px 0 8px;font-size:12.5pt}.paper h3{margin:8px 0 4px;font-size:10.5pt}.paper p{margin:0 0 6px}
 .paper td{padding:4px 9px}.paper table{margin:6px 0}.paper li{margin:4px 0}.paper .sg{height:19mm;margin:2px 0 0}
 .sgb{break-inside:avoid;page-break-inside:avoid}@page{size:A4;margin:12mm}}
+.fxcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:14px 0}
+.fxc{border:1px solid var(--line);border-radius:6px;padding:12px 14px;background:#fff}
+.fxc small{display:block;color:var(--mute);font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.fxc b{display:block;font:600 1.45rem Lora,Georgia,serif;color:var(--head);margin-top:2px}
+.fxc.al b{color:#B3261E}.fxof{font:500 .9rem Inter,sans-serif;color:var(--mute)}
+.fxtool{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin:6px 0 12px}@media(max-width:640px){.fxtool{grid-template-columns:1fr}}
+.fxw{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
+.fxt{width:100%;border-collapse:collapse;font-size:.92rem}
+.fxt th{background:var(--alt);text-align:left;padding:10px 12px;font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);white-space:nowrap;border-bottom:1px solid var(--line)}
+.fxt td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.fxt tr:last-child td{border-bottom:0}
+.fxt tbody tr[data-k]{cursor:pointer}.fxt tbody tr[data-k]:hover,.fxt tbody tr[data-k]:focus{background:#F3FAF9;outline:0}
+.fxt td small{display:block;color:var(--mute);font-size:.78rem}
+.fxt .num{text-align:right;white-space:nowrap}
+.fxt .fxtot td{background:var(--alt)}
+.fxt button{padding:5px 10px;font-size:.78rem;margin:2px 4px 2px 0}.fxact{white-space:nowrap}
+.fxchip,.fxbadge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.8rem;font-weight:600;white-space:nowrap}
+.fxchip.ok,.fxbadge.paid{background:#E2F5EC;color:#12703E}
+.fxchip.no,.fxbadge.none{background:#EEF1F6;color:#5B6475}
+.fxbadge.part{background:#FFF3D6;color:#8A5A00}
+.fxbar{height:7px;border-radius:4px;background:#DDE5E3;overflow:hidden;min-width:90px}.fxbar i{display:block;height:100%;background:var(--teal)}
+.fxh{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between}
 </style>
 </head>
 <body>
@@ -71,12 +93,12 @@ label{display:block;font-weight:600;margin:12px 0 4px}
 </div>
 
 <div id="app" hidden>
-  <div class="tabs"><button class="on" data-t="apps">Applications</button><button data-t="reg">Registrations<span id="gbadge"></span></button><button data-t="stu">Students</button><button data-t="rec">Receipts</button><button data-t="portal">Portal</button><button data-t="bin" title="Recycle bin" aria-label="Recycle bin" style="margin-left:auto;display:inline-flex;align-items:center;gap:6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg><span id="bbadge"></span></button></div>
+  <div class="tabs"><button class="on" data-t="apps">Applications</button><button data-t="reg">Registrations<span id="gbadge"></span></button><button data-t="stu">Students</button><button data-t="fin">Students Financial Records</button><button data-t="rec">Receipts</button><button data-t="portal">Portal</button><button data-t="bin" title="Recycle bin" aria-label="Recycle bin" style="margin-left:auto;display:inline-flex;align-items:center;gap:6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg><span id="bbadge"></span></button></div>
 
   <section id="portal" hidden>
     <style>.cr2{border:1px solid var(--line);border-radius:4px;padding:12px 14px;margin:10px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cr2 .t{flex:1;min-width:200px}.cr2 small{display:block}.pt2{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.pt2 button{background:#fff;color:var(--ink);border-color:var(--line)}.pt2 button.on{background:var(--head);color:#fff;border-color:var(--head)}#pbody table{width:100%;border-collapse:collapse}#pbody th,#pbody td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);font-size:.92rem}#pbody td input{padding:6px;max-width:110px}.pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px} .pbar{height:16px;border-radius:9px;background:#DDE5E3;overflow:hidden;margin:8px 0 4px} .pbar i{display:block;height:100%;width:0;background:var(--teal);transition:width .15s}</style>
     <h2>Students Portal</h2>
-    <div class="pt2" id="ptabs"><button class="on" data-v="tl">Timeline</button><button data-v="les">Lessons</button><button data-v="gr">Grades</button><button data-v="fee">Fees</button><button data-v="log">Logins</button></div>
+    <div class="pt2" id="ptabs"><button class="on" data-v="tl">Timeline</button><button data-v="les">Lessons</button><button data-v="gr">Grades</button><button data-v="log">Logins</button></div>
     <div id="pbody"></div>
   </section>
 
@@ -104,15 +126,19 @@ label{display:block;font-weight:600;margin:12px 0 4px}
     <div id="list"></div>
   </section>
 
+  <section id="fin" hidden><div id="finb"></div></section>
+
   <section id="rec" hidden>
     <h2>Record a payment and send a receipt</h2>
     <p class="mute">When you have confirmed an Airtel Money payment (the student forwards the Airtel Money receipt on WhatsApp), record it here. Then send the receipt by email or WhatsApp.</p>
     <form id="rf" class="card">
       <div class="grid2">
         <div><label for="ra">Student</label><select id="ra" required></select></div>
-        <div><label for="ri">Item</label><select id="ri"><option value="id_card">BFS Identity Card (K100)</option><option value="tshirt">BFS T-shirt (K200)</option></select></div>
+        <div><label for="ri">Item</label><select id="ri"><option value="id_card">BFS Identity Card (K100)</option><option value="tshirt">BFS T-shirt (K200)</option><option value="graduation">Graduation fee (instalment)</option></select></div>
         <div id="szw" hidden><label for="rs">T-shirt size</label><select id="rs"><option value="">Choose</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option></select></div>
+        <div id="amw" hidden><label for="ram">Amount received (K)</label><input id="ram" type="number" min="1" step="1" inputmode="numeric"></div>
         <div><label for="rr">Airtel Money reference (optional)</label><input id="rr"></div>
+        <div id="gbal" class="mute" hidden style="grid-column:1/-1;margin-bottom:6px"></div>
       </div>
       <p><button type="submit">Record payment</button></p>
     </form>
@@ -413,7 +439,7 @@ $("list").addEventListener("click",function(e){var dl=e.target.getAttribute&&e.t
 
 document.querySelectorAll(".tabs button").forEach(function(b){b.onclick=function(){
   document.querySelectorAll(".tabs button").forEach(function(x){x.classList.toggle("on",x===b)});
-  var t=b.getAttribute("data-t");$("apps").hidden=t!=="apps";$("rec").hidden=t!=="rec";$("stu").hidden=t!=="stu";$("regs").hidden=t!=="reg";$("bin").hidden=t!=="bin";$("portal").hidden=t!=="portal";if(t==="portal"&&window.bfsPortal)bfsPortal();if(t==="rec"&&!stuRows)loadStudents()}});
+  var t=b.getAttribute("data-t");$("apps").hidden=t!=="apps";$("rec").hidden=t!=="rec";$("stu").hidden=t!=="stu";$("regs").hidden=t!=="reg";$("bin").hidden=t!=="bin";$("portal").hidden=t!=="portal";if(t==="portal"&&window.bfsPortal)bfsPortal();$("fin").hidden=t!=="fin";if(t==="rec"&&!stuRows)loadStudents();if(t==="fin"){renderFin();if(!stuRows)loadStudents().then(renderFin)}}});
 
 
 var stuRows=null,stuProg="All",syncBusy=false,tried={},binReceipts=[];
@@ -570,17 +596,20 @@ function fillStudents(){
   o.sort(function(x,y){return String(x.n).localeCompare(String(y.n))});
   $("ra").innerHTML=o.length?o.map(function(x){return '<option value="'+x.v+'">'+esc(x.n)+(x.no?" ("+esc(x.no)+")":"")+'</option>'}).join(""):'<option value="">No students yet</option>';
 }
-$("ri").onchange=function(){$("szw").hidden=$("ri").value!=="tshirt"};
+$("ri").onchange=function(){$("szw").hidden=$("ri").value!=="tshirt";$("amw").hidden=$("ri").value!=="graduation";recHint()};
+$("ra").onchange=function(){recHint()};
 $("rf").addEventListener("submit",function(e){e.preventDefault();
   var v=$("ra").value,isS=v.slice(0,2)==="s:",a=isS?(stuRows||[]).filter(function(x){return x.id===v.slice(2)})[0]:apps.filter(function(x){return x.id===v.slice(2)})[0];if(!a){show("rmsg","Choose a student first.",1);return}
   var item=$("ri").value,size=$("rs").value;
   if(item==="tshirt"&&!size){show("rmsg","Choose the T-shirt size.",1);return}
-  sb.from("receipts").insert(Object.assign({application_id:isS?(a.application_id||null):a.id,student_name:a.full_name,item:item,amount:FEES[item].amount,size:item==="tshirt"?size:null,ref:$("rr").value.trim()||null},isS?{student_id:a.id}:{})).select().single().then(function(r){
+  var amt=0,key=item;if(item==="graduation"){amt=Math.floor(Number($("ram").value));if(!(amt>0)){show("rmsg","Enter the amount received for the graduation fee.",1);return}key="graduation_"+Date.now().toString(36)}else amt=FEES[item].amount;
+  sb.from("receipts").insert(Object.assign({application_id:isS?(a.application_id||null):a.id,student_name:a.full_name,item:key,amount:amt,size:item==="tshirt"?size:null,ref:$("rr").value.trim()||null},isS?{student_id:a.id}:{})).select().single().then(function(r){
     if(r.error){show("rmsg",r.error.code==="23505"?"A payment for this item is already recorded for this student.":"Could not save the payment.",1)}
-    else{show("rmsg","Payment recorded. Receipt "+r.data.receipt_no+" is being emailed to the student automatically and now shows in their portal.");$("rf").reset();$("szw").hidden=true;autoReceipt(r.data);loadReceipts()}
+    else{show("rmsg","Payment recorded. Receipt "+r.data.receipt_no+" is being emailed to the student automatically. It now shows in their portal and in Students Financial Records.");$("rf").reset();$("szw").hidden=true;$("amw").hidden=true;$("gbal").hidden=true;receipts.push(r.data);autoReceipt(r.data);loadReceipts()}
   })
 });
 function renderReceipts(){
+  if($("fin")&&!$("fin").hidden)renderFin();
   $("rlist").innerHTML=receipts.length?receipts.map(function(r){
     var a=receiptApp(r),it=feeOf(r.item),t=receiptText(r),wa=a.whatsapp||a.phone||"";
     return '<div class="card"><div class="row"><b style="flex:1">'+esc(r.receipt_no)+'</b><span class="mute">'+fmtDate(r.paid_at)+'</span></div>'
@@ -596,6 +625,103 @@ $("rlist").addEventListener("click",function(e){var t=e.target,pid=t.getAttribut
   if(!confirm("Move this receipt to the Recycle bin?"))return;
   softDel("receipts",id,"deleted_at",loadReceipts)
 });
+/* ===== Students Financial Records ===== */
+var FIN={sel:null,q:"",prog:"All",st:"All",P:[]};
+var FSTAT={paid:"Fully paid",part:"Partly paid",none:"No payment"};
+function money(n){return"K"+Number(n||0).toLocaleString("en-US")}
+function finCalc(p){
+ var rs=receipts.filter(function(r){return(p.sid&&r.student_id===p.sid)||(p.aid&&r.application_id===p.aid)}).sort(function(x,y){return String(y.paid_at).localeCompare(String(x.paid_at))});
+ var gt=/advanced/i.test(p.prog)?3000:1500,idc=null,ts=null,gp=0,tot=0;
+ rs.forEach(function(r){tot+=Number(r.amount)||0;if(r.item==="id_card")idc=idc||r;else if(r.item==="tshirt")ts=ts||r;else if(/^graduation/.test(r.item||""))gp+=Number(r.amount)||0});
+ p.rs=rs;p.idc=idc;p.ts=ts;p.gp=gp;p.gt=gt;p.total=tot;p.due=100+200+gt;
+ p.out=(idc?0:100)+(ts?0:200)+Math.max(0,gt-gp);
+ p.status=!rs.length?"none":(p.out<=0?"paid":"part")}
+function finPeople(){
+ var rows=(stuRows||[]).filter(function(x){return x.status==="verified"&&act(x)&&!x.reg_deleted_at}),
+  acc=apps.filter(function(a){return a.status==="accepted"&&act(a)}),aid={};acc.forEach(function(a){aid[a.id]=1});
+ var o=acc.map(function(a){return{key:"a:"+a.id,sid:null,aid:a.id,rec:a}})
+  .concat(rows.filter(function(x){return!(x.application_id&&aid[x.application_id])}).map(function(x){return{key:"s:"+x.id,sid:x.id,aid:x.application_id||null,rec:x}}));
+ o.forEach(function(p){p.name=p.rec.full_name||"";p.no=p.rec.student_number||"";p.prog=p.rec.programme||"";finCalc(p)});
+ o.sort(function(x,y){return String(x.name).localeCompare(String(y.name))});return o}
+function fxBadge(s){return'<span class="fxbadge '+s+'">'+FSTAT[s]+'</span>'}
+function fxChip(r){return r?'<span class="fxchip ok">&#10003; Paid</span>':'<span class="fxchip no">Not paid</span>'}
+function fxBar(paid,total){var pc=total?Math.min(100,Math.round(paid/total*100)):0;return'<div class="fxbar"><i style="width:'+pc+'%"></i></div><small>'+money(paid)+' of '+money(total)+'</small>'}
+function renderFin(){var box=$("finb");if(!box)return;var P=finPeople();FIN.P=P;
+ if(FIN.sel){var p=P.filter(function(x){return x.key===FIN.sel})[0];if(p){finDetail(box,p);return}FIN.sel=null}
+ var tot=0,nr=0,np=0,nf=0;P.forEach(function(p){tot+=p.total;nr+=p.rs.length;if(p.rs.length)np++;if(p.status==="paid")nf++});
+ function opt(v,l,cur){return'<option value="'+v+'"'+(cur===v?" selected":"")+'>'+l+'</option>'}
+ box.innerHTML='<h2>Students Financial Records</h2><p class="mute">Every payment recorded under Receipts is saved here automatically and shows in the student&rsquo;s portal. Select a student to see their full financial record.</p>'
+ +'<div class="fxcards"><div class="fxc"><small>Total received</small><b>'+money(tot)+'</b></div><div class="fxc"><small>Receipts issued</small><b>'+nr+'</b></div><div class="fxc"><small>Students who have paid</small><b>'+np+'<span class="fxof"> of '+P.length+'</span></b></div><div class="fxc"><small>Fully paid</small><b>'+nf+'</b></div></div>'
+ +'<div class="fxtool"><input id="fxq" type="search" placeholder="Search by name or student number" aria-label="Search students" value="'+esc(FIN.q)+'">'
+ +'<select id="fxp" aria-label="Programme">'+opt("All","All programmes",FIN.prog)+opt("Certificate","Certificate",FIN.prog)+opt("Advanced Certificate","Advanced Certificate",FIN.prog)+'</select>'
+ +'<select id="fxs" aria-label="Payment status">'+opt("All","All statuses",FIN.st)+opt("paid","Fully paid",FIN.st)+opt("part","Partly paid",FIN.st)+opt("none","No payment",FIN.st)+'</select></div><div id="finl"></div>';
+ finList()}
+function finList(){var q=FIN.q.trim().toLowerCase(),l=FIN.P.filter(function(p){return(!q||(p.name+" "+p.no).toLowerCase().indexOf(q)>-1)&&(FIN.prog==="All"||p.prog===FIN.prog)&&(FIN.st==="All"||p.status===FIN.st)});
+ $("finl").innerHTML=l.length?'<p class="mute" style="margin:0 0 6px">Showing '+l.length+' of '+FIN.P.length+' students</p><div class="fxw"><table class="fxt"><thead><tr><th>Student</th><th>Programme</th><th>ID card</th><th>T-shirt</th><th>Graduation fee</th><th class="num">Total paid</th><th>Status</th></tr></thead><tbody>'
+  +l.map(function(p){return'<tr data-k="'+esc(p.key)+'" tabindex="0" title="Open financial record"><td><b>'+esc(p.name)+'</b><small>'+esc(p.no||"No number yet")+'</small></td><td>'+esc(p.prog||"-")+'</td><td>'+fxChip(p.idc)+'</td><td>'+fxChip(p.ts)+'</td><td>'+fxBar(p.gp,p.gt)+'</td><td class="num"><b>'+money(p.total)+'</b></td><td>'+fxBadge(p.status)+'</td></tr>'}).join("")+'</tbody></table></div>'
+  :'<div class="msg">'+(FIN.P.length?"No students match your search.":"There are no admitted students yet.")+'</div>'}
+function finDetail(box,p){var a=p.rec,rows=p.rs,wa=a.whatsapp||a.phone||"";
+ function frow(label,req,paid,done,extra){return'<tr><td><b>'+esc(label)+'</b>'+(extra?'<small>'+extra+'</small>':'')+'</td><td class="num">'+money(req)+'</td><td class="num">'+money(paid)+'</td><td class="num">'+money(Math.max(0,req-paid))+'</td><td>'+(done?'<span class="fxchip ok">&#10003; Paid</span>':(paid>0?'<span class="fxbadge part">Part paid</span>':'<span class="fxchip no">Not paid</span>'))+'</td></tr>'}
+ var contact=[wa?esc(wa):"",a.email?esc(a.email):""].filter(Boolean).join(" &middot; ");
+ box.innerHTML='<p><button class="o" data-fa="back">&larr; All students</button></p>'
+ +'<div class="card"><div class="fxh"><div><h3 style="margin:0">'+esc(p.name)+'</h3><div class="mute">'+esc(p.no||"No student number yet")+' &middot; '+esc(p.prog||"Programme not set")+'</div>'+(contact?'<div class="mute">'+contact+'</div>':'')+'</div><div>'+fxBadge(p.status)+'</div></div>'
+ +'<div class="fxcards"><div class="fxc"><small>Total paid</small><b>'+money(p.total)+'</b></div><div class="fxc'+(p.out>0?' al':'')+'"><small>Balance on all fees</small><b>'+money(p.out)+'</b></div><div class="fxc"><small>Receipts issued</small><b>'+rows.length+'</b></div></div>'
+ +'<div class="row"><button data-fa="pay">Record a payment</button><button class="o" data-fa="stmt">Download statement (PDF)</button></div></div>'
+ +'<h3>Fee statement</h3><div class="fxw"><table class="fxt"><thead><tr><th>Item</th><th class="num">Required</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>'
+ +frow("BFS Identity Card",100,p.idc?Number(p.idc.amount):0,!!p.idc,p.idc?"Paid on "+esc(fmtDate(p.idc.paid_at)):"")
+ +frow("BFS T-shirt",200,p.ts?Number(p.ts.amount):0,!!p.ts,p.ts?"Size "+esc(p.ts.size||"-")+" &middot; paid on "+esc(fmtDate(p.ts.paid_at)):"")
+ +frow("Graduation fee ("+(/advanced/i.test(p.prog)?"Advanced Certificate":"Certificate")+")",p.gt,p.gp,p.gp>=p.gt,'<div style="margin-top:4px">'+fxBar(p.gp,p.gt)+'</div>')
+ +'<tr class="fxtot"><td><b>Total</b></td><td class="num"><b>'+money(p.due)+'</b></td><td class="num"><b>'+money(p.total)+'</b></td><td class="num"><b>'+money(p.out)+'</b></td><td></td></tr></tbody></table></div>'
+ +'<h3 style="margin-top:22px">Payment history</h3>'
+ +(rows.length?'<div class="fxw"><table class="fxt"><thead><tr><th>Date</th><th>Receipt no.</th><th>Item</th><th>Reference</th><th class="num">Amount</th><th>Receipt sent</th><th></th></tr></thead><tbody>'
+  +rows.map(function(r){return'<tr><td style="white-space:nowrap">'+esc(fmtDate(r.paid_at))+'</td><td style="white-space:nowrap"><b>'+esc(r.receipt_no)+'</b></td><td>'+esc(feeOf(r.item).label)+(r.size?' ('+esc(r.size)+')':'')+'</td><td>'+esc(r.ref||"-")+'</td><td class="num"><b>'+money(r.amount)+'</b></td><td>'+(r.emailed_at?'<span class="fxchip ok">Emailed</span><small>'+esc(fmtDate(r.emailed_at))+'</small>':'<span class="fxchip no">Not emailed</span>')+'</td><td class="fxact"><button class="o" data-fa="pdf" data-id="'+esc(r.id)+'">PDF</button>'+(a.email?'<button class="o" data-fa="mail" data-id="'+esc(r.id)+'">Email</button>':'')+(wa?'<button class="wa" data-fa="wa" data-id="'+esc(r.id)+'">WhatsApp</button>':'')+'</td></tr>'}).join("")+'</tbody></table></div>'
+  :'<div class="msg">No payments have been recorded for this student yet. Use <b>Record a payment</b> above.</div>')}
+function finPay(){var p=FIN.P.filter(function(x){return x.key===FIN.sel})[0];if(!p)return;
+ document.querySelector('.tabs button[data-t="rec"]').click();$("ra").value=p.key;recHint();window.scrollTo(0,0)}
+function recHint(){var h=$("gbal");if(!h)return;if($("ri").value!=="graduation"){h.hidden=true;return}
+ var p=finPeople().filter(function(x){return x.key===$("ra").value})[0];if(!p){h.hidden=true;return}
+ h.hidden=false;h.textContent=p.name+" has paid "+money(p.gp)+" of the "+money(p.gt)+" graduation fee. Balance: "+money(Math.max(0,p.gt-p.gp))+"."}
+function statementPdf(p){var J=window.jspdf;if(!J){alert("The PDF tool could not load. Check your internet connection and refresh the page.");return null}
+ var d=new J.jsPDF({unit:"mm",format:"a4"}),T=[15,143,134],L=16,y=0,a=p.rec;
+ d.setFillColor(T[0],T[1],T[2]);d.rect(0,0,210,5,"F");d.addImage(LOGO,"JPEG",L,12,24,24);
+ d.setTextColor(T[0],T[1],T[2]);d.setFont("helvetica","bold");d.setFontSize(15);d.text("BORN FOR SERVICE",44,21);d.text("SCHOOL OF MINISTRY",44,28);
+ d.setTextColor(60,60,60);d.setFont("helvetica","italic");d.setFontSize(9);d.text("Created for Good Works (Ephesians 2:10)",44,33);
+ d.setFont("helvetica","normal");d.text("Lusaka, Zambia  |  Bornforservice27@gmail.com",44,38);
+ d.setDrawColor(T[0],T[1],T[2]);d.setLineWidth(.6);d.line(L,43,194,43);
+ d.setTextColor(20,20,20);d.setFont("helvetica","bold");d.setFontSize(16);d.text("STUDENT FINANCIAL STATEMENT",105,54,{align:"center"});
+ d.setFont("helvetica","normal");d.setFontSize(9);d.setTextColor(80,80,80);d.text("Statement date: "+fmtDate(new Date()),194,61,{align:"right"});
+ y=66;d.setLineWidth(.2);d.setDrawColor(150,150,150);
+ var info=[["Student name",p.name],["Student number",p.no||"-"],["Programme",(PROG[p.prog]||{}).name||p.prog||"-"],["Phone / WhatsApp",a.whatsapp||a.phone||"-"]];if(a.email)info.push(["Email",a.email]);
+ info.forEach(function(r){var ln=d.splitTextToSize(String(r[1]),124),h=Math.max(8,ln.length*4.6+3.4);d.setFillColor(243,246,244);d.rect(L,y,50,h,"FD");d.rect(L+50,y,128,h);d.setTextColor(30,30,30);d.setFont("helvetica","bold");d.setFontSize(9);d.text(r[0],L+2,y+5.4);d.setFont("helvetica","normal");d.text(ln,L+52,y+5.4);y+=h});
+ y+=9;
+ function sub(t){if(y>262){d.addPage();y=18}d.setTextColor(T[0],T[1],T[2]);d.setFont("helvetica","bold");d.setFontSize(11);d.text(t,L,y);y+=3.5}
+ function tr(vals,ws,al,o){o=o||{};var h=7.5,x=L;if(y+h>278){d.addPage();y=18}d.setDrawColor(150,150,150);d.setLineWidth(.2);
+  vals.forEach(function(v,i){if(o.fill){d.setFillColor(o.fill[0],o.fill[1],o.fill[2]);d.rect(x,y,ws[i],h,"FD")}else d.rect(x,y,ws[i],h);
+   d.setFont("helvetica",o.bold?"bold":"normal");d.setFontSize(8.5);var c=o.color||[30,30,30];d.setTextColor(c[0],c[1],c[2]);
+   var s=d.splitTextToSize(String(v),ws[i]-4)[0]||"";if(al[i]==="r")d.text(s,x+ws[i]-2,y+5,{align:"right"});else d.text(s,x+2,y+5);x+=ws[i]});y+=h}
+ var W=[255,255,255],w1=[62,28,28,28,32],a1=["l","r","r","r","l"];
+ sub("Fee summary");tr(["Item","Required","Paid","Balance","Status"],w1,a1,{fill:T,bold:1,color:W});
+ function fr(l,req,paid,done){tr([l,money(req),money(paid),money(Math.max(0,req-paid)),done?"Paid":(paid>0?"Part paid":"Not paid")],w1,a1)}
+ fr("BFS Identity Card",100,p.idc?Number(p.idc.amount):0,!!p.idc);fr("BFS T-shirt"+(p.ts&&p.ts.size?" (size "+p.ts.size+")":""),200,p.ts?Number(p.ts.amount):0,!!p.ts);fr("Graduation fee",p.gt,p.gp,p.gp>=p.gt);
+ tr(["Total",money(p.due),money(p.total),money(p.out),""],w1,a1,{bold:1,fill:[243,246,244]});
+ y+=9;var w2=[36,34,50,36,22],a2=["l","l","l","l","r"];sub("Payment history");
+ tr(["Date","Receipt no.","Item","Reference","Amount"],w2,a2,{fill:T,bold:1,color:W});
+ if(p.rs.length){p.rs.slice().reverse().forEach(function(r){tr([fmtDate(r.paid_at),r.receipt_no||"-",feeOf(r.item).label+(r.size?" ("+r.size+")":""),r.ref||"-",money(r.amount)],w2,a2)});tr(["Total paid","","","",money(p.total)],w2,a2,{bold:1,fill:[243,246,244]})}
+ else tr(["No payments have been recorded yet.","","","",""],w2,a2);
+ var n=d.getNumberOfPages();for(var i=1;i<=n;i++){d.setPage(i);d.setDrawColor(T[0],T[1],T[2]);d.setLineWidth(.4);d.line(L,284,194,284);d.setTextColor(90,90,90);d.setFont("helvetica","normal");d.setFontSize(8);d.text("Born For Service School of Ministry  |  Computer-generated statement  |  Page "+i+" of "+n,105,289,{align:"center"})}
+ return d}
+$("finb").addEventListener("click",function(e){var t=e.target,b=t.closest?t.closest("[data-fa]"):null;
+ if(b){var a=b.getAttribute("data-fa"),id=b.getAttribute("data-id"),r=id?receipts.filter(function(x){return x.id===id})[0]:null;
+  if(a==="back"){FIN.sel=null;renderFin()}
+  else if(a==="pay")finPay();
+  else if(a==="stmt"){var p=FIN.P.filter(function(x){return x.key===FIN.sel})[0],d=p&&statementPdf(p);if(d)d.save("BFS-Statement-"+(p.no||"student")+"-"+String(p.name).replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"")+".pdf")}
+  else if(a==="pdf"&&r)savePdf(r);else if(a==="mail"&&r)autoReceipt(r);else if(a==="wa"&&r)sharePdf(r);
+  return}
+ var tr=t.closest?t.closest("tr[data-k]"):null;if(tr){FIN.sel=tr.getAttribute("data-k");renderFin();window.scrollTo(0,0)}});
+$("finb").addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.getAttribute&&e.target.getAttribute("data-k")){FIN.sel=e.target.getAttribute("data-k");renderFin();window.scrollTo(0,0)}});
+$("finb").addEventListener("input",function(e){if(e.target.id==="fxq"){FIN.q=e.target.value;finList()}});
+$("finb").addEventListener("change",function(e){if(e.target.id==="fxp"){FIN.prog=e.target.value;finList()}else if(e.target.id==="fxs"){FIN.st=e.target.value;finList()}});
+
 init();
 </script>
 <script>

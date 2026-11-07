@@ -255,7 +255,7 @@ $("sv").onclick=function(){var a=$("p1").value,b=$("p2").value,m=$("m2");m.textC
 $("out").onclick=function(){sb.auth.signOut().then(function(){me=null;$("pw").value="";show("vLogin")})};
 var TT={t:"Timeline",p:"Personal Information",l:"Lessons",g:"Grades",f:"Fees",d:"Documents"},PN={t:"tT",p:"tP",l:"tL",g:"tG",f:"tF",d:"tD"};
 function go(t){[].forEach.call($("menu").children,function(b){if(b.id!=="out")b.classList.toggle("on",b.getAttribute("data-t")===t)});
- Object.keys(PN).forEach(function(k){$(PN[k]).classList.toggle("hide",k!==t)});window.scrollTo(0,0)}
+ Object.keys(PN).forEach(function(k){$(PN[k]).classList.toggle("hide",k!==t)});window.scrollTo(0,0);if(t==="f"||t==="d")refreshPay()}
 function loadGrades(){
   var KL={assignment:"Assignment",test:"Test",exam:"Exam"};
   function autoNote(a){var n=(me.full_name||"").trim().split(/\s+/)[0]||"Student",pc=Math.round(a.max_mark?a.mark/a.max_mark*100:0),t=a.title;
@@ -599,19 +599,27 @@ function load(){show("vApp");$("cu").textContent=me.student_number;
  Promise.all([sb.from("receipts").select("*"),
   sb.from("bfs_courses").select("*").order("sort"),
   sb.from("bfs_lessons").select("*").order("sort")]).then(function(r){
-  var rc=(r[0].data||[]).filter(function(x){return!x.deleted_at}),fl=[];RCL=rc;(function(){var mp=me.programme,cs=(r[1].data||[]).filter(function(c){var g=c.programme||"all";return g==="all"||g===mp}),ok={};cs.forEach(function(c){ok[c.id]=1});renderLessons(cs,(r[2].data||[]).filter(function(l){return ok[l.course_id]}))})();
+  var rc=(r[0].data||[]).filter(function(x){return!x.deleted_at});RCL=rc;(function(){var mp=me.programme,cs=(r[1].data||[]).filter(function(c){var g=c.programme||"all";return g==="all"||g===mp}),ok={};cs.forEach(function(c){ok[c.id]=1});renderLessons(cs,(r[2].data||[]).filter(function(l){return ok[l.course_id]}))})();
+  paintPay(rc);loadGrades();startPay()
+})}
+
+var PAYSIG="";
+function paySig(rc){return rc.map(function(x){return x.id+":"+x.amount}).sort().join("|")}
+function paintPay(rc){var fl=[];PAYSIG=paySig(rc);RCL=rc;
   if(me.nrc_path)fl.unshift({description:"NRC / Passport copy (submitted with your application)",file_name:me.nrc_path.split("/").pop(),file_path:me.nrc_path,bucket:"nrc"});
   if(me.status==="verified"&&me.student_number&&PROG[me.programme])fl.unshift({description:"Admission Letter",file_name:letterFile(me),file_path:"letter",bucket:"letter",created_at:me.admitted_at});
   rc.forEach(function(x){fl.push({description:"Receipt "+x.receipt_no+": "+(feeOf(x.item).label),file_name:receiptFile(x),file_path:String(x.id),bucket:"receipt",created_at:x.paid_at})});
   $("tD").innerHTML=fl.length?'<div class="tw"><table><tr><th>Document</th><th>File</th><th>Date added</th><th>Size</th><th></th></tr>'+fl.map(function(f){return"<tr><td>"+esc(f.description)+"</td><td>"+esc(f.file_name||"")+"</td><td>"+fmt(f.created_at)+"</td><td>"+(f.size_bytes?Math.max(.1,f.size_bytes/1048576).toFixed(1)+" MB":"")+'</td><td><button class="btn sm" data-p="'+esc(f.file_path)+'" data-b="'+(f.bucket||"student-files")+'" data-n="'+esc(f.file_name||"")+'">Download</button></td></tr>'}).join("")+"</table></div>":'<p class="mute">No documents have been added for you yet.</p>';
-  loadGrades();
   var paid={};rc.forEach(function(x){paid[x.item]=x});
   var adv=/advanced/i.test(me.programme||"");
   var fees=[["id_card","BFS Identity Card",100],["tshirt","BFS T-shirt",200],["graduation","Graduation fee ("+(adv?"Advanced Certificate":"Certificate")+")",adv?3000:1500]];
   $("tF").innerHTML="<p class='mute'>Tuition is free. These are the only fees.</p><p class='mute'>To pay, follow the payment instructions in your admission letter or on the BFS website. Your receipt appears here and under Documents once your payment is recorded.</p><div class='tw'><table><tr><th>Item</th><th>Amount</th><th>Status</th></tr>"+fees.map(function(f){var p=paid[f[0]];
    if(f[0]==="graduation"){var gp=0;rc.forEach(function(x){if(/^graduation/.test(x.item))gp+=Number(x.amount)});var rm=Math.max(0,f[2]-gp),pc=Math.min(100,Math.round(gp/f[2]*100));
     return"<tr><td>"+esc(f[1])+"</td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(rm<=0?'<span class="ok">Fully paid</span>':'<span class="bad">Balance K'+rm.toLocaleString("en-US")+'</span> <small class="mute">(paid K'+gp.toLocaleString("en-US")+")</small>")+'<div class="bar"><i style="width:'+pc+'%"></i></div></td></tr>'}
-   return"<tr><td>"+esc(f[1])+"</td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(p?'<span class="ok">Paid</span> <small class="mute">'+fmt(p.paid_at)+"</small>":'<span class="bad">Not paid</span>')+"</td></tr>"}).join("")+"</table></div>"})}
+   return"<tr><td>"+esc(f[1])+"</td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(p?'<span class="ok">Paid</span> <small class="mute">'+fmt(p.paid_at)+"</small>":'<span class="bad">Not paid</span>')+"</td></tr>"}).join("")+"</table></div>"}
+function refreshPay(){if(!me||$("vApp").classList.contains("hide"))return;
+ sb.from("receipts").select("*").then(function(r){if(!r||r.error)return;var rc=(r.data||[]).filter(function(x){return!x.deleted_at});if(paySig(rc)===PAYSIG)return;paintPay(rc)})}
+function startPay(){if(window.__payT)return;window.__payT=setInterval(refreshPay,30000);document.addEventListener("visibilitychange",function(){if(!document.hidden)refreshPay()});window.addEventListener("focus",refreshPay)}
 
 var REC=/type=recovery/.test(location.hash);
 $("pwb").onclick=function(e){e.preventDefault();sb.auth.signOut().then(function(){me=null;CUR="";REC=false;history.replaceState(null,"",location.pathname);$("p1").value=$("p2").value=$("pw").value=$("id").value="";$("m1").textContent="";$("m2").textContent="";show("vLogin")})};
