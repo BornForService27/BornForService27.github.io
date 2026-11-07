@@ -59,7 +59,7 @@ label{display:block;font-weight:600;margin:12px 0 4px}
 .fxc small{display:block;color:var(--mute);font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
 .fxc b{display:block;font:600 1.45rem Lora,Georgia,serif;color:var(--head);margin-top:2px}
 .fxc.al b{color:#B3261E}.fxof{font:500 .9rem Inter,sans-serif;color:var(--mute)}
-.fxtool{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin:6px 0 12px}@media(max-width:640px){.fxtool{grid-template-columns:1fr}}
+.fxtool{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin:6px 0 12px}@media(max-width:640px){.fxtool{grid-template-columns:1fr}}
 .fxw{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
 .fxt{width:100%;border-collapse:collapse;font-size:.92rem}
 .fxt th{background:var(--alt);text-align:left;padding:10px 12px;font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);white-space:nowrap;border-bottom:1px solid var(--line)}
@@ -134,8 +134,9 @@ label{display:block;font-weight:600;margin:12px 0 4px}
     <form id="rf" class="card">
       <div class="grid2">
         <div><label for="ra">Student</label><select id="ra" required></select></div>
-        <div><label for="ri">Item</label><select id="ri"><option value="id_card">BFS Identity Card (K100)</option><option value="tshirt">BFS T-shirt (K200)</option><option value="graduation">Graduation fee (instalment)</option></select></div>
+        <div><label for="ri">Item</label><select id="ri"><option value="id_card">BFS Identity Card (K100)</option><option value="tshirt">BFS T-shirt (K200)</option><option value="graduation">Graduation fee (instalment)</option><option value="other">Other payment (trip, funeral contribution, etc.)</option></select></div>
         <div id="szw" hidden><label for="rs">T-shirt size</label><select id="rs"><option value="">Choose</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option></select></div>
+        <div id="opw" hidden><label for="rot">Type of payment</label><input id="rot" list="rotl" maxlength="60" placeholder="e.g. Trip, Funeral contribution" autocomplete="off"><datalist id="rotl"><option value="Trip contribution"><option value="Funeral contribution"><option value="Offering"><option value="Donation"><option value="Books"><option value="Event registration"></datalist></div>
         <div id="amw" hidden><label for="ram">Amount received (K)</label><input id="ram" type="number" min="1" step="1" inputmode="numeric"></div>
         <div><label for="rr">Airtel Money reference (optional)</label><input id="rr"></div>
         <div id="gbal" class="mute" hidden style="grid-column:1/-1;margin-bottom:6px"></div>
@@ -170,7 +171,7 @@ var SIGN="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAaQAAADmCAYAAACaq/HmAACo
 var SIGNER={name:"Brother Christopher Tandeo",title:"Founder and Overseer"};
 var PROG={Certificate:{name:"Certificate in Biblical Studies and Christian Ministry",length:"1 year",fee:"K1,500"},"Advanced Certificate":{name:"Advanced Certificate in Biblical Studies and Christian Ministry",length:"2 years",fee:"K3,000"}};
 var FEES={id_card:{label:"BFS Identity Card",amount:100},tshirt:{label:"BFS T-shirt",amount:200}};
-function feeOf(i){return FEES[i]||(/^graduation/.test(i||"")?{label:"Graduation fee (instalment)",amount:0}:{label:i})}
+function feeOf(i){return FEES[i]||(/^graduation/.test(i||"")?{label:"Graduation fee (instalment)",amount:0}:/^other:/.test(i||"")?{label:String(i).slice(6).split("~")[0]||"Other payment",amount:0}:{label:i})}
 function gradInfo(r){if(!/^graduation/.test(r.item||""))return null;var a=receiptApp(r),total=/advanced/i.test(a.programme||"")?3000:1500,paid=0;
  receipts.forEach(function(x){if(/^graduation/.test(x.item)&&String(x.paid_at)<=String(r.paid_at)&&(x.id===r.id||(r.student_id&&x.student_id===r.student_id)||(r.application_id&&x.application_id===r.application_id)))paid+=Number(x.amount)});
  return{total:total,paid:paid,remaining:Math.max(0,total-paid)}}
@@ -581,7 +582,7 @@ function renderBin(){
   $("binlist").innerHTML=sec("Applications",A,function(a){return it("a",a.id,a.full_name,esc(LABEL[a.status]||a.status)+" &middot; deleted "+esc(fmtDate(a.deleted_at))+(a.status==="accepted"?" &middot; the student stays in the register":""),true)})
    +sec("Registrations",R,function(s){return it("r",s.id,s.full_name,esc(s.student_number)+" &middot; "+esc(s.status==="verified"?"verified, the student stays in the register":s.status)+" &middot; deleted "+esc(fmtDate(s.reg_deleted_at)),s.status!=="verified")})
    +sec("Students",S,function(s){return it("s",s.id,s.full_name,esc(s.student_number)+" &middot; "+esc(s.programme||"")+" &middot; deleted "+esc(fmtDate(s.deleted_at)),true)})
-   +sec("Receipts",C,function(r){return it("c",r.id,(r.student_name||"Receipt")+(r.receipt_no?" ("+r.receipt_no+")":""),esc(r.item||"")+" &middot; deleted "+esc(fmtDate(r.deleted_at)),true)})}
+   +sec("Receipts",C,function(r){return it("c",r.id,(r.student_name||"Receipt")+(r.receipt_no?" ("+r.receipt_no+")":""),esc(feeOf(r.item).label)+" &middot; deleted "+esc(fmtDate(r.deleted_at)),true)})}
 $("bin").addEventListener("click",function(e){var t=e.target,rs=t.getAttribute&&t.getAttribute("data-brs"),bd=t.getAttribute&&t.getAttribute("data-bdel"),v=rs||bd;if(!v)return;
   var k=v.split(":")[0],id=v.split(":")[1];
   if(rs){if(k==="a")restoreRow("applications",id,"deleted_at",loadApps);else if(k==="r")restoreRow("students",id,"reg_deleted_at",loadStudents);else if(k==="s")restoreRow("students",id,"deleted_at",loadStudents);else restoreRow("receipts",id,"deleted_at",loadReceipts);return}
@@ -596,16 +597,16 @@ function fillStudents(){
   o.sort(function(x,y){return String(x.n).localeCompare(String(y.n))});
   $("ra").innerHTML=o.length?o.map(function(x){return '<option value="'+x.v+'">'+esc(x.n)+(x.no?" ("+esc(x.no)+")":"")+'</option>'}).join(""):'<option value="">No students yet</option>';
 }
-$("ri").onchange=function(){$("szw").hidden=$("ri").value!=="tshirt";$("amw").hidden=$("ri").value!=="graduation";recHint()};
+$("ri").onchange=function(){$("szw").hidden=$("ri").value!=="tshirt";$("amw").hidden=!($("ri").value==="graduation"||$("ri").value==="other");$("opw").hidden=$("ri").value!=="other";recHint()};
 $("ra").onchange=function(){recHint()};
 $("rf").addEventListener("submit",function(e){e.preventDefault();
   var v=$("ra").value,isS=v.slice(0,2)==="s:",a=isS?(stuRows||[]).filter(function(x){return x.id===v.slice(2)})[0]:apps.filter(function(x){return x.id===v.slice(2)})[0];if(!a){show("rmsg","Choose a student first.",1);return}
   var item=$("ri").value,size=$("rs").value;
   if(item==="tshirt"&&!size){show("rmsg","Choose the T-shirt size.",1);return}
-  var amt=0,key=item;if(item==="graduation"){amt=Math.floor(Number($("ram").value));if(!(amt>0)){show("rmsg","Enter the amount received for the graduation fee.",1);return}key="graduation_"+Date.now().toString(36)}else amt=FEES[item].amount;
+  var amt=0,key=item;if(item==="graduation"){amt=Math.floor(Number($("ram").value));if(!(amt>0)){show("rmsg","Enter the amount received for the graduation fee.",1);return}key="graduation_"+Date.now().toString(36)}else if(item==="other"){var ty=$("rot").value.trim().replace(/[~:]+/g," ").replace(/\s+/g," ");if(!ty){show("rmsg","Enter the type of payment, for example Trip or Funeral contribution.",1);return}amt=Math.floor(Number($("ram").value));if(!(amt>0)){show("rmsg","Enter the amount received.",1);return}key="other:"+ty+"~"+Date.now().toString(36)}else amt=FEES[item].amount;
   sb.from("receipts").insert(Object.assign({application_id:isS?(a.application_id||null):a.id,student_name:a.full_name,item:key,amount:amt,size:item==="tshirt"?size:null,ref:$("rr").value.trim()||null},isS?{student_id:a.id}:{})).select().single().then(function(r){
     if(r.error){show("rmsg",r.error.code==="23505"?"A payment for this item is already recorded for this student.":"Could not save the payment.",1)}
-    else{show("rmsg","Payment recorded. Receipt "+r.data.receipt_no+" is being emailed to the student automatically. It now shows in their portal and in Students Financial Records.");$("rf").reset();$("szw").hidden=true;$("amw").hidden=true;$("gbal").hidden=true;receipts.push(r.data);autoReceipt(r.data);loadReceipts()}
+    else{show("rmsg","Payment recorded. Receipt "+r.data.receipt_no+" is being emailed to the student automatically. It now shows in their portal and in Students Financial Records.");$("rf").reset();$("szw").hidden=true;$("amw").hidden=true;$("opw").hidden=true;$("gbal").hidden=true;receipts.push(r.data);autoReceipt(r.data);loadReceipts()}
   })
 });
 function renderReceipts(){
@@ -626,14 +627,13 @@ $("rlist").addEventListener("click",function(e){var t=e.target,pid=t.getAttribut
   softDel("receipts",id,"deleted_at",loadReceipts)
 });
 /* ===== Students Financial Records ===== */
-var FIN={sel:null,q:"",prog:"All",st:"All",P:[]};
-var FSTAT={paid:"Fully paid",part:"Partly paid",none:"No payment"};
+var FIN={sel:null,q:"",prog:"All",P:[]};
 function money(n){return"K"+Number(n||0).toLocaleString("en-US")}
 function finCalc(p){
  var rs=receipts.filter(function(r){return(p.sid&&r.student_id===p.sid)||(p.aid&&r.application_id===p.aid)}).sort(function(x,y){return String(y.paid_at).localeCompare(String(x.paid_at))});
- var gt=/advanced/i.test(p.prog)?3000:1500,idc=null,ts=null,gp=0,tot=0;
- rs.forEach(function(r){tot+=Number(r.amount)||0;if(r.item==="id_card")idc=idc||r;else if(r.item==="tshirt")ts=ts||r;else if(/^graduation/.test(r.item||""))gp+=Number(r.amount)||0});
- p.rs=rs;p.idc=idc;p.ts=ts;p.gp=gp;p.gt=gt;p.total=tot;p.due=100+200+gt;
+ var gt=/advanced/i.test(p.prog)?3000:1500,idc=null,ts=null,gp=0,tot=0,op=0,ol=[];
+ rs.forEach(function(r){tot+=Number(r.amount)||0;if(r.item==="id_card")idc=idc||r;else if(r.item==="tshirt")ts=ts||r;else if(/^graduation/.test(r.item||""))gp+=Number(r.amount)||0;else if(/^other:/.test(r.item||"")){op+=Number(r.amount)||0;ol.push(r)}});
+ p.rs=rs;p.idc=idc;p.ts=ts;p.gp=gp;p.gt=gt;p.total=tot;p.op=op;p.ol=ol;p.due=100+200+gt;p.feesPaid=(idc?Number(idc.amount)||0:0)+(ts?Number(ts.amount)||0:0)+gp;
  p.out=(idc?0:100)+(ts?0:200)+Math.max(0,gt-gp);
  p.status=!rs.length?"none":(p.out<=0?"paid":"part")}
 function finPeople(){
@@ -643,35 +643,31 @@ function finPeople(){
   .concat(rows.filter(function(x){return!(x.application_id&&aid[x.application_id])}).map(function(x){return{key:"s:"+x.id,sid:x.id,aid:x.application_id||null,rec:x}}));
  o.forEach(function(p){p.name=p.rec.full_name||"";p.no=p.rec.student_number||"";p.prog=p.rec.programme||"";finCalc(p)});
  o.sort(function(x,y){return String(x.name).localeCompare(String(y.name))});return o}
-function fxBadge(s){return'<span class="fxbadge '+s+'">'+FSTAT[s]+'</span>'}
 function fxChip(r){return r?'<span class="fxchip ok">&#10003; Paid</span>':'<span class="fxchip no">Not paid</span>'}
 function fxBar(paid,total){var pc=total?Math.min(100,Math.round(paid/total*100)):0;return'<div class="fxbar"><i style="width:'+pc+'%"></i></div><small>'+money(paid)+' of '+money(total)+'</small>'}
 function renderFin(){var box=$("finb");if(!box)return;var P=finPeople();FIN.P=P;
  if(FIN.sel){var p=P.filter(function(x){return x.key===FIN.sel})[0];if(p){finDetail(box,p);return}FIN.sel=null}
- var tot=0,nr=0,np=0,nf=0;P.forEach(function(p){tot+=p.total;nr+=p.rs.length;if(p.rs.length)np++;if(p.status==="paid")nf++});
  function opt(v,l,cur){return'<option value="'+v+'"'+(cur===v?" selected":"")+'>'+l+'</option>'}
  box.innerHTML='<h2>Students Financial Records</h2><p class="mute">Every payment recorded under Receipts is saved here automatically and shows in the student&rsquo;s portal. Select a student to see their full financial record.</p>'
- +'<div class="fxcards"><div class="fxc"><small>Total received</small><b>'+money(tot)+'</b></div><div class="fxc"><small>Receipts issued</small><b>'+nr+'</b></div><div class="fxc"><small>Students who have paid</small><b>'+np+'<span class="fxof"> of '+P.length+'</span></b></div><div class="fxc"><small>Fully paid</small><b>'+nf+'</b></div></div>'
  +'<div class="fxtool"><input id="fxq" type="search" placeholder="Search by name or student number" aria-label="Search students" value="'+esc(FIN.q)+'">'
- +'<select id="fxp" aria-label="Programme">'+opt("All","All programmes",FIN.prog)+opt("Certificate","Certificate",FIN.prog)+opt("Advanced Certificate","Advanced Certificate",FIN.prog)+'</select>'
- +'<select id="fxs" aria-label="Payment status">'+opt("All","All statuses",FIN.st)+opt("paid","Fully paid",FIN.st)+opt("part","Partly paid",FIN.st)+opt("none","No payment",FIN.st)+'</select></div><div id="finl"></div>';
+ +'<select id="fxp" aria-label="Programme">'+opt("All","All programmes",FIN.prog)+opt("Certificate","Certificate",FIN.prog)+opt("Advanced Certificate","Advanced Certificate",FIN.prog)+'</select></div><div id="finl"></div>';
  finList()}
-function finList(){var q=FIN.q.trim().toLowerCase(),l=FIN.P.filter(function(p){return(!q||(p.name+" "+p.no).toLowerCase().indexOf(q)>-1)&&(FIN.prog==="All"||p.prog===FIN.prog)&&(FIN.st==="All"||p.status===FIN.st)});
- $("finl").innerHTML=l.length?'<p class="mute" style="margin:0 0 6px">Showing '+l.length+' of '+FIN.P.length+' students</p><div class="fxw"><table class="fxt"><thead><tr><th>Student</th><th>Programme</th><th>ID card</th><th>T-shirt</th><th>Graduation fee</th><th class="num">Total paid</th><th>Status</th></tr></thead><tbody>'
-  +l.map(function(p){return'<tr data-k="'+esc(p.key)+'" tabindex="0" title="Open financial record"><td><b>'+esc(p.name)+'</b><small>'+esc(p.no||"No number yet")+'</small></td><td>'+esc(p.prog||"-")+'</td><td>'+fxChip(p.idc)+'</td><td>'+fxChip(p.ts)+'</td><td>'+fxBar(p.gp,p.gt)+'</td><td class="num"><b>'+money(p.total)+'</b></td><td>'+fxBadge(p.status)+'</td></tr>'}).join("")+'</tbody></table></div>'
+function finList(){var q=FIN.q.trim().toLowerCase(),l=FIN.P.filter(function(p){return(!q||(p.name+" "+p.no).toLowerCase().indexOf(q)>-1)&&(FIN.prog==="All"||p.prog===FIN.prog)});
+ $("finl").innerHTML=l.length?'<p class="mute" style="margin:0 0 6px">Showing '+l.length+' of '+FIN.P.length+' students</p><div class="fxw"><table class="fxt"><thead><tr><th>Student</th><th>Programme</th><th>ID card</th><th>T-shirt</th><th>Graduation fee</th><th>Other payments</th></tr></thead><tbody>'
+  +l.map(function(p){return'<tr data-k="'+esc(p.key)+'" tabindex="0" title="Open financial record"><td><b>'+esc(p.name)+'</b><small>'+esc(p.no||"No number yet")+'</small></td><td>'+esc(p.prog||"-")+'</td><td>'+fxChip(p.idc)+'</td><td>'+fxChip(p.ts)+'</td><td>'+fxBar(p.gp,p.gt)+'</td><td>'+(p.ol.length?'<b>'+money(p.op)+'</b><small>'+p.ol.length+' payment'+(p.ol.length===1?"":"s")+'</small>':'<span class="mute">-</span>')+'</td></tr>'}).join("")+'</tbody></table></div>'
   :'<div class="msg">'+(FIN.P.length?"No students match your search.":"There are no admitted students yet.")+'</div>'}
 function finDetail(box,p){var a=p.rec,rows=p.rs,wa=a.whatsapp||a.phone||"";
  function frow(label,req,paid,done,extra){return'<tr><td><b>'+esc(label)+'</b>'+(extra?'<small>'+extra+'</small>':'')+'</td><td class="num">'+money(req)+'</td><td class="num">'+money(paid)+'</td><td class="num">'+money(Math.max(0,req-paid))+'</td><td>'+(done?'<span class="fxchip ok">&#10003; Paid</span>':(paid>0?'<span class="fxbadge part">Part paid</span>':'<span class="fxchip no">Not paid</span>'))+'</td></tr>'}
  var contact=[wa?esc(wa):"",a.email?esc(a.email):""].filter(Boolean).join(" &middot; ");
  box.innerHTML='<p><button class="o" data-fa="back">&larr; All students</button></p>'
- +'<div class="card"><div class="fxh"><div><h3 style="margin:0">'+esc(p.name)+'</h3><div class="mute">'+esc(p.no||"No student number yet")+' &middot; '+esc(p.prog||"Programme not set")+'</div>'+(contact?'<div class="mute">'+contact+'</div>':'')+'</div><div>'+fxBadge(p.status)+'</div></div>'
- +'<div class="fxcards"><div class="fxc"><small>Total paid</small><b>'+money(p.total)+'</b></div><div class="fxc'+(p.out>0?' al':'')+'"><small>Balance on all fees</small><b>'+money(p.out)+'</b></div><div class="fxc"><small>Receipts issued</small><b>'+rows.length+'</b></div></div>'
+ +'<div class="card"><div class="fxh"><div><h3 style="margin:0">'+esc(p.name)+'</h3><div class="mute">'+esc(p.no||"No student number yet")+' &middot; '+esc(p.prog||"Programme not set")+'</div>'+(contact?'<div class="mute">'+contact+'</div>':'')+'</div></div>'
+ +'<div class="fxcards"><div class="fxc"><small>Total paid</small><b>'+money(p.total)+'</b></div><div class="fxc'+(p.out>0?' al':'')+'"><small>Balance on all fees</small><b>'+money(p.out)+'</b></div><div class="fxc"><small>Other payments</small><b>'+money(p.op)+'</b></div><div class="fxc"><small>Receipts issued</small><b>'+rows.length+'</b></div></div>'
  +'<div class="row"><button data-fa="pay">Record a payment</button><button class="o" data-fa="stmt">Download statement (PDF)</button></div></div>'
  +'<h3>Fee statement</h3><div class="fxw"><table class="fxt"><thead><tr><th>Item</th><th class="num">Required</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>'
  +frow("BFS Identity Card",100,p.idc?Number(p.idc.amount):0,!!p.idc,p.idc?"Paid on "+esc(fmtDate(p.idc.paid_at)):"")
  +frow("BFS T-shirt",200,p.ts?Number(p.ts.amount):0,!!p.ts,p.ts?"Size "+esc(p.ts.size||"-")+" &middot; paid on "+esc(fmtDate(p.ts.paid_at)):"")
  +frow("Graduation fee ("+(/advanced/i.test(p.prog)?"Advanced Certificate":"Certificate")+")",p.gt,p.gp,p.gp>=p.gt,'<div style="margin-top:4px">'+fxBar(p.gp,p.gt)+'</div>')
- +'<tr class="fxtot"><td><b>Total</b></td><td class="num"><b>'+money(p.due)+'</b></td><td class="num"><b>'+money(p.total)+'</b></td><td class="num"><b>'+money(p.out)+'</b></td><td></td></tr></tbody></table></div>'
+ +'<tr class="fxtot"><td><b>Total</b></td><td class="num"><b>'+money(p.due)+'</b></td><td class="num"><b>'+money(p.feesPaid)+'</b></td><td class="num"><b>'+money(p.out)+'</b></td><td></td></tr></tbody></table></div>'
  +'<h3 style="margin-top:22px">Payment history</h3>'
  +(rows.length?'<div class="fxw"><table class="fxt"><thead><tr><th>Date</th><th>Receipt no.</th><th>Item</th><th>Reference</th><th class="num">Amount</th><th>Receipt sent</th><th></th></tr></thead><tbody>'
   +rows.map(function(r){return'<tr><td style="white-space:nowrap">'+esc(fmtDate(r.paid_at))+'</td><td style="white-space:nowrap"><b>'+esc(r.receipt_no)+'</b></td><td>'+esc(feeOf(r.item).label)+(r.size?' ('+esc(r.size)+')':'')+'</td><td>'+esc(r.ref||"-")+'</td><td class="num"><b>'+money(r.amount)+'</b></td><td>'+(r.emailed_at?'<span class="fxchip ok">Emailed</span><small>'+esc(fmtDate(r.emailed_at))+'</small>':'<span class="fxchip no">Not emailed</span>')+'</td><td class="fxact"><button class="o" data-fa="pdf" data-id="'+esc(r.id)+'">PDF</button>'+(a.email?'<button class="o" data-fa="mail" data-id="'+esc(r.id)+'">Email</button>':'')+(wa?'<button class="wa" data-fa="wa" data-id="'+esc(r.id)+'">WhatsApp</button>':'')+'</td></tr>'}).join("")+'</tbody></table></div>'
@@ -703,7 +699,7 @@ function statementPdf(p){var J=window.jspdf;if(!J){alert("The PDF tool could not
  sub("Fee summary");tr(["Item","Required","Paid","Balance","Status"],w1,a1,{fill:T,bold:1,color:W});
  function fr(l,req,paid,done){tr([l,money(req),money(paid),money(Math.max(0,req-paid)),done?"Paid":(paid>0?"Part paid":"Not paid")],w1,a1)}
  fr("BFS Identity Card",100,p.idc?Number(p.idc.amount):0,!!p.idc);fr("BFS T-shirt"+(p.ts&&p.ts.size?" (size "+p.ts.size+")":""),200,p.ts?Number(p.ts.amount):0,!!p.ts);fr("Graduation fee",p.gt,p.gp,p.gp>=p.gt);
- tr(["Total",money(p.due),money(p.total),money(p.out),""],w1,a1,{bold:1,fill:[243,246,244]});
+ tr(["Total fees",money(p.due),money(p.feesPaid),money(p.out),""],w1,a1,{bold:1,fill:[243,246,244]});
  y+=9;var w2=[36,34,50,36,22],a2=["l","l","l","l","r"];sub("Payment history");
  tr(["Date","Receipt no.","Item","Reference","Amount"],w2,a2,{fill:T,bold:1,color:W});
  if(p.rs.length){p.rs.slice().reverse().forEach(function(r){tr([fmtDate(r.paid_at),r.receipt_no||"-",feeOf(r.item).label+(r.size?" ("+r.size+")":""),r.ref||"-",money(r.amount)],w2,a2)});tr(["Total paid","","","",money(p.total)],w2,a2,{bold:1,fill:[243,246,244]})}
@@ -720,7 +716,7 @@ $("finb").addEventListener("click",function(e){var t=e.target,b=t.closest?t.clos
  var tr=t.closest?t.closest("tr[data-k]"):null;if(tr){FIN.sel=tr.getAttribute("data-k");renderFin();window.scrollTo(0,0)}});
 $("finb").addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.getAttribute&&e.target.getAttribute("data-k")){FIN.sel=e.target.getAttribute("data-k");renderFin();window.scrollTo(0,0)}});
 $("finb").addEventListener("input",function(e){if(e.target.id==="fxq"){FIN.q=e.target.value;finList()}});
-$("finb").addEventListener("change",function(e){if(e.target.id==="fxp"){FIN.prog=e.target.value;finList()}else if(e.target.id==="fxs"){FIN.st=e.target.value;finList()}});
+$("finb").addEventListener("change",function(e){if(e.target.id==="fxp"){FIN.prog=e.target.value;finList()}});
 
 init();
 </script>

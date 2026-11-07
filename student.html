@@ -340,7 +340,7 @@ function admissionPdf(a){
 }
 var RCL=[];function receiptApp(){return me}
 var FEES={id_card:{label:"BFS Identity Card",amount:100},tshirt:{label:"BFS T-shirt",amount:200}};
-function feeOf(i){return FEES[i]||(/^graduation/.test(i||"")?{label:"Graduation fee (instalment)",amount:0}:{label:i})}
+function feeOf(i){return FEES[i]||(/^graduation/.test(i||"")?{label:"Graduation fee (instalment)",amount:0}:/^other:/.test(i||"")?{label:String(i).slice(6).split("~")[0]||"Other payment",amount:0}:{label:i})}
 function gradInfo(r){if(!/^graduation/.test(r.item||""))return null;var total=/advanced/i.test(me.programme||"")?3000:1500,paid=0;
  RCL.forEach(function(x){if(/^graduation/.test(x.item)&&(x.id===r.id||String(x.paid_at)<=String(r.paid_at)))paid+=Number(x.amount)});
  return{total:total,paid:paid,remaining:Math.max(0,total-paid)}}
@@ -616,7 +616,8 @@ function paintPay(rc){var fl=[];PAYSIG=paySig(rc);RCL=rc;
   $("tF").innerHTML="<p class='mute'>Tuition is free. These are the only fees.</p><p class='mute'>To pay, follow the payment instructions in your admission letter or on the BFS website. Your receipt appears here and under Documents once your payment is recorded.</p><div class='tw'><table><tr><th>Item</th><th>Amount</th><th>Status</th></tr>"+fees.map(function(f){var p=paid[f[0]];
    if(f[0]==="graduation"){var gp=0;rc.forEach(function(x){if(/^graduation/.test(x.item))gp+=Number(x.amount)});var rm=Math.max(0,f[2]-gp),pc=Math.min(100,Math.round(gp/f[2]*100));
     return"<tr><td>"+esc(f[1])+"</td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(rm<=0?'<span class="ok">Fully paid</span>':'<span class="bad">Balance K'+rm.toLocaleString("en-US")+'</span> <small class="mute">(paid K'+gp.toLocaleString("en-US")+")</small>")+'<div class="bar"><i style="width:'+pc+'%"></i></div></td></tr>'}
-   return"<tr><td>"+esc(f[1])+"</td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(p?'<span class="ok">Paid</span> <small class="mute">'+fmt(p.paid_at)+"</small>":'<span class="bad">Not paid</span>')+"</td></tr>"}).join("")+"</table></div>"}
+   return"<tr><td>"+esc(f[1])+"</td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(p?'<span class="ok">Paid</span> <small class="mute">'+fmt(p.paid_at)+"</small>":'<span class="bad">Not paid</span>')+"</td></tr>"}).join("")+"</table></div>";var ot=rc.filter(function(x){return/^other:/.test(x.item||"")});
+if(ot.length)$("tF").innerHTML+='<h3 style="margin:22px 0 8px">Other payments</h3><div class="tw"><table><tr><th>Payment</th><th>Amount</th><th>Date</th></tr>'+ot.map(function(x){return"<tr><td>"+esc(feeOf(x.item).label)+"</td><td>K"+Number(x.amount).toLocaleString("en-US")+"</td><td>"+fmt(x.paid_at)+"</td></tr>"}).join("")+"</table></div>"}
 function refreshPay(){if(!me||$("vApp").classList.contains("hide"))return;
  sb.from("receipts").select("*").then(function(r){if(!r||r.error)return;var rc=(r.data||[]).filter(function(x){return!x.deleted_at});if(paySig(rc)===PAYSIG)return;paintPay(rc)})}
 function startPay(){if(window.__payT)return;window.__payT=setInterval(refreshPay,30000);document.addEventListener("visibilitychange",function(){if(!document.hidden)refreshPay()});window.addEventListener("focus",refreshPay)}
