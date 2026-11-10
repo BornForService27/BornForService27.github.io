@@ -81,6 +81,7 @@ label{display:block;font-weight:600;margin:12px 0 4px}
 .fxpill{border:1px solid var(--line);background:#fff;color:var(--ink);padding:6px 14px;border-radius:20px;font:500 .85rem Inter,sans-serif;cursor:pointer}
 .fxpill:hover{background:#F3FAF9}.fxpill b{margin-left:4px}.fxpill.on{background:var(--teal);border-color:var(--teal);color:#fff}
 .fxneg{color:#B3261E;font-weight:600}.fxt tfoot td{background:var(--alt);font-weight:600;border-top:1px solid var(--line)}
+.fxexp{display:flex;gap:8px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -673,21 +674,46 @@ function finTypeView(){var T=FIN.type,fixed=T==="id_card"||T==="tshirt"||T==="gr
  var all=FIN.P.filter(function(p){return(!q||(p.name+" "+p.no).toLowerCase().indexOf(q)>-1)&&(FIN.prog==="All"||p.prog===FIN.prog)}).map(function(p){
   var o=p.bt[T]||{n:0,amt:0},req=T==="id_card"?100:T==="tshirt"?200:T==="graduation"?p.gt:null,paid=o.amt,rc=p.rs.filter(function(r){return finType(r)===T});
   return{p:p,req:req,paid:paid,bal:req===null?null:Math.max(0,req-paid),st:paid<=0?"none":(req!==null&&paid<req?"part":"paid"),last:rc[0]?rc[0].paid_at:null,size:(rc.filter(function(r){return r.size})[0]||{}).size||""}});
- var cnt={all:all.length,paid:0,part:0,none:0},col=0,out=0;all.forEach(function(r){cnt[r.st]++;col+=r.paid;if(r.bal!==null)out+=r.bal});
+ var cnt={all:all.length,paid:0,part:0,none:0};all.forEach(function(r){cnt[r.st]++});
  var rows=all.filter(function(r){return FIN.pst==="all"||r.st===FIN.pst});FIN.rows=rows;
  function pill(k,l){return'<button type="button" class="fxpill'+(FIN.pst===k?" on":"")+'" data-fs="'+k+'">'+l+' <b>'+cnt[k]+'</b></button>'}
  var need=T==="id_card"?"K100 per student":T==="tshirt"?"K200 per student":T==="graduation"?"K1,500 Certificate &middot; K3,000 Advanced Certificate":"Amount varies by payment";
- var sr=0,sp=0,sb2=0;rows.forEach(function(r){sr+=r.req||0;sp+=r.paid;sb2+=r.bal||0});
- var cols=5+(T==="tshirt"?1:0)+2;
- $("finl").innerHTML='<div class="fxtitle"><div><h3>'+esc(finLabel(T))+'</h3><span class="mute">'+need+'</span></div><button type="button" class="o" data-fa="csv">Export CSV</button></div>'
-  +'<div class="fxcards"><div class="fxc"><small>Collected</small><b>'+money(col)+'</b></div>'+(fixed?'<div class="fxc'+(out>0?' al':'')+'"><small>Outstanding balance</small><b>'+money(out)+'</b></div>':'')+'<div class="fxc"><small>'+(fixed?'Fully paid':'Students who paid')+'</small><b>'+cnt.paid+'<span class="fxof"> of '+cnt.all+'</span></b></div></div>'
+ $("finl").innerHTML='<div class="fxtitle"><div><h3>'+esc(finLabel(T))+'</h3><span class="mute">'+need+'</span></div><div class="fxexp"><button type="button" class="o" data-fa="rpdf">Export PDF</button><button type="button" class="o" data-fa="csv">Export CSV</button></div></div>'
   +'<div class="fxpills">'+pill("all","All students")+pill("paid","Paid")+(fixed?pill("part","Part paid (balance)"):"")+pill("none","Not paid")+'</div>'
-  +(rows.length?'<div class="fxw"><table class="fxt"><thead><tr><th>Student</th><th>Programme</th>'+(T==="tshirt"?'<th>Size</th>':'')+'<th class="num">Required</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th><th>Last payment</th></tr></thead><tbody>'
+  +(rows.length?'<p class="mute" style="margin:0 0 6px">Showing '+rows.length+' of '+cnt.all+' students</p><div class="fxw"><table class="fxt"><thead><tr><th>Student</th><th>Programme</th>'+(T==="tshirt"?'<th>Size</th>':'')+'<th class="num">Required</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th><th>Last payment</th></tr></thead><tbody>'
    +rows.map(function(r){var st=r.st==="paid"?'<span class="fxchip ok">&#10003; Paid</span>':r.st==="part"?'<span class="fxbadge part">Part paid</span>':'<span class="fxchip no">Not paid</span>';
     return'<tr data-k="'+esc(r.p.key)+'" tabindex="0" title="Open financial record"><td><b>'+esc(r.p.name)+'</b><small>'+esc(r.p.no||"No number yet")+'</small></td><td>'+esc(r.p.prog||"-")+'</td>'+(T==="tshirt"?'<td>'+esc(r.size||"-")+'</td>':'')
      +'<td class="num">'+(r.req===null?'-':money(r.req))+'</td><td class="num">'+(r.paid?'<b>'+money(r.paid)+'</b>':'-')+'</td><td class="num">'+(r.bal===null?'-':(r.bal>0?'<span class="fxneg">'+money(r.bal)+'</span>':'-'))+'</td><td>'+st+'</td><td style="white-space:nowrap">'+(r.last?esc(fmtDate(r.last)):'-')+'</td></tr>'}).join("")
-   +'</tbody><tfoot><tr><td colspan="'+(T==="tshirt"?3:2)+'">'+rows.length+' student'+(rows.length===1?"":"s")+'</td><td class="num">'+(fixed?money(sr):'-')+'</td><td class="num">'+money(sp)+'</td><td class="num">'+(fixed?money(sb2):'-')+'</td><td colspan="2"></td></tr></tfoot></table></div>'
+   +'</tbody></table></div>'
   :'<div class="msg">No students in this view.</div>')}
+function finPdf(){var J=window.jspdf;if(!J){alert("The PDF tool could not load. Check your internet connection and refresh the page.");return}
+ var T=FIN.type,fixed=T==="id_card"||T==="tshirt"||T==="graduation",d=new J.jsPDF({unit:"mm",format:"a4",orientation:"landscape"}),TL=[15,143,134],L=12,TW=273,y,SL={paid:"Paid",part:"Part paid",none:"Not paid"};
+ var spec=fixed?[["Student",50,"l"],["Student no.",24,"l"],["Programme",38,"l"]].concat(T==="tshirt"?[["Size",14,"l"]]:[],[["Required",24,"r"],["Paid",24,"r"],["Balance",24,"r"],["Status",26,"l"],["Last payment",40,"l"]]):[["Student",70,"l"],["Student no.",30,"l"],["Programme",50,"l"],["Amount paid",30,"r"],["Status",30,"l"],["Last payment",50,"l"]];
+ var sum=0;spec.forEach(function(c){sum+=c[1]});spec.forEach(function(c){c[1]=c[1]*TW/sum});
+ var ws=spec.map(function(c){return c[1]}),al=spec.map(function(c){return c[2]});
+ d.setFillColor(TL[0],TL[1],TL[2]);d.rect(0,0,297,5,"F");d.addImage(LOGO,"JPEG",L,10,20,20);
+ d.setTextColor(TL[0],TL[1],TL[2]);d.setFont("helvetica","bold");d.setFontSize(14);d.text("BORN FOR SERVICE SCHOOL OF MINISTRY",36,18);
+ d.setTextColor(60,60,60);d.setFont("helvetica","italic");d.setFontSize(9);d.text("Created for Good Works (Ephesians 2:10)",36,24);d.setFont("helvetica","normal");d.text("Lusaka, Zambia  |  Bornforservice27@gmail.com",36,29);
+ d.setFontSize(9);d.text("Report date: "+fmtDate(new Date()),285,18,{align:"right"});
+ d.setDrawColor(TL[0],TL[1],TL[2]);d.setLineWidth(.6);d.line(L,34,285,34);
+ d.setTextColor(20,20,20);d.setFont("helvetica","bold");d.setFontSize(14);d.text("PAYMENT REPORT: "+finLabel(T).toUpperCase(),L,43);
+ d.setFont("helvetica","normal");d.setFontSize(9);d.setTextColor(80,80,80);
+ var need=T==="id_card"?"K100 per student":T==="tshirt"?"K200 per student":T==="graduation"?"K1,500 Certificate; K3,000 Advanced Certificate":"Amount varies by payment";
+ d.text("Required: "+need+"   |   Programme: "+(FIN.prog==="All"?"All programmes":FIN.prog)+"   |   Showing: "+({all:"All students",paid:"Paid",part:"Part paid (balance)",none:"Not paid"}[FIN.pst])+"   |   "+FIN.rows.length+" student"+(FIN.rows.length===1?"":"s"),L,49);
+ y=54;
+ function row(vals,o){o=o||{};var h=7.5,x=L;d.setLineWidth(.2);d.setDrawColor(150,150,150);
+  vals.forEach(function(v,i){var cl=(o.cols&&o.cols[i])||o.color||[30,30,30];if(o.fill){d.setFillColor(o.fill[0],o.fill[1],o.fill[2]);d.rect(x,y,ws[i],h,"FD")}else d.rect(x,y,ws[i],h);
+   d.setFont("helvetica",o.bold?"bold":"normal");d.setFontSize(8.5);d.setTextColor(cl[0],cl[1],cl[2]);var t=d.splitTextToSize(String(v),ws[i]-4)[0]||"";
+   if(al[i]==="r")d.text(t,x+ws[i]-2,y+5,{align:"right"});else d.text(t,x+2,y+5);x+=ws[i]});y+=h}
+ function head(){row(spec.map(function(c){return c[0]}),{fill:TL,bold:1,color:[255,255,255]})}
+ head();
+ if(!FIN.rows.length){row(["No students in this view."].concat(spec.slice(1).map(function(){return""})))}
+ FIN.rows.forEach(function(r){if(y+7.5>196){d.addPage();y=14;head()}
+  var stc=r.st==="paid"?[18,112,62]:r.st==="part"?[138,90,0]:[91,100,117],last=r.last?fmtDate(r.last):"-";
+  var v=fixed?[r.p.name,r.p.no||"-",r.p.prog||"-"].concat(T==="tshirt"?[r.size||"-"]:[],[money(r.req),r.paid?money(r.paid):"-",r.bal>0?money(r.bal):"-",SL[r.st],last]):[r.p.name,r.p.no||"-",r.p.prog||"-",r.paid?money(r.paid):"-",SL[r.st],last];
+  var cols={};cols[v.length-2]=stc;if(fixed&&r.bal>0)cols[v.length-3]=[179,38,30];row(v,{cols:cols})});
+ var n=d.getNumberOfPages();for(var i=1;i<=n;i++){d.setPage(i);d.setDrawColor(TL[0],TL[1],TL[2]);d.setLineWidth(.4);d.line(L,200,285,200);d.setTextColor(90,90,90);d.setFont("helvetica","normal");d.setFontSize(8);d.text("Born For Service School of Ministry  |  Computer-generated report  |  Page "+i+" of "+n,148.5,205,{align:"center"})}
+ d.save(finLabel(T).replace(/[^A-Za-z0-9]+/g,"-")+"-payment-report.pdf")}
 function finCsv(){var T=FIN.type,L={paid:"Paid",part:"Part paid",none:"Not paid"},h=["Student","Student number","Programme"].concat(T==="tshirt"?["Size"]:[],["Required (K)","Paid (K)","Balance (K)","Status","Last payment"]);
  var lines=[h].concat(FIN.rows.map(function(r){return[r.p.name,r.p.no,r.p.prog].concat(T==="tshirt"?[r.size]:[],[r.req===null?"":r.req,r.paid,r.bal===null?"":r.bal,L[r.st],r.last?fmtDate(r.last):""])}));
  var csv="\ufeff"+lines.map(function(l){return l.map(function(v){return'"'+String(v==null?"":v).replace(/"/g,'""')+'"'}).join(",")}).join("\r\n");
@@ -745,7 +771,7 @@ function statementPdf(p){var J=window.jspdf;if(!J){alert("The PDF tool could not
 $("finb").addEventListener("click",function(e){var t=e.target,fs=t.closest?t.closest("[data-fs]"):null;if(fs){FIN.pst=fs.getAttribute("data-fs");finList();return}var b=t.closest?t.closest("[data-fa]"):null;
  if(b){var a=b.getAttribute("data-fa"),id=b.getAttribute("data-id"),r=id?receipts.filter(function(x){return x.id===id})[0]:null;
   if(a==="back"){FIN.sel=null;renderFin()}
-  else if(a==="csv")finCsv()
+  else if(a==="csv")finCsv();else if(a==="rpdf")finPdf()
   else if(a==="pay")finPay();
   else if(a==="stmt"){var p=FIN.P.filter(function(x){return x.key===FIN.sel})[0],d=p&&statementPdf(p);if(d)d.save("BFS-Statement-"+(p.no||"student")+"-"+String(p.name).replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"")+".pdf")}
   else if(a==="pdf"&&r)savePdf(r);else if(a==="mail"&&r)autoReceipt(r);else if(a==="wa"&&r)sharePdf(r);
