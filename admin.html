@@ -82,6 +82,20 @@ label{display:block;font-weight:600;margin:12px 0 4px}
 .fxpill:hover{background:#F3FAF9}.fxpill b{margin-left:4px}.fxpill.on{background:var(--teal);border-color:var(--teal);color:#fff}
 .fxneg{color:#B3261E;font-weight:600}.fxt tfoot td{background:var(--alt);font-weight:600;border-top:1px solid var(--line)}
 .fxexp{display:flex;gap:8px;flex-wrap:wrap}
+.amb{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.78rem;font-weight:600;white-space:nowrap}
+.amb.ok{background:#E2F5EC;color:#12703E}.amb.ok2{background:#E3EEFB;color:#1B5AA6}.amb.wait{background:#FFF3D6;color:#8A5A00}.amb.live{background:#FDE8E6;color:#B3261E}
+.amwarn{background:#FFF8E5;border:1px solid #F0D58A;color:#7A5A00;padding:8px 12px;border-radius:6px}
+.amq{margin:12px 0}.amqh{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.amqp{white-space:pre-wrap;font-weight:600;margin-bottom:10px}
+.amlab{font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);font-weight:600;margin:10px 0 4px}
+.amtext{white-space:pre-wrap;background:var(--alt);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+.amo{padding:6px 10px;border:1px solid var(--line);border-radius:6px;margin:4px 0;background:#fff}
+.amo.sel{background:#EEF4FB;border-color:#B7CBE8}.amo.key{border-color:#8FD0AE;background:#F1FAF5}.amo.sel.key{background:#E2F5EC}
+.amm{color:var(--mute)}.amk{font-size:.75rem;font-weight:600;color:#12703E;margin-left:6px}.amw{font-size:.75rem;font-weight:600;color:#B3261E;margin-left:6px}
+.amsr{display:grid;grid-template-columns:200px 1fr;gap:8px 12px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.amsr label{grid-column:1/-1;margin:0}.amsr input{margin:0}@media(max-width:640px){.amsr{grid-template-columns:1fr}}
+.amopt{display:flex;gap:8px;align-items:center;font-weight:400;margin:4px 0}.amopt input{width:auto;margin:0}
+.amtot{font-size:1.1rem}.amtot b{font:600 1.5rem Lora,Georgia,serif;color:var(--head)}
 </style>
 </head>
 <body>
@@ -104,7 +118,7 @@ label{display:block;font-weight:600;margin:12px 0 4px}
   <section id="portal" hidden>
     <style>.cr2{border:1px solid var(--line);border-radius:4px;padding:12px 14px;margin:10px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cr2 .t{flex:1;min-width:200px}.cr2 small{display:block}.pt2{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.pt2 button{background:#fff;color:var(--ink);border-color:var(--line)}.pt2 button.on{background:var(--head);color:#fff;border-color:var(--head)}#pbody table{width:100%;border-collapse:collapse}#pbody th,#pbody td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);font-size:.92rem}#pbody td input{padding:6px;max-width:110px}.pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px} .pbar{height:16px;border-radius:9px;background:#DDE5E3;overflow:hidden;margin:8px 0 4px} .pbar i{display:block;height:100%;width:0;background:var(--teal);transition:width .15s}</style>
     <h2>Students Portal</h2>
-    <div class="pt2" id="ptabs"><button class="on" data-v="tl">Timeline</button><button data-v="les">Lessons</button><button data-v="gr">Grades</button><button data-v="log">Logins</button></div>
+    <div class="pt2" id="ptabs"><button class="on" data-v="tl">Timeline</button><button data-v="les">Lessons</button><button data-v="asm">Assessments</button><button data-v="gr">Grades</button><button data-v="log">Logins</button></div>
     <div id="pbody"></div>
   </section>
 
@@ -1026,7 +1040,279 @@ logone:function(i){note("Working…");mk(i).then(function(t){note("Done. Copy an
 logall:function(){var todo=ST.filter(function(s){return!s.user_id&&s.email}),out=[],p=Promise.resolve();if(!todo.length)return note("Everyone with an email already has a login.");
  note("Creating "+todo.length+" login(s)…");todo.forEach(function(s){p=p.then(function(){return mk(s.id).then(function(t){out.push(t)}).catch(function(e){out.push("FAILED: "+s.full_name+" — "+e.message)})})});
  p.then(function(){note("Done. Send each student their own details:");document.getElementById("l_out").innerHTML='<textarea rows="12" readonly onclick="this.select()">'+pe(out.join("\n\n"))+"</textarea>"})}};
-function go(v){cur=v;if(v!=="les")LCUR=null;if(v!=="gr")GCUR=null;[].forEach.call(document.querySelectorAll("#ptabs button"),function(b){b.classList.toggle("on",b.getAttribute("data-v")===v)});B.innerHTML="<p class=mute>Loading…</p>";V[v]()}
+/* ---- shared paper helpers ---- */
+/* ===== Assessments: shared helpers (answer text, marked paper PDF) ===== */
+var ASM_TYPES={single:"Multiple choice (one answer)",multi:"Multiple choice (several answers)",tf:"True or false",short:"One word / short answer",number:"Number answer",essay:"Essay / explain",file:"File upload"};
+function asmL(i){return String.fromCharCode(65+Number(i))}
+function asmEmpty(a){return a==null||a===""||(Array.isArray(a)&&!a.length)}
+function asmPick(o,i){i=Number(i);return o&&o[i]!=null?asmL(i)+". "+o[i]:""}
+function asmAnsText(it){var a=it.answer,o=it.options||[];
+ if(asmEmpty(a))return"No answer";
+ if(it.type==="single")return asmPick(o,a)||"No answer";
+ if(it.type==="multi")return(Array.isArray(a)?a:[]).map(Number).sort(function(x,y){return x-y}).map(function(i){return asmPick(o,i)}).filter(Boolean).join("; ")||"No answer";
+ if(it.type==="tf")return(a===true||a==="true")?"True":"False";
+ if(it.type==="file")return a&&a.name?"File: "+a.name:"No file uploaded";
+ return String(a)}
+function asmCorrectText(it){var c=it.correct,o=it.options||[];
+ if(asmEmpty(c))return"";
+ if(it.type==="single")return asmPick(o,c);
+ if(it.type==="multi")return(Array.isArray(c)?c:[]).map(Number).sort(function(x,y){return x-y}).map(function(i){return asmPick(o,i)}).filter(Boolean).join("; ");
+ if(it.type==="tf")return(c===true||c==="true")?"True":"False";
+ if(it.type==="short")return(Array.isArray(c)?c:[c]).join(" / ");
+ if(it.type==="number"){var t=Number(c.tolerance)||0;return String(c.value)+(t?" (accepted within +/- "+t+")":"")}
+ if(it.type==="essay")return String(c);
+ return""}
+function asmClean(s){return String(s==null?"":s).replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D]/g,'"').replace(/[\u2013\u2014]/g,"-").replace(/\u2026/g,"...").replace(/\t/g,"    ").replace(/[^\n\x20-\x7E\xA0-\xFF]/g,"?")}
+function asmFmtMark(n){n=Number(n);return isFinite(n)?String(Math.round(n*100)/100):"-"}
+/* d = {logo, kindLabel, assessment:{title,course}, student:{name,number,programme}, submitted, items:[{n,type,prompt,options,answer,correct,score,max,comment,explanation}], total, max, feedback} */
+function asmPdf(d){var J=window.jspdf;if(!J)return null;
+ var P=new J.jsPDF({unit:"mm",format:"a4"}),T=[15,143,134],L=16,W=178,y=0,LH=4.5;
+ var m=/^data:image\/(png|jpe?g)/i.exec(d.logo||""),fmt=m&&m[1].toLowerCase()==="png"?"PNG":"JPEG";
+ P.setFillColor(T[0],T[1],T[2]);P.rect(0,0,210,5,"F");
+ try{if(d.logo)P.addImage(d.logo,fmt,L,12,22,22)}catch(e){}
+ P.setTextColor(T[0],T[1],T[2]);P.setFont("helvetica","bold");P.setFontSize(15);P.text("BORN FOR SERVICE",44,21);P.text("SCHOOL OF MINISTRY",44,28);
+ P.setTextColor(60,60,60);P.setFont("helvetica","italic");P.setFontSize(9);P.text("Created for Good Works (Ephesians 2:10)",44,33);
+ P.setFont("helvetica","normal");P.text("Lusaka, Zambia  |  Bornforservice27@gmail.com",44,38);
+ P.setDrawColor(T[0],T[1],T[2]);P.setLineWidth(.6);P.line(L,43,194,43);
+ P.setTextColor(20,20,20);P.setFont("helvetica","bold");P.setFontSize(16);P.text("MARKED "+String(d.kindLabel||"PAPER").toUpperCase(),105,54,{align:"center"});
+ y=60;P.setLineWidth(.2);P.setDrawColor(150,150,150);
+ var info=[["Student name",d.student.name],["Student number",d.student.number||"-"],["Programme",d.student.programme||"-"],[d.kindLabel||"Assessment",d.assessment.title]];
+ if(d.assessment.course)info.push(["Course",d.assessment.course]);
+ if(d.submitted)info.push(["Submitted",d.submitted]);
+ info.forEach(function(r){var ln=P.splitTextToSize(asmClean(r[1]),124),h=Math.max(8,ln.length*4.6+3.4);P.setFillColor(243,246,244);P.rect(L,y,50,h,"FD");P.rect(L+50,y,128,h);P.setTextColor(30,30,30);P.setFont("helvetica","bold");P.setFontSize(9);P.text(r[0],L+2,y+5.4);P.setFont("helvetica","normal");P.text(ln,L+52,y+5.4);y+=h});
+ y+=7;
+ var pct=d.max>0?Math.round(d.total/d.max*1000)/10:0,pass=pct>=50;
+ P.setFillColor(pass?226:253,pass?245:232,pass?236:230);P.setDrawColor(pass?18:179,pass?112:38,pass?62:30);P.setLineWidth(.5);P.rect(L,y,W,20,"FD");
+ P.setTextColor(30,30,30);P.setFont("helvetica","bold");P.setFontSize(9);P.text("TOTAL MARKS",L+5,y+7);
+ P.setFontSize(18);P.text(asmFmtMark(d.total)+" / "+asmFmtMark(d.max),L+5,y+15.5);
+ P.setFontSize(14);P.setTextColor(pass?18:179,pass?112:38,pass?62:30);P.text(pct+"%  -  "+(pass?"PASS":"FAIL"),L+W-5,y+11,{align:"right"});
+ P.setFont("helvetica","normal");P.setFontSize(8);P.setTextColor(90,90,90);P.text("Pass mark: 50%",L+W-5,y+16.5,{align:"right"});
+ y+=27;
+ function ls(t,w,sz,st){P.setFont("helvetica",st||"normal");P.setFontSize(sz);return P.splitTextToSize(asmClean(t),w)}
+ function put(a,x,sz,st,c){P.setFont("helvetica",st||"normal");P.setFontSize(sz);c=c||[30,30,30];P.setTextColor(c[0],c[1],c[2]);a.forEach(function(s){P.text(s,x,y);y+=LH})}
+ (d.items||[]).forEach(function(it){
+  var pr=ls(it.prompt,W-6,9.5,"bold"),an=ls("Your answer: "+asmAnsText(it),W-6,9),ct=asmCorrectText(it),co=ct?ls("Correct answer: "+ct,W-6,9):[],
+   cm=it.comment?ls("Marker's comment: "+it.comment,W-6,8.5,"italic"):[],ex=it.explanation?ls("Explanation: "+it.explanation,W-6,8.5,"italic"):[];
+  var h=9+pr.length*LH+2+an.length*LH+(co.length?co.length*LH+1:0)+(cm.length?cm.length*LH+1:0)+(ex.length?ex.length*LH+1:0)+4;
+  if(y+Math.min(h,60)>280){P.addPage();y=18}
+  var sc=it.score,full=sc!=null&&Number(sc)>=Number(it.max)&&Number(it.max)>0,zero=sc!=null&&Number(sc)===0,col=sc==null?[90,90,90]:full?[18,112,62]:zero?[179,38,30]:[138,90,0];
+  P.setFillColor(243,246,244);P.setDrawColor(200,205,203);P.setLineWidth(.2);P.rect(L,y,W,7,"FD");
+  P.setFont("helvetica","bold");P.setFontSize(9);P.setTextColor(30,30,30);P.text("Question "+it.n,L+2,y+4.9);
+  P.setTextColor(col[0],col[1],col[2]);P.text((sc==null?"-":asmFmtMark(sc))+" / "+asmFmtMark(it.max)+" mark"+(Number(it.max)===1?"":"s"),L+W-2,y+4.9,{align:"right"});
+  y+=11;put(pr,L+3,9.5,"bold");y+=1.5;
+  put(an,L+3,9,"normal",full?[18,112,62]:zero?[179,38,30]:sc==null?[30,30,30]:[138,90,0]);
+  if(co.length){y+=1;put(co,L+3,9,"normal",[18,112,62])}
+  if(cm.length){y+=1;put(cm,L+3,8.5,"italic",[70,70,70])}
+  if(ex.length){y+=1;put(ex,L+3,8.5,"italic",[70,70,70])}
+  y+=3;P.setDrawColor(225,229,228);P.line(L,y,L+W,y);y+=5});
+ if(d.feedback){var fb=ls("Overall feedback: "+d.feedback,W-6,9.5);if(y+fb.length*LH+6>280){P.addPage();y=18}put(fb,L+3,9.5,"normal",[30,30,30])}
+ var n=P.getNumberOfPages();for(var i=1;i<=n;i++){P.setPage(i);P.setDrawColor(T[0],T[1],T[2]);P.setLineWidth(.4);P.line(L,285,194,285);P.setTextColor(90,90,90);P.setFont("helvetica","normal");P.setFontSize(8);P.text("Born For Service School of Ministry  |  Computer-generated marked paper  |  Page "+i+" of "+n,105,290,{align:"center"})}
+ return P}
+
+/* ===== Assessments: tests, exams, assignments ===== */
+var AM={page:"list",id:null,a:null,qs:[],at:[],qe:null,mid:null,order:[]};
+var AMK={test:"Test",exam:"Exam",assignment:"Assignment"};
+function amWhen(i){return i?new Date(i).toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}):"-"}
+function amLocal(i){var d=new Date(i),p=function(n){return(n<10?"0":"")+n};return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"T"+p(d.getHours())+":"+p(d.getMinutes())}
+function amAud(p){return p==="Certificate"?"Certificate students":p==="Advanced Certificate"?"Advanced Certificate students":"All students"}
+function amNorm(s){return String(s==null?"":s).toLowerCase().replace(/[^a-z0-9\u00C0-\u024F\s]/g," ").replace(/\s+/g," ").trim()}
+function amById(id){return document.getElementById(id)}
+function amErr(e){note(e&&e.message?e.message:String(e),1)}
+/* automatic marking: returns a number, or null when a person must mark it */
+function amAutoQ(q,a){var t=q.qtype,mk=Number(q.marks)||0;
+ if(t==="essay"||t==="file")return null;
+ if(a==null||a===""||(Array.isArray(a)&&!a.length))return 0;
+ if(t==="single")return Number(a)===Number(q.answer)?mk:0;
+ if(t==="multi"){var c=(q.answer||[]).map(Number).sort(function(x,y){return x-y}),s=(Array.isArray(a)?a:[]).map(Number).sort(function(x,y){return x-y});return c.length===s.length&&c.every(function(v,i){return v===s[i]})?mk:0}
+ if(t==="tf")return(a===true||a==="true")===(q.answer===true||q.answer==="true")?mk:0;
+ if(t==="short"){var acc=(q.answer||[]).map(amNorm).filter(Boolean);return acc.indexOf(amNorm(a))>-1?mk:0}
+ if(t==="number"){var n=Number(String(a).replace(/,/g,"")),v=Number(q.answer&&q.answer.value),tl=Number(q.answer&&q.answer.tolerance)||0;return isFinite(n)&&Math.abs(n-v)<=tl+1e-9?mk:0}
+ return null}
+function amAutoAll(qs,ans,scores){var out=Object.assign({},scores||{}),pending=0;
+ qs.forEach(function(q){var cur=out[q.id];if(cur&&cur.auto===false)return;var s=amAutoQ(q,(ans||{})[q.id]);
+  if(s===null){if(!cur||cur.score==null)pending++;return}
+  out[q.id]={score:s,comment:(cur&&cur.comment)||"",auto:true}});
+ return{scores:out,pending:pending}}
+function amTotals(qs,scores){var t=0,mx=0,miss=[];qs.forEach(function(q,i){mx+=Number(q.marks)||0;var s=scores[q.id];if(s&&s.score!=null&&s.score!=="")t+=Number(s.score)||0;else miss.push(i+1)});return{total:Math.round(t*100)/100,max:mx,missing:miss}}
+function amBadge(a){var late=a.status==="in_progress"&&new Date(a.deadline_at).getTime()+15000<Date.now();
+ if(a.released_at)return'<span class="amb ok">Sent to student</span>';
+ if(a.status==="marked")return'<span class="amb ok2">Marked</span>';
+ if(a.status==="submitted"||late)return'<span class="amb wait">Submitted'+(a.auto_submitted?" (time up)":"")+'</span>';
+ return'<span class="amb live">Writing now</span>'}
+/* ---------- navigation ---------- */
+function amRender(){return AM.page==="edit"?amEdit():AM.page==="subs"?amSubs():AM.page==="mark"?amMark():amList()}
+V.asm=function(){return amRender()};
+function amFail(e){B.innerHTML='<div class="msg err">Could not load: '+pe(e.message)+'<br>If this says the table or function does not exist, run assessments-upgrade.sql in Supabase first.</div>'}
+/* ---------- list ---------- */
+function amList(){AM.page="list";AM.id=null;
+ return Promise.all([rest("bfs_assessments?select=*&order=created_at.desc"),rest("bfs_questions?select=assessment_id,marks"),rest("bfs_attempts?select=assessment_id,status,released_at"),rest("bfs_courses?select=id,title&order=sort")]).then(function(r){
+  var qn={},qm={},an={},mk={};(r[1]||[]).forEach(function(x){qn[x.assessment_id]=(qn[x.assessment_id]||0)+1;qm[x.assessment_id]=(qm[x.assessment_id]||0)+Number(x.marks||0)});
+  (r[2]||[]).forEach(function(x){an[x.assessment_id]=(an[x.assessment_id]||0)+1;if(x.status==="marked")mk[x.assessment_id]=(mk[x.assessment_id]||0)+1});
+  B.innerHTML='<div class="card"><h3 style="margin-top:0">New test, exam or assignment</h3><p class="mute">Create it, add the questions, set when it opens and closes, then publish it. Students write it in their portal; you mark it here.</p>'+
+  '<div class="pg"><input id="am_t" placeholder="Title, for example Hermeneutics Test 1"><select id="am_k"><option value="test">Test</option><option value="exam">Exam</option><option value="assignment">Assignment</option></select>'+
+  '<select id="am_c"><option value="">Course (optional)</option>'+(r[3]||[]).map(function(c){return'<option value="'+pe(c.id)+'">'+pe(c.title)+'</option>'}).join("")+'</select>'+
+  '<select id="am_p"><option value="all">For all students</option><option value="Certificate">Certificate students only</option><option value="Advanced Certificate">Advanced Certificate students only</option></select></div>'+
+  '<p><button data-a="amcreate">Create and add questions</button></p><div id="pnote" class="msg" hidden></div></div><h3>Tests, exams and assignments</h3>'+
+  ((r[0]||[]).length?r[0].map(function(x){return'<div class="cr2"><div class="t"><b>'+pe(x.title)+'</b><div class="mute">'+AMK[x.kind]+' \u00B7 '+amAud(x.programme)+' \u00B7 '+(x.status==="published"?"Published":"Draft (students cannot see it)")+' \u00B7 '+(qn[x.id]||0)+' question'+((qn[x.id]||0)===1?"":"s")+' \u00B7 '+(qm[x.id]||0)+' marks<br>Opens '+amWhen(x.starts_at)+' \u00B7 Closes '+amWhen(x.ends_at)+(x.duration_minutes?' \u00B7 '+x.duration_minutes+' minutes allowed':'')+' \u00B7 '+(an[x.id]||0)+' attempt'+((an[x.id]||0)===1?"":"s")+', '+(mk[x.id]||0)+' marked</div></div><button data-a="amedit" data-id="'+x.id+'">Edit</button><button data-a="amsubs" data-id="'+x.id+'">Submissions</button><button data-a="amdel" data-id="'+x.id+'">Delete</button></div>'}).join(""):'<p class="mute">Nothing here yet. Create your first one above.</p>')
+ }).catch(amFail)}
+/* ---------- editor ---------- */
+function amQx(t,q){q=q||{};
+ if(t==="single"||t==="multi"){var o=q.options&&q.options.length?q.options:["",""];return'<label>Answer options (one per line, at least two)</label><textarea id="am_qo" rows="5">'+pe(o.join("\n"))+'</textarea><label>'+(t==="multi"?"Correct answers (tick every correct option)":"Correct answer")+'</label><div id="am_qc">'+amQc(t,o.filter(function(s){return String(s).trim()}),q.answer)+'</div>'}
+ if(t==="tf")return'<label>Correct answer</label><select id="am_qa"><option value="true"'+(q.answer===true?" selected":"")+'>True</option><option value="false"'+(q.answer===false?" selected":"")+'>False</option></select>';
+ if(t==="short")return'<label>Accepted answers (one per line; capital letters and extra spaces are ignored)</label><textarea id="am_qa" rows="3">'+pe((Array.isArray(q.answer)?q.answer:[]).join("\n"))+'</textarea>';
+ if(t==="number"){var a=q.answer&&typeof q.answer==="object"&&!Array.isArray(q.answer)?q.answer:{};return'<div class="pg"><div><label>Correct number</label><input id="am_qa" type="number" step="any" value="'+(a.value!=null?a.value:"")+'"></div><div><label>Accept answers within \u00B1 (optional)</label><input id="am_qtol" type="number" step="any" min="0" value="'+(a.tolerance||"")+'"></div></div>'}
+ if(t==="essay")return'<label>Model answer or marking guide (optional; students see it after marking)</label><textarea id="am_qa" rows="4">'+pe(typeof q.answer==="string"?q.answer:"")+'</textarea><p class="mute">You mark essays yourself and enter the marks when marking.</p>';
+ return'<p class="mute">The student uploads a file (for example a Word document, PDF or a photo of their work). You open the file and enter the marks yourself.</p>'}
+function amQc(t,o,ans){var h="";o.forEach(function(x,i){var ck=t==="multi"?(Array.isArray(ans)&&ans.map(Number).indexOf(i)>-1):(ans!=null&&!Array.isArray(ans)&&Number(ans)===i);
+ h+='<label class="amopt"><input type="'+(t==="multi"?"checkbox":"radio")+'" name="am_qk" value="'+i+'"'+(ck?" checked":"")+'><span>'+asmL(i)+'. '+pe(x)+'</span></label>'});
+ return h||'<p class="mute">Type the options above, then choose the correct one here.</p>'}
+function amQForm(q){q=q||{qtype:"single",prompt:"",options:["",""],answer:null,marks:1,explanation:""};AM.qe=q.id||null;var t=q.qtype;
+ return'<label>Question type</label><select id="am_qt">'+Object.keys(ASM_TYPES).map(function(k){return'<option value="'+k+'"'+(k===t?" selected":"")+'>'+ASM_TYPES[k]+'</option>'}).join("")+'</select>'+
+ '<label>Question</label><textarea id="am_qp" rows="3" placeholder="Type the question here">'+pe(q.prompt)+'</textarea><div id="am_qx">'+amQx(t,q)+'</div>'+
+ '<div class="pg"><div><label>Marks for this question</label><input id="am_qm" type="number" min="0" step="0.5" value="'+(q.marks!=null?q.marks:1)+'"></div></div>'+
+ '<label>Explanation shown to the student after marking (optional)</label><textarea id="am_qe" rows="2">'+pe(q.explanation||"")+'</textarea>'+
+ '<p><button data-a="amqsave">'+(q.id?"Save question":"Add question")+'</button>'+(q.id?' <button class="o" data-a="amqcancel">Cancel</button>':"")+'</p><div id="am_qn" class="msg" hidden></div>'}
+function amQRead(){var t=amById("am_qt").value,p=amById("am_qp").value.trim(),m=Number(amById("am_qm").value),ex=amById("am_qe").value.trim();
+ if(!p)throw new Error("Type the question.");if(!isFinite(m)||m<0)throw new Error("Enter the marks for this question.");
+ var o=null,ans=null,tr=function(s){return s.trim()};
+ if(t==="single"||t==="multi"){o=amById("am_qo").value.split("\n").map(tr).filter(Boolean);if(o.length<2)throw new Error("Enter at least two options.");
+  var ck=[].slice.call(document.querySelectorAll("#am_qc input:checked")).map(function(x){return Number(x.value)});
+  if(!ck.length)throw new Error(t==="multi"?"Tick every correct option.":"Choose the correct option.");ans=t==="multi"?ck.sort(function(a,b){return a-b}):ck[0]}
+ else if(t==="tf")ans=amById("am_qa").value==="true";
+ else if(t==="short"){ans=amById("am_qa").value.split("\n").map(tr).filter(Boolean);if(!ans.length)throw new Error("Enter at least one accepted answer.")}
+ else if(t==="number"){var v=amById("am_qa").value;if(v===""||!isFinite(Number(v)))throw new Error("Enter the correct number.");ans={value:Number(v),tolerance:Number(amById("am_qtol").value)||0}}
+ else if(t==="essay")ans=amById("am_qa").value.trim()||null;
+ return{qtype:t,prompt:p,options:o,answer:ans,marks:m,explanation:ex||null}}
+function amEdit(){AM.page="edit";
+ return Promise.all([rest("bfs_assessments?select=*&id=eq."+AM.id),rest("bfs_questions?select=*&assessment_id=eq."+AM.id+"&order=position.asc,created_at.asc"),rest("bfs_attempts?select=id&assessment_id=eq."+AM.id),rest("bfs_courses?select=id,title&order=sort")]).then(function(r){
+  AM.a=(r[0]||[])[0];if(!AM.a){return amList()}AM.qs=r[1]||[];var a=AM.a,na=(r[2]||[]).length,tm=0;AM.qs.forEach(function(q){tm+=Number(q.marks)||0});
+  B.innerHTML='<p><button data-a="amback">&larr; All assessments</button> <button class="o" data-a="amsubs" data-id="'+a.id+'">Submissions and marking</button></p>'+
+  '<div class="card"><h3 style="margin-top:0">'+pe(a.title)+'</h3><p class="mute">'+AMK[a.kind]+' \u00B7 '+(a.status==="published"?"Published. Students can see it.":"Draft. Students cannot see it yet.")+(na?' \u00B7 '+na+' student attempt'+(na===1?"":"s")+' so far':"")+'</p>'+
+  '<label for="am_title">Title</label><input id="am_title" value="'+pe(a.title)+'">'+
+  '<div class="pg"><div><label>Type</label><select id="am_kind">'+Object.keys(AMK).map(function(k){return'<option value="'+k+'"'+(a.kind===k?" selected":"")+'>'+AMK[k]+'</option>'}).join("")+'</select></div>'+
+  '<div><label>Course</label><select id="am_course"><option value="">None</option>'+(r[3]||[]).map(function(c){return'<option value="'+pe(c.id)+'"'+(String(a.course_id)===String(c.id)?" selected":"")+'>'+pe(c.title)+'</option>'}).join("")+'</select></div>'+
+  '<div><label>For</label><select id="am_prog"><option value="all"'+(a.programme==="all"?" selected":"")+'>All students</option><option value="Certificate"'+(a.programme==="Certificate"?" selected":"")+'>Certificate students only</option><option value="Advanced Certificate"'+(a.programme==="Advanced Certificate"?" selected":"")+'>Advanced Certificate students only</option></select></div></div>'+
+  '<label for="am_ins">Instructions shown to students before they begin</label><textarea id="am_ins" rows="4" placeholder="For example: Answer all questions. You may not use notes.">'+pe(a.instructions||"")+'</textarea>'+
+  '<div class="pg"><div><label>Opens</label><input id="am_st" type="datetime-local" value="'+amLocal(a.starts_at)+'"></div><div><label>Closes</label><input id="am_en" type="datetime-local" value="'+amLocal(a.ends_at)+'"></div><div><label>Time allowed in minutes (optional)</label><input id="am_dur" type="number" min="1" step="1" value="'+(a.duration_minutes||"")+'"></div></div>'+
+  '<p class="mute">Students can only start between <b>Opens</b> and <b>Closes</b>. If you set the time allowed, each student gets that many minutes from the moment they begin, but never past the closing time. When time runs out, whatever they have answered is saved and submitted automatically.</p>'+
+  '<p><button data-a="amsave">Save details</button> <button class="'+(a.status==="published"?"o":"")+'" data-a="ampub">'+(a.status==="published"?"Unpublish":"Publish to students")+'</button></p><div id="pnote" class="msg" hidden></div></div>'+
+  '<h3>Questions ('+AM.qs.length+' \u00B7 '+tm+' marks in total)</h3>'+
+  (AM.qs.length?AM.qs.map(function(q,i){return'<div class="cr2"><div class="t"><b>'+(i+1)+'.</b> '+pe(String(q.prompt).slice(0,140))+(String(q.prompt).length>140?"\u2026":"")+'<div class="mute">'+ASM_TYPES[q.qtype]+' \u00B7 '+Number(q.marks)+' mark'+(Number(q.marks)===1?"":"s")+'</div></div><button class="o" data-a="amqup" data-id="'+q.id+'" title="Move up">\u2191</button><button class="o" data-a="amqdn" data-id="'+q.id+'" title="Move down">\u2193</button><button data-a="amqedit" data-id="'+q.id+'">Edit</button><button data-a="amqdel" data-id="'+q.id+'">Delete</button></div>'}).join(""):'<p class="mute">No questions yet. Add the first one below.</p>')+
+  '<div class="card" id="am_qcard"><h3 style="margin-top:0" id="am_qh">Add a question</h3><div id="am_qf">'+amQForm(null)+'</div></div>'}).catch(amFail)}
+/* ---------- submissions ---------- */
+function amClose(){return rest("bfs_attempts?assessment_id=eq."+AM.id+"&status=eq.in_progress&deadline_at=lt."+encodeURIComponent(new Date(Date.now()-15000).toISOString()),{method:"PATCH",body:JSON.stringify({status:"submitted",submitted_at:new Date().toISOString(),auto_submitted:true})})}
+function amAutoSave(qs,at){var p=Promise.resolve();at.forEach(function(x){if(x.status!=="submitted")return;var r=amAutoAll(qs,x.answers,x.scores);
+ if(JSON.stringify(r.scores)!==JSON.stringify(x.scores||{})){x.scores=r.scores;p=p.then(function(){return rest("bfs_attempts?id=eq."+x.id,{method:"PATCH",body:JSON.stringify({scores:r.scores})})})}});return p}
+function amSubs(){AM.page="subs";
+ return amClose().then(function(){return Promise.all([rest("bfs_assessments?select=*&id=eq."+AM.id),rest("bfs_questions?select=*&assessment_id=eq."+AM.id+"&order=position.asc,created_at.asc"),rest("bfs_attempts?select=*&assessment_id=eq."+AM.id+"&order=submitted_at.asc.nullslast"),stu()])}).then(function(r){
+  AM.a=(r[0]||[])[0];if(!AM.a)return amList();AM.qs=r[1]||[];AM.at=r[2]||[];
+  return amAutoSave(AM.qs,AM.at).then(function(){
+   var a=AM.a,qs=AM.qs,at=AM.at,mx=0;qs.forEach(function(q){mx+=Number(q.marks)||0});AM.order=at.map(function(x){return x.id});
+   var live=at.filter(function(x){return x.status==="in_progress"}).length,sub=at.filter(function(x){return x.status==="submitted"}).length,mk=at.filter(function(x){return x.status==="marked"}).length,sent=at.filter(function(x){return x.released_at}).length;
+   var absent=ST.filter(function(s){return(a.programme==="all"||s.programme===a.programme)&&!at.some(function(x){return x.student_id===s.id})});
+   var blocked=live?live+" student"+(live===1?" is":"s are")+" still writing.":sub?sub+" paper"+(sub===1?" is":"s are")+" not marked yet.":!mk?"There is nothing marked yet.":"";
+   B.innerHTML='<p><button data-a="amback">&larr; All assessments</button> <button class="o" data-a="amedit" data-id="'+a.id+'">Edit questions</button></p>'+
+   '<div class="card"><h3 style="margin-top:0">'+pe(a.title)+'</h3><p class="mute">'+AMK[a.kind]+' \u00B7 out of '+mx+' \u00B7 '+amAud(a.programme)+' \u00B7 Opens '+amWhen(a.starts_at)+' \u00B7 Closes '+amWhen(a.ends_at)+'</p>'+
+   '<p><b>'+at.length+'</b> attempt'+(at.length===1?"":"s")+' \u00B7 <b>'+live+'</b> writing now \u00B7 <b>'+sub+'</b> waiting to be marked \u00B7 <b>'+mk+'</b> marked \u00B7 <b>'+sent+'</b> sent to students</p>'+
+   '<p><button class="o" data-a="amrefresh">Refresh</button> <button class="o" data-a="amauto">Auto-mark all</button></p><div id="pnote" class="msg" hidden></div></div>'+
+   (at.length?'<div style="overflow-x:auto"><table><tr><th>Student</th><th>Submitted</th><th>Status</th><th>Marks</th><th>Needs your marking</th><th></th></tr>'+at.map(function(x){var d=x.details||{},rr=amAutoAll(qs,x.answers,x.scores),tt=amTotals(qs,rr.scores),pend=x.status==="submitted"?rr.pending:0;
+    return'<tr><td><b>'+pe(d.name||"")+'</b><br><small class="mute">'+pe(d.student_number||"")+'</small></td><td>'+(x.submitted_at?amWhen(x.submitted_at):"\u2014")+'</td><td>'+amBadge(x)+'</td><td>'+(x.status==="marked"?'<b>'+(x.total_score!=null?Number(x.total_score):tt.total)+'</b> / '+mx:(x.status==="submitted"?tt.total+' / '+mx+' so far':"\u2014"))+'</td><td>'+(x.status==="submitted"?(pend?pend+" question"+(pend===1?"":"s"):"None. Ready to complete"):"\u2014")+'</td><td style="white-space:nowrap">'+(x.status!=="in_progress"||new Date(x.deadline_at).getTime()<Date.now()?'<button data-a="ammark" data-id="'+x.id+'">'+(x.status==="marked"?"View":"Mark")+'</button> ':"")+(x.status==="marked"&&!x.released_at?'<button class="o" data-a="amsend" data-id="'+x.id+'">Send paper</button> ':"")+'<button class="o" data-a="amreset" data-id="'+x.id+'">Reset</button></td></tr>'}).join("")+'</table></div>':'<p class="mute">No student has started yet.</p>')+
+   (absent.length?'<details style="margin-top:12px"><summary>Did not attempt ('+absent.length+')</summary><p class="mute">'+absent.map(function(s){return pe(s.full_name)}).join(", ")+'</p></details>':"")+
+   '<div class="card" style="margin-top:16px"><h3 style="margin-top:0">Publish results</h3><p class="mute">When every paper is marked, one button will: <b>send each marked paper</b> (with the correct answers and the total) to its student\'s portal, <b>record the marks in Grades</b>, and <b>post the results on the timeline</b>.'+(a.results_published_at?' Results were first published on '+amWhen(a.results_published_at)+'. Pressing the button again sends newly marked papers and updates the marks without posting to the timeline again.':'')+'</p>'+
+   (blocked?'<p class="amwarn">'+blocked+'</p>':"")+'<p><button data-a="ampubres"'+(blocked?" disabled":"")+'>'+(a.results_published_at?"Send papers and update marks":"Publish results and send all papers")+'</button></p></div>'})}).catch(amFail)}
+/* ---------- marking ---------- */
+function amShowAns(q,a){var t=q.qtype,o=q.options||[],c=q.answer;
+ if(t==="single"||t==="multi"){var sel=t==="multi"?(Array.isArray(a)?a.map(Number):[]):(a==null||a===""?[]:[Number(a)]),cor=t==="multi"?(Array.isArray(c)?c.map(Number):[]):[Number(c)];
+  return o.map(function(x,i){var s=sel.indexOf(i)>-1,k=cor.indexOf(i)>-1;return'<div class="amo'+(s?" sel":"")+(k?" key":"")+'"><span class="amm">'+(s?"\u25CF":"\u25CB")+'</span> '+asmL(i)+'. '+pe(x)+(k?' <span class="amk">correct</span>':"")+(s&&!k?' <span class="amw">student\'s choice</span>':"")+'</div>'}).join("")+(asmEmpty(a)?'<div class="mute">No answer given.</div>':"")}
+ if(t==="file")return a&&a.path?'<div class="amtext"><a href="#" data-a="amfile" data-id="'+pe(a.path)+'">Open '+pe(a.name||"file")+'</a> <small class="mute">('+Math.max(1,Math.round((a.size||0)/1024))+' KB)</small></div>':'<div class="mute">No file uploaded.</div>';
+ var tx=asmAnsText({type:t,options:o,answer:a});return'<div class="amtext">'+(asmEmpty(a)?'<span class="mute">No answer given.</span>':pe(tx))+'</div>'}
+function amMark(){AM.page="mark";
+ return Promise.all([rest("bfs_attempts?select=*&id=eq."+AM.mid),rest("bfs_assessments?select=*&id=eq."+AM.id),rest("bfs_questions?select=*&assessment_id=eq."+AM.id+"&order=position.asc,created_at.asc")]).then(function(r){
+  var x=(r[0]||[])[0];AM.a=(r[1]||[])[0];AM.qs=r[2]||[];if(!x||!AM.a)return amSubs();AM.cur=x;
+  var qs=AM.qs,d=x.details||{},rr=amAutoAll(qs,x.answers,x.scores),sc=rr.scores,tt=amTotals(qs,sc),idx=AM.order.indexOf(x.id),mx=tt.max;
+  B.innerHTML='<p><button data-a="amsubs" data-id="'+AM.id+'">&larr; Submissions</button> '+(idx>=0&&idx<AM.order.length-1?'<button class="o" data-a="amnext">Next paper &rarr;</button>':"")+'</p>'+
+  '<div class="card"><h3 style="margin-top:0">'+pe(d.name||"")+'</h3><p class="mute">'+pe(d.student_number||"")+' \u00B7 '+pe(d.programme||"")+' \u00B7 '+pe(AM.a.title)+' \u00B7 Submitted '+amWhen(x.submitted_at)+(x.auto_submitted?" (time ran out, answers were submitted automatically)":"")+'</p>'+
+  '<p class="amtot">Total: <b id="am_tot">'+tt.total+'</b> / '+mx+' <span id="am_pct" class="mute">('+(mx?Math.round(tt.total/mx*1000)/10:0)+'%)</span> '+amBadge(x)+'</p><div id="pnote" class="msg" hidden></div></div>'+
+  qs.map(function(q,i){var s=sc[q.id],auto=amAutoQ(q,(x.answers||{})[q.id]),isAuto=auto!==null,val=s&&s.score!=null?s.score:"";
+   return'<div class="card amq"><div class="amqh"><b>Question '+(i+1)+'</b><span class="mute">'+ASM_TYPES[q.qtype]+' \u00B7 '+Number(q.marks)+' mark'+(Number(q.marks)===1?"":"s")+'</span></div><div class="amqp">'+pe(q.prompt)+'</div>'+
+   '<div class="amlab">Student\'s answer</div>'+amShowAns(q,(x.answers||{})[q.id])+
+   (q.qtype==="short"||q.qtype==="tf"||q.qtype==="number"?'<div class="amlab">Correct answer</div><div class="amtext">'+pe(asmCorrectText({type:q.qtype,options:q.options,correct:q.answer}))+'</div>':"")+
+   (q.qtype==="essay"&&q.answer?'<div class="amlab">Model answer / marking guide</div><div class="amtext">'+pe(q.answer)+'</div>':"")+
+   '<div class="amsr"><label>Marks (out of '+Number(q.marks)+')'+(isAuto?' <span class="amb ok2">auto-marked</span>':' <span class="amb wait">you mark this</span>')+'</label><input type="number" class="amsc" data-q="'+q.id+'" data-max="'+Number(q.marks)+'" data-auto="'+(isAuto?auto:"")+'" min="0" max="'+Number(q.marks)+'" step="0.5" value="'+val+'"><input type="text" class="amcm" data-q="'+q.id+'" maxlength="400" placeholder="Comment for the student (optional)" value="'+pe((s&&s.comment)||"")+'"></div></div>'}).join("")+
+  '<div class="card"><label>Overall feedback for the student (optional)</label><textarea id="am_fb" rows="3">'+pe(x.feedback||"")+'</textarea>'+
+  '<p><button class="o" data-a="amsavem">Save marks</button> <button data-a="amdone">Complete marking</button> <button class="o" data-a="ampdf">Download paper (PDF)</button>'+(x.status==="marked"&&!x.released_at?' <button data-a="amsend" data-id="'+x.id+'">Send paper to student</button>':"")+'</p>'+(x.released_at?'<p class="mute">This paper was sent to the student on '+amWhen(x.released_at)+'. If you change marks now, the student sees the update.</p>':"")+'</div>'}).catch(amFail)}
+function amReadMarks(){var qs=AM.qs,out={},bad=null;
+ qs.forEach(function(q,i){var el=document.querySelector('.amsc[data-q="'+q.id+'"]'),cm=document.querySelector('.amcm[data-q="'+q.id+'"]'),v=el.value.trim();
+  if(v===""){if(cm.value.trim())out[q.id]={score:null,comment:cm.value.trim(),auto:false};return}
+  var n=Number(v);if(!isFinite(n)||n<0||n>Number(q.marks)){bad=bad||"Question "+(i+1)+": marks must be between 0 and "+Number(q.marks)+".";return}
+  var au=el.getAttribute("data-auto");out[q.id]={score:n,comment:cm.value.trim(),auto:au!==""&&Number(au)===n}});
+ return{scores:out,err:bad}}
+function amMarksSave(done){var m=amReadMarks();if(m.err)return Promise.reject(new Error(m.err));var tt=amTotals(AM.qs,m.scores);
+ if(done&&tt.missing.length)return Promise.reject(new Error("Enter marks for question"+(tt.missing.length===1?"":"s")+" "+tt.missing.join(", ")+" first."));
+ var fb=amById("am_fb").value.trim()||null,body={scores:m.scores,feedback:fb};
+ if(done){body.status="marked";body.total_score=tt.total;body.max_score=tt.max;body.marked_at=new Date().toISOString()}
+ return rest("bfs_attempts?id=eq."+AM.mid,{method:"PATCH",body:JSON.stringify(body)}).then(function(){return tt})}
+function amPaperData(x){var d=x.details||{},sc=x.scores||{},tt=amTotals(AM.qs,sc);
+ return{logo:LOGO,kindLabel:AMK[AM.a.kind]||"Paper",assessment:{title:AM.a.title,course:AM.a.course_title||""},student:{name:d.name||"",number:d.student_number||"",programme:d.programme||""},submitted:x.submitted_at?amWhen(x.submitted_at):"",
+  items:AM.qs.map(function(q,i){var s=sc[q.id]||{};return{n:i+1,type:q.qtype,prompt:q.prompt,options:q.options,answer:(x.answers||{})[q.id],correct:q.answer,score:s.score!=null?s.score:null,max:Number(q.marks),comment:s.comment||"",explanation:q.explanation||""}}),
+  total:x.total_score!=null?Number(x.total_score):tt.total,max:x.max_score!=null?Number(x.max_score):tt.max,feedback:x.feedback||""}}
+/* ---------- actions ---------- */
+Object.assign(A,{
+amback:function(){AM.page="list";amList()},
+amcreate:function(){var t=amById("am_t").value.trim();if(!t)return note("Enter a title.",1);
+ var c=amById("am_c"),st=new Date();st.setDate(st.getDate()+1);st.setHours(8,0,0,0);var en=new Date(st.getTime()+2*3600000);
+ rest("bfs_assessments",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({title:t,kind:amById("am_k").value,programme:amById("am_p").value,course_id:c.value||null,course_title:c.value?c.options[c.selectedIndex].text:null,starts_at:st.toISOString(),ends_at:en.toISOString()})}).then(function(r){AM.id=r[0].id;return amEdit()}).catch(amErr)},
+amedit:function(i){if(i)AM.id=i;AM.qe=null;amEdit()},
+amsubs:function(i){if(i)AM.id=i;amSubs()},
+amrefresh:function(){amSubs()},
+amdel:function(i){if(!confirm("Delete this assessment with all its questions and every student's attempt? This cannot be undone."))return;rest("bfs_assessments?id=eq."+i,{method:"DELETE"}).then(amList).catch(amErr)},
+amsave:function(){var st=new Date(amById("am_st").value),en=new Date(amById("am_en").value),du=amById("am_dur").value.trim(),t=amById("am_title").value.trim(),c=amById("am_course");
+ if(!t)return note("Enter a title.",1);if(isNaN(st)||isNaN(en))return note("Set when it opens and closes.",1);if(en<=st)return note("It must close after it opens.",1);
+ if(du!==""&&!(Number(du)>0&&Math.floor(Number(du))===Number(du)))return note("Time allowed must be a whole number of minutes.",1);
+ rest("bfs_assessments?id=eq."+AM.id,{method:"PATCH",body:JSON.stringify({title:t,kind:amById("am_kind").value,programme:amById("am_prog").value,course_id:c.value||null,course_title:c.value?c.options[c.selectedIndex].text:null,instructions:amById("am_ins").value.trim()||null,starts_at:st.toISOString(),ends_at:en.toISOString(),duration_minutes:du===""?null:Number(du)})}).then(function(){return amEdit()}).then(function(){note("Saved.")}).catch(amErr)},
+ampub:function(){var pub=AM.a.status==="published";
+ if(!pub){if(!AM.qs.length)return note("Add at least one question before publishing.",1);if(new Date(AM.a.ends_at)<=new Date())return note("The closing time has already passed. Change it first.",1)}
+ else if(!confirm("Unpublish? Students will no longer see it. Anyone already writing keeps their saved answers."))return;
+ rest("bfs_assessments?id=eq."+AM.id,{method:"PATCH",body:JSON.stringify({status:pub?"draft":"published"})}).then(function(){return amEdit()}).then(function(){note(pub?"Unpublished.":"Published. Students can see it now and start when it opens.")}).catch(amErr)},
+amqsave:function(){var n=amById("am_qn"),q;try{q=amQRead()}catch(e){n.hidden=false;n.className="msg err";n.textContent=e.message;return}
+ var p=AM.qe?rest("bfs_questions?id=eq."+AM.qe,{method:"PATCH",body:JSON.stringify(q)}):(q.assessment_id=AM.id,q.position=AM.qs.length,post("bfs_questions",q));
+ p.then(function(){AM.qe=null;return amEdit()}).catch(function(e){n.hidden=false;n.className="msg err";n.textContent=e.message})},
+amqedit:function(i){var q=AM.qs.filter(function(x){return x.id===i})[0];if(!q)return;amById("am_qf").innerHTML=amQForm(q);amById("am_qh").textContent="Edit question";amById("am_qcard").scrollIntoView({behavior:"smooth",block:"center"})},
+amqcancel:function(){amById("am_qf").innerHTML=amQForm(null);amById("am_qh").textContent="Add a question"},
+amqdel:function(i){if(!confirm("Delete this question?"))return;rest("bfs_questions?id=eq."+i,{method:"DELETE"}).then(function(){return amEdit()}).catch(amErr)},
+amqup:function(i){amMove(i,-1)},amqdn:function(i){amMove(i,1)},
+amfile:function(path){sb.storage.from("bfs-assessments").createSignedUrl(path,300).then(function(r){if(r.error||!r.data)return note("Could not open the file.",1);window.open(r.data.signedUrl,"_blank")})},
+ammark:function(i){AM.mid=i;amMark()},
+amnext:function(){var k=AM.order.indexOf(AM.mid);if(k>=0&&k<AM.order.length-1){AM.mid=AM.order[k+1];amMark()}},
+amsavem:function(){amMarksSave(false).then(function(){note("Marks saved.")}).catch(amErr)},
+amdone:function(){amMarksSave(true).then(function(tt){return amMark().then(function(){note("Marking complete: "+tt.total+" / "+tt.max+". Use Send paper to student when you are ready.")})}).catch(amErr)},
+ampdf:function(){var d=amPaperData(AM.cur),m=amReadMarks();if(!m.err){var tt=amTotals(AM.qs,m.scores);d.total=tt.total;d.max=tt.max;d.items.forEach(function(it,i){var s=m.scores[AM.qs[i].id];it.score=s&&s.score!=null?s.score:null;it.comment=(s&&s.comment)||""})}
+ var p=asmPdf(d);if(!p)return note("The PDF tool did not load. Check your internet connection and refresh.",1);p.save("Marked-"+String(AM.a.title).replace(/[^A-Za-z0-9]+/g,"-")+"-"+String(d.student.name).replace(/[^A-Za-z0-9]+/g,"-")+".pdf")},
+amsend:function(i){var id=i||AM.mid;rest("bfs_attempts?id=eq."+id,{method:"PATCH",body:JSON.stringify({released_at:new Date().toISOString()})}).then(function(){return AM.page==="mark"?amMark():amSubs()}).then(function(){note("The marked paper was sent to the student's portal.")}).catch(amErr)},
+amreset:function(i){if(!confirm("Reset this attempt? The student's answers and marks will be deleted and they can start again."))return;rest("bfs_attempts?id=eq."+i,{method:"DELETE"}).then(amSubs).catch(amErr)},
+amauto:function(){var p=Promise.resolve(),n=0;AM.at.forEach(function(x){if(x.status!=="submitted")return;var r=amAutoAll(AM.qs,x.answers,{});n++;p=p.then(function(){return rest("bfs_attempts?id=eq."+x.id,{method:"PATCH",body:JSON.stringify({scores:r.scores})})})});p.then(amSubs).then(function(){note("Auto-marked "+n+" paper"+(n===1?"":"s")+". Essays and uploaded files still need your marks.")}).catch(amErr)},
+ampubres:function(){var a=AM.a,at=AM.at.filter(function(x){return x.status==="marked"}),first=!a.results_published_at,mx=0;AM.qs.forEach(function(q){mx+=Number(q.marks)||0});if(!at.length)return note("Nothing is marked yet.",1);
+ if(!confirm((first?"This will send "+at.length+" marked paper"+(at.length===1?"":"s")+" to the students' portals, record the marks in Grades and post the results on the timeline.":"This will send newly marked papers and update the marks in Grades.")+"\n\nContinue?"))return;
+ var rows=at.map(function(x){return{student_id:x.student_id,mark:Number(x.total_score)}}),sheet=null;
+ note("Recording the marks...");
+ stu().then(function(){return a.grade_sheet_id?rest("bfs_grade_sheets?select=*&id=eq."+a.grade_sheet_id).then(function(r){return r&&r[0]}):null}).then(function(sh){if(sh)return sh;return rest("bfs_grade_sheets",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({title:a.title,kind:a.kind,max_mark:mx})}).then(function(r){return r[0]})})
+ .then(function(sh){sheet=sh;GS=sh;GCUR=sh.id;return post("bfs_grade_entries?on_conflict=sheet_id,student_id",rows.map(function(r){return{sheet_id:sh.id,student_id:r.student_id,mark:r.mark,comment:null}}),{Prefer:"resolution=merge-duplicates,return=minimal"})})
+ .then(function(){return rest("bfs_assessments?id=eq."+a.id,{method:"PATCH",body:JSON.stringify({grade_sheet_id:String(sheet.id)})})})
+ .then(function(){note("Sending the marked papers to the students...");return rest("bfs_attempts?assessment_id=eq."+a.id+"&status=eq.marked&released_at=is.null",{method:"PATCH",body:JSON.stringify({released_at:new Date().toISOString()})})})
+ .then(function(){return rest("bfs_grade_sheets?id=eq."+sheet.id,{method:"PATCH",body:JSON.stringify({published:true,published_at:new Date().toISOString()})})})
+ .then(function(){GS.published=true;return first?gsPost(rows):null})
+ .then(function(){return rest("bfs_assessments?id=eq."+a.id,{method:"PATCH",body:JSON.stringify({results_published_at:first?new Date().toISOString():a.results_published_at})})})
+ .then(function(){return amSubs()}).then(function(){note(first?"Done. The papers were sent, the marks are recorded in Grades and the results are on the timeline.":"Done. Newly marked papers were sent and the marks updated.")})
+ .catch(function(e){note("Stopped: "+e.message+(sheet?" Marks may already be recorded. You can post the results image again from Grades.":""),1)})}
+});
+function amMove(i,d){var a=AM.qs.slice(),k=a.findIndex(function(x){return x.id===i}),j=k+d;if(k<0||j<0||j>=a.length)return;var t=a[k];a[k]=a[j];a[j]=t;
+ var p=Promise.resolve();a.forEach(function(q,n){if(q.position!==n)p=p.then(function(){return rest("bfs_questions?id=eq."+q.id,{method:"PATCH",body:JSON.stringify({position:n})})})});p.then(function(){return amEdit()}).catch(amErr)}
+/* the type picker and the option list update the form as you type */
+B.addEventListener("change",function(e){if(e.target.id!=="am_qt")return;var t=e.target.value,o=amById("am_qo"),ox=o?o.value.split("\n"):["",""];amById("am_qx").innerHTML=amQx(t,{options:ox.length>1?ox:["",""],answer:null})});
+B.addEventListener("input",function(e){if(e.target.id!=="am_qo")return;var t=amById("am_qt").value,o=e.target.value.split("\n").map(function(s){return s.trim()}).filter(Boolean),ck=[].slice.call(document.querySelectorAll("#am_qc input:checked")).map(function(x){return Number(x.value)});amById("am_qc").innerHTML=amQc(t,o,t==="multi"?ck:ck[0])});
+B.addEventListener("input",function(e){if(!e.target.classList||!e.target.classList.contains("amsc"))return;var t=0,mx=0;[].forEach.call(document.querySelectorAll(".amsc"),function(el){mx+=Number(el.getAttribute("data-max"))||0;var n=Number(el.value);if(el.value!==""&&isFinite(n))t+=n});t=Math.round(t*100)/100;amById("am_tot").textContent=t;amById("am_pct").textContent="("+(mx?Math.round(t/mx*1000)/10:0)+"%)"});
+
+function go(v){cur=v;if(v!=="asm")AM.page="list";if(v!=="les")LCUR=null;if(v!=="gr")GCUR=null;[].forEach.call(document.querySelectorAll("#ptabs button"),function(b){b.classList.toggle("on",b.getAttribute("data-v")===v)});B.innerHTML="<p class=mute>Loading…</p>";V[v]()}
 document.getElementById("ptabs").onclick=function(e){var v=e.target.getAttribute("data-v");if(v)go(v)};
 B.onclick=function(e){var a=e.target.getAttribute("data-a");if(a&&A[a])A[a](e.target.getAttribute("data-id"))};
 window.bfsPortal=function(){ST=[];go(cur)};

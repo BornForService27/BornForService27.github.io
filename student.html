@@ -193,6 +193,45 @@ html{color-scheme:light}
 .hd .btn.sm{padding:6px 10px;font-size:.8rem;white-space:nowrap}
 .cu{margin-top:12px}
 }
+/* ===== Assessments ===== */
+.asc{border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:0 0 14px;background:#fff}
+.asc-h{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}.asc-h b{font-size:1.05rem}
+.asp{display:inline-block;padding:3px 12px;border-radius:14px;font-size:.8rem;font-weight:600;white-space:nowrap}
+.asp.open{background:#E2F5EC;color:#12703E}.asp.progress{background:#FDE8E6;color:#B3261E}.asp.upcoming{background:#E3EEFB;color:#1B5AA6}.asp.submitted,.asp.marked{background:#FFF3D6;color:#8A5A00}.asp.released{background:#E2F5EC;color:#12703E}.asp.missed{background:#EEF1F6;color:#5B6475}
+.asc-m{display:flex;gap:16px;flex-wrap:wrap;color:var(--mute);font-size:.9rem;margin:8px 0}.asc-a{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.asres{font-size:1.15rem;font-weight:600}.ok{color:#12703E;font-weight:600}.bad{color:#B3261E;font-weight:600}
+.exov{position:fixed;inset:0;z-index:150;background:#F4F7F7;overflow:auto;-webkit-overflow-scrolling:touch}
+.exbox{max-width:740px;margin:0 auto;padding:24px 18px 70px}.exbox h2{margin:.2em 0}.exbox.exc{text-align:center;padding-top:14vh}
+.exmeta{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0}.exmeta div{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px}.exmeta small{display:block;color:var(--mute);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;font-weight:600}.exmeta b{font-size:1.05rem}
+.exins,.exrules{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:12px 0;white-space:pre-wrap}.exrules{white-space:normal}.exrules ul{margin:6px 0 0 18px;padding:0}
+.exchk{display:flex;gap:10px;align-items:flex-start;font-weight:400;margin:14px 0}.exchk input{width:auto;margin-top:4px}
+.exbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.exbtns.top{justify-content:space-between;margin:0 0 8px}
+.exh{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.exht{display:flex;flex-direction:column;min-width:0}.exht b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.exht small{color:var(--mute)}
+.exhr{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end}
+.extimer{font:600 1.35rem/1 Lora,Georgia,serif;background:var(--head);color:#fff;padding:7px 14px;border-radius:8px;min-width:92px;text-align:center}.extimer.warn{background:#C77700}.extimer.bad{background:#B3261E;animation:exblink 1s infinite}
+@keyframes exblink{50%{opacity:.65}}
+.exsave{font-size:.82rem;color:#12703E}.exsave.bad{color:#B3261E;font-weight:600}
+.exnote{background:#FFF3D6;color:#7A5A00;text-align:center;padding:8px 12px;font-weight:600}.exnote.hide{display:none}
+.exb{max-width:1000px;margin:0 auto;padding:18px 16px 80px;display:grid;grid-template-columns:200px 1fr;gap:20px;align-items:start}
+.exnav{position:sticky;top:76px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px}.exnt{font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);font-weight:600;margin-bottom:8px}
+.exchips{display:flex;flex-wrap:wrap;gap:6px}.exchip{width:34px;height:34px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;font-weight:600;padding:0}.exchip.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.exprog{margin:10px 0;font-size:.85rem;color:var(--mute)}
+.exqc{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:0 0 14px}.exqh{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px;color:var(--mute)}.exqh b{color:var(--head)}
+.exqp{white-space:pre-wrap;font-size:1.02rem;margin-bottom:10px}.exhint{font-size:.82rem;color:var(--mute);margin-bottom:6px}
+.exopt{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:6px 0;cursor:pointer;font-weight:400}.exopt:hover{background:#F3FAF9}.exopt input{width:auto;margin-top:3px}
+.exin,.exta{width:100%;box-sizing:border-box}.exta{min-height:180px;resize:vertical}.exwc{font-size:.8rem;color:var(--mute);margin-top:4px;text-align:right}
+.exfile{border:1px dashed var(--line);border-radius:8px;padding:12px}.exfn{margin-top:8px;color:var(--mute);font-size:.9rem}.exok{color:#12703E;font-weight:600}
+.exfoot{text-align:center;margin:20px 0}
+.exmod{position:fixed;inset:0;background:rgba(10,20,25,.55);display:grid;place-items:center;z-index:160;padding:16px}.exmb{background:#fff;border-radius:12px;padding:22px;max-width:420px;width:100%}.exmb h3{margin-top:0}
+.exspin{width:42px;height:42px;border:4px solid #DDE5E3;border-top-color:var(--teal);border-radius:50%;margin:0 auto 14px;animation:exsp 1s linear infinite}@keyframes exsp{to{transform:rotate(360deg)}}
+.exdone{width:64px;height:64px;line-height:64px;border-radius:50%;background:#E2F5EC;color:#12703E;font-size:2rem;margin:0 auto 12px}
+.rvsum{display:flex;justify-content:space-between;align-items:center;gap:12px;border-radius:10px;padding:16px 20px;margin:12px 0;border:1px solid}.rvsum.pass{background:#E9F7F0;border-color:#8FD0AE}.rvsum.fail{background:#FDEDEB;border-color:#EFA9A2}
+.rvsum small{display:block;color:var(--mute);font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;font-weight:600}.rvsum b{font:600 1.8rem Lora,Georgia,serif}.rvp{text-align:right}.rvp span{display:block;font-weight:600}
+.rvq{background:#fff;border:1px solid var(--line);border-left:5px solid #C9D2D0;border-radius:10px;padding:14px 16px;margin:0 0 12px}.rvq.rok{border-left-color:#2E9E68}.rvq.rbad{border-left-color:#C93B30}.rvq.rpart{border-left-color:#D99A1E}
+.rvans{white-space:pre-wrap;background:var(--alt);border:1px solid var(--line);border-radius:6px;padding:8px 10px}.rvans.key{background:#EEF9F3;border-color:#B7E0C8}
+.amlab{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);font-weight:600;margin:10px 0 4px}
+@media(max-width:720px){.exb{display:block;padding:12px 12px 80px}.exnav{position:static;margin-bottom:12px}.exnav .btn{display:none}.exh{padding:8px 12px}.extimer{font-size:1.1rem;min-width:78px;padding:6px 10px}.exht b{max-width:48vw}}
 </style>
 </head><body>
 <header><div class="wrap hd"><img src="data:image/webp;base64,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" alt="BFS logo" width="56" height="56"><div style="margin-right:auto"><div class="hn">BORN FOR SERVICE SCHOOL OF MINISTRY</div><div class="hs">STUDENTS INFORMATION SYSTEM</div></div><a class="btn o sm" href="index.html">Main site</a></div></header>
@@ -219,10 +258,10 @@ html{color-scheme:light}
 
 <section id="vApp" class="hide">
 <div class="cu">Current user: <span id="cu"></span></div>
-<div class="lay"><nav id="menu" aria-label="Portal sections"><button class="on" data-t="t">Timeline</button><button data-t="p">Personal Information</button><button data-t="l">Lessons</button><button data-t="g">Grades</button><button data-t="f">Fees</button><button data-t="d">Documents</button></nav>
+<div class="lay"><nav id="menu" aria-label="Portal sections"><button class="on" data-t="t">Timeline</button><button data-t="p">Personal Information</button><button data-t="l">Lessons</button><button data-t="a">Assessments</button><button data-t="g">Grades</button><button data-t="f">Fees</button><button data-t="d">Documents</button></nav>
 <div><div id="tT" class="hide"></div><div id="tP"><div id="tPi"></div><div class="card acct"><h3>Account &amp; security</h3><p class="mute" style="margin:0 0 14px">Change your password or sign out of the Students Portal.</p><div class="arow"><button type="button" id="cpt" class="btn o sm">Change password</button><button type="button" id="out" class="btn sm">Log out</button></div>
 <div id="cpf" class="hide nw" style="margin-top:6px"><label for="c0">Current password</label><input id="c0" type="password" autocomplete="current-password"><label for="c1">New password (at least 8 characters)</label><input id="c1" type="password" autocomplete="new-password"><label for="c2">Repeat new password</label><input id="c2" type="password" autocomplete="new-password"><button id="cs" class="btn full">Save password</button><div id="m4" class="msg"></div></div></div></div>
-<div id="tL" class="hide"></div><div id="tG" class="hide"></div><div id="tF" class="hide"></div><div id="tD" class="hide"></div></div></div>
+<div id="tL" class="hide"></div><div id="tA" class="hide"></div><div id="tG" class="hide"></div><div id="tF" class="hide"></div><div id="tD" class="hide"></div></div></div>
 </section>
 </main>
 <script>
@@ -253,7 +292,7 @@ $("sv").onclick=function(){var a=$("p1").value,b=$("p2").value,m=$("m2");m.textC
  sb.auth.updateUser(CUR?{password:a,current_password:CUR}:{password:a}).then(function(r){if(r.error){m.textContent=r.error.message;return}
   sb.rpc("bfs_pw_done").then(function(){REC=false;history.replaceState(null,"",location.pathname);boot()})})};
 $("out").onclick=function(){sb.auth.signOut().then(function(){me=null;$("pw").value="";show("vLogin")})};
-var TT={t:"Timeline",p:"Personal Information",l:"Lessons",g:"Grades",f:"Fees",d:"Documents"},PN={t:"tT",p:"tP",l:"tL",g:"tG",f:"tF",d:"tD"};
+var TT={t:"Timeline",p:"Personal Information",l:"Lessons",a:"Assessments",g:"Grades",f:"Fees",d:"Documents"},PN={t:"tT",p:"tP",l:"tL",a:"tA",g:"tG",f:"tF",d:"tD"};
 function go(t){[].forEach.call($("menu").children,function(b){if(b.id!=="out")b.classList.toggle("on",b.getAttribute("data-t")===t)});
  Object.keys(PN).forEach(function(k){$(PN[k]).classList.toggle("hide",k!==t)});window.scrollTo(0,0);if(t==="f"||t==="d")refreshPay()}
 function loadGrades(){
@@ -268,7 +307,7 @@ function loadGrades(){
    $("tG").innerHTML="<p class='mute'>Pass mark: 50%.</p>"+(g.length?'<div class="tw"><table><tr><th>Date</th><th>Course / Test</th><th>Type</th><th>Mark</th><th>Result</th><th>Message for you</th></tr>'+g.map(function(a){var pct=a.max_mark?a.mark/a.max_mark*100:0;
     return"<tr><td>"+fmt(a.published_at)+"</td><td>"+esc(a.title)+"</td><td>"+esc(KL[a.kind]||a.kind)+"</td><td>"+esc(a.mark)+" / "+esc(a.max_mark)+" ("+Math.round(pct)+"%)</td><td>"+(pct>=50?'<span class="ok">Pass</span>':'<span class="bad">Fail</span>')+"</td><td>"+esc(a.comment||autoNote(a))+"</td></tr>"}).join("")+"</table></div>":'<p class="mute">No results have been published for you yet.</p>')});
 }
-$("menu").onclick=function(e){var t=e.target.getAttribute("data-t");if(t){go(t);if(t==="g"&&me&&me.status==="verified")loadGrades()}};
+$("menu").onclick=function(e){var t=e.target.getAttribute("data-t");if(t){go(t);if(t==="g"&&me&&me.status==="verified")loadGrades();if(t==="a")loadAssess()}};
 $("cpt").onclick=function(){var f=$("cpf");f.classList.toggle("hide");if(!f.classList.contains("hide"))$("c0").focus()};
 $("cs").onclick=function(){var c=$("c0").value,a=$("c1").value,b=$("c2").value,m=$("m4");m.style.color="";
  if(!c){m.textContent="Enter your current password.";return}if(a.length<8){m.textContent="Use at least 8 characters.";return}
@@ -618,6 +657,227 @@ function paintPay(rc){var fl=[];PAYSIG=paySig(rc);RCL=rc;
     return"<tr><td>"+esc(f[1])+"</td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(rm<=0?'<span class="ok">Fully paid</span>':'<span class="bad">Balance K'+rm.toLocaleString("en-US")+'</span> <small class="mute">(paid K'+gp.toLocaleString("en-US")+")</small>")+'<div class="bar"><i style="width:'+pc+'%"></i></div></td></tr>'}
    return"<tr><td>"+esc(f[1])+"</td><td>K"+f[2].toLocaleString("en-US")+"</td><td>"+(p?'<span class="ok">Paid</span> <small class="mute">'+fmt(p.paid_at)+"</small>":'<span class="bad">Not paid</span>')+"</td></tr>"}).join("")+"</table></div>";var ot=rc.filter(function(x){return/^other:/.test(x.item||"")});
 if(ot.length)$("tF").innerHTML+='<h3 style="margin:22px 0 8px">Other payments</h3><div class="tw"><table><tr><th>Payment</th><th>Amount</th><th>Date</th></tr>'+ot.map(function(x){return"<tr><td>"+esc(feeOf(x.item).label)+"</td><td>K"+Number(x.amount).toLocaleString("en-US")+"</td><td>"+fmt(x.paid_at)+"</td></tr>"}).join("")+"</table></div>"}
+/* ===== Assessments: shared helpers (answer text, marked paper PDF) ===== */
+var ASM_TYPES={single:"Multiple choice (one answer)",multi:"Multiple choice (several answers)",tf:"True or false",short:"One word / short answer",number:"Number answer",essay:"Essay / explain",file:"File upload"};
+function asmL(i){return String.fromCharCode(65+Number(i))}
+function asmEmpty(a){return a==null||a===""||(Array.isArray(a)&&!a.length)}
+function asmPick(o,i){i=Number(i);return o&&o[i]!=null?asmL(i)+". "+o[i]:""}
+function asmAnsText(it){var a=it.answer,o=it.options||[];
+ if(asmEmpty(a))return"No answer";
+ if(it.type==="single")return asmPick(o,a)||"No answer";
+ if(it.type==="multi")return(Array.isArray(a)?a:[]).map(Number).sort(function(x,y){return x-y}).map(function(i){return asmPick(o,i)}).filter(Boolean).join("; ")||"No answer";
+ if(it.type==="tf")return(a===true||a==="true")?"True":"False";
+ if(it.type==="file")return a&&a.name?"File: "+a.name:"No file uploaded";
+ return String(a)}
+function asmCorrectText(it){var c=it.correct,o=it.options||[];
+ if(asmEmpty(c))return"";
+ if(it.type==="single")return asmPick(o,c);
+ if(it.type==="multi")return(Array.isArray(c)?c:[]).map(Number).sort(function(x,y){return x-y}).map(function(i){return asmPick(o,i)}).filter(Boolean).join("; ");
+ if(it.type==="tf")return(c===true||c==="true")?"True":"False";
+ if(it.type==="short")return(Array.isArray(c)?c:[c]).join(" / ");
+ if(it.type==="number"){var t=Number(c.tolerance)||0;return String(c.value)+(t?" (accepted within +/- "+t+")":"")}
+ if(it.type==="essay")return String(c);
+ return""}
+function asmClean(s){return String(s==null?"":s).replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D]/g,'"').replace(/[\u2013\u2014]/g,"-").replace(/\u2026/g,"...").replace(/\t/g,"    ").replace(/[^\n\x20-\x7E\xA0-\xFF]/g,"?")}
+function asmFmtMark(n){n=Number(n);return isFinite(n)?String(Math.round(n*100)/100):"-"}
+/* d = {logo, kindLabel, assessment:{title,course}, student:{name,number,programme}, submitted, items:[{n,type,prompt,options,answer,correct,score,max,comment,explanation}], total, max, feedback} */
+function asmPdf(d){var J=window.jspdf;if(!J)return null;
+ var P=new J.jsPDF({unit:"mm",format:"a4"}),T=[15,143,134],L=16,W=178,y=0,LH=4.5;
+ var m=/^data:image\/(png|jpe?g)/i.exec(d.logo||""),fmt=m&&m[1].toLowerCase()==="png"?"PNG":"JPEG";
+ P.setFillColor(T[0],T[1],T[2]);P.rect(0,0,210,5,"F");
+ try{if(d.logo)P.addImage(d.logo,fmt,L,12,22,22)}catch(e){}
+ P.setTextColor(T[0],T[1],T[2]);P.setFont("helvetica","bold");P.setFontSize(15);P.text("BORN FOR SERVICE",44,21);P.text("SCHOOL OF MINISTRY",44,28);
+ P.setTextColor(60,60,60);P.setFont("helvetica","italic");P.setFontSize(9);P.text("Created for Good Works (Ephesians 2:10)",44,33);
+ P.setFont("helvetica","normal");P.text("Lusaka, Zambia  |  Bornforservice27@gmail.com",44,38);
+ P.setDrawColor(T[0],T[1],T[2]);P.setLineWidth(.6);P.line(L,43,194,43);
+ P.setTextColor(20,20,20);P.setFont("helvetica","bold");P.setFontSize(16);P.text("MARKED "+String(d.kindLabel||"PAPER").toUpperCase(),105,54,{align:"center"});
+ y=60;P.setLineWidth(.2);P.setDrawColor(150,150,150);
+ var info=[["Student name",d.student.name],["Student number",d.student.number||"-"],["Programme",d.student.programme||"-"],[d.kindLabel||"Assessment",d.assessment.title]];
+ if(d.assessment.course)info.push(["Course",d.assessment.course]);
+ if(d.submitted)info.push(["Submitted",d.submitted]);
+ info.forEach(function(r){var ln=P.splitTextToSize(asmClean(r[1]),124),h=Math.max(8,ln.length*4.6+3.4);P.setFillColor(243,246,244);P.rect(L,y,50,h,"FD");P.rect(L+50,y,128,h);P.setTextColor(30,30,30);P.setFont("helvetica","bold");P.setFontSize(9);P.text(r[0],L+2,y+5.4);P.setFont("helvetica","normal");P.text(ln,L+52,y+5.4);y+=h});
+ y+=7;
+ var pct=d.max>0?Math.round(d.total/d.max*1000)/10:0,pass=pct>=50;
+ P.setFillColor(pass?226:253,pass?245:232,pass?236:230);P.setDrawColor(pass?18:179,pass?112:38,pass?62:30);P.setLineWidth(.5);P.rect(L,y,W,20,"FD");
+ P.setTextColor(30,30,30);P.setFont("helvetica","bold");P.setFontSize(9);P.text("TOTAL MARKS",L+5,y+7);
+ P.setFontSize(18);P.text(asmFmtMark(d.total)+" / "+asmFmtMark(d.max),L+5,y+15.5);
+ P.setFontSize(14);P.setTextColor(pass?18:179,pass?112:38,pass?62:30);P.text(pct+"%  -  "+(pass?"PASS":"FAIL"),L+W-5,y+11,{align:"right"});
+ P.setFont("helvetica","normal");P.setFontSize(8);P.setTextColor(90,90,90);P.text("Pass mark: 50%",L+W-5,y+16.5,{align:"right"});
+ y+=27;
+ function ls(t,w,sz,st){P.setFont("helvetica",st||"normal");P.setFontSize(sz);return P.splitTextToSize(asmClean(t),w)}
+ function put(a,x,sz,st,c){P.setFont("helvetica",st||"normal");P.setFontSize(sz);c=c||[30,30,30];P.setTextColor(c[0],c[1],c[2]);a.forEach(function(s){P.text(s,x,y);y+=LH})}
+ (d.items||[]).forEach(function(it){
+  var pr=ls(it.prompt,W-6,9.5,"bold"),an=ls("Your answer: "+asmAnsText(it),W-6,9),ct=asmCorrectText(it),co=ct?ls("Correct answer: "+ct,W-6,9):[],
+   cm=it.comment?ls("Marker's comment: "+it.comment,W-6,8.5,"italic"):[],ex=it.explanation?ls("Explanation: "+it.explanation,W-6,8.5,"italic"):[];
+  var h=9+pr.length*LH+2+an.length*LH+(co.length?co.length*LH+1:0)+(cm.length?cm.length*LH+1:0)+(ex.length?ex.length*LH+1:0)+4;
+  if(y+Math.min(h,60)>280){P.addPage();y=18}
+  var sc=it.score,full=sc!=null&&Number(sc)>=Number(it.max)&&Number(it.max)>0,zero=sc!=null&&Number(sc)===0,col=sc==null?[90,90,90]:full?[18,112,62]:zero?[179,38,30]:[138,90,0];
+  P.setFillColor(243,246,244);P.setDrawColor(200,205,203);P.setLineWidth(.2);P.rect(L,y,W,7,"FD");
+  P.setFont("helvetica","bold");P.setFontSize(9);P.setTextColor(30,30,30);P.text("Question "+it.n,L+2,y+4.9);
+  P.setTextColor(col[0],col[1],col[2]);P.text((sc==null?"-":asmFmtMark(sc))+" / "+asmFmtMark(it.max)+" mark"+(Number(it.max)===1?"":"s"),L+W-2,y+4.9,{align:"right"});
+  y+=11;put(pr,L+3,9.5,"bold");y+=1.5;
+  put(an,L+3,9,"normal",full?[18,112,62]:zero?[179,38,30]:sc==null?[30,30,30]:[138,90,0]);
+  if(co.length){y+=1;put(co,L+3,9,"normal",[18,112,62])}
+  if(cm.length){y+=1;put(cm,L+3,8.5,"italic",[70,70,70])}
+  if(ex.length){y+=1;put(ex,L+3,8.5,"italic",[70,70,70])}
+  y+=3;P.setDrawColor(225,229,228);P.line(L,y,L+W,y);y+=5});
+ if(d.feedback){var fb=ls("Overall feedback: "+d.feedback,W-6,9.5);if(y+fb.length*LH+6>280){P.addPage();y=18}put(fb,L+3,9.5,"normal",[30,30,30])}
+ var n=P.getNumberOfPages();for(var i=1;i<=n;i++){P.setPage(i);P.setDrawColor(T[0],T[1],T[2]);P.setLineWidth(.4);P.line(L,285,194,285);P.setTextColor(90,90,90);P.setFont("helvetica","normal");P.setFontSize(8);P.text("Born For Service School of Ministry  |  Computer-generated marked paper  |  Page "+i+" of "+n,105,290,{align:"center"})}
+ return P}
+
+/* ===== Assessments: tests, exams and assignments ===== */
+var ASM={off:0,list:[],ex:null,tick:null,beat:null,deb:null,rv:null,poll:null};
+var ASK={test:"Test",exam:"Exam",assignment:"Assignment"};
+function asmLogo(){var i=document.querySelector("header img");return i?i.src:""}
+function asmNow(){return Date.now()+ASM.off}
+function asmWhen(i){return i?new Date(i).toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}):"-"}
+function asmClock(ms){var s=Math.max(0,Math.ceil(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60,p=function(n){return(n<10?"0":"")+n};return h?h+":"+p(m)+":"+p(x):p(m)+":"+p(x)}
+function asmIn(ms){var m=Math.max(1,Math.round(ms/60000));if(m<60)return m+" minute"+(m===1?"":"s");var h=Math.round(m/60);if(h<48)return h+" hour"+(h===1?"":"s");var d=Math.round(h/24);return d+" day"+(d===1?"":"s")}
+function asmOv(html,cls){var o=$("exov");if(!o){o=document.createElement("div");o.id="exov";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");document.body.appendChild(o);document.body.style.overflow="hidden"}o.className="exov"+(cls?" "+cls:"");o.innerHTML=html;o.scrollTop=0;return o}
+function asmOvClose(){var o=$("exov");if(o)o.remove();document.body.style.overflow=""}
+/* ---------- the list ---------- */
+function loadAssess(quiet){var box=$("tA");if(!box)return;
+ if(!me||me.status!=="verified"){box.innerHTML='<p class="mute">Tests, exams and assignments are available to admitted students.</p>';return}
+ if(!quiet)box.innerHTML='<p class="mute">Loading\u2026</p>';
+ sb.rpc("bfs_assess_list").then(function(r){if(r.error){box.innerHTML='<p class="mute">'+(/does not exist|PGRST202|schema cache|Could not find/i.test(String(r.error.message)+String(r.error.code))?"Tests and exams are not available yet.":"Your tests and exams could not be loaded. Please try again.")+'</p>';return}
+  var d=r.data||{};ASM.off=new Date(d.now).getTime()-Date.now();ASM.list=d.items||[];asmDraw()});
+ if(!ASM.poll)ASM.poll=setInterval(function(){var b=$("tA");if(b&&!b.classList.contains("hide")&&!$("exov")&&!document.hidden)loadAssess(true)},30000)}
+function asmState(x){var n=asmNow(),s=new Date(x.starts_at).getTime(),e=new Date(x.ends_at).getTime(),t=x.attempt;
+ if(t&&t.released)return"released";if(t&&t.status==="marked")return"marked";if(t&&t.status==="submitted")return"submitted";
+ if(t&&t.status==="in_progress")return new Date(t.deadline_at).getTime()+15000<n?"submitted":"progress";
+ if(n<s)return"upcoming";if(n>e)return"missed";return"open"}
+var ASL={open:"Open now",progress:"In progress",upcoming:"Not open yet",submitted:"Submitted",marked:"Submitted",released:"Result available",missed:"Closed"};
+function asmCard(x){var st=asmState(x),t=x.attempt,n=asmNow(),pct=t&&t.released&&t.max>0?Math.round(t.total/t.max*1000)/10:null,k=ASK[x.kind]||"Test",a="",info="";
+ if(st==="open"){a='<button class="btn" data-as="begin" data-id="'+x.id+'">Start '+esc(k.toLowerCase())+'</button>';info="Closes "+asmWhen(x.ends_at)+" (in "+asmIn(new Date(x.ends_at).getTime()-n)+")"}
+ else if(st==="progress"){a='<button class="btn" data-as="begin" data-id="'+x.id+'">Continue</button>';info="Time left: <b>"+asmClock(new Date(t.deadline_at).getTime()-n)+"</b>"}
+ else if(st==="upcoming")info="Opens "+asmWhen(x.starts_at)+" (in "+asmIn(new Date(x.starts_at).getTime()-n)+")";
+ else if(st==="submitted"||st==="marked")info="Submitted "+asmWhen(t.submitted_at)+". It is being marked. Your marked paper will appear here when it is sent to you.";
+ else if(st==="released"){info='<span class="asres">'+Number(t.total)+" / "+Number(t.max)+" ("+pct+'%) \u00B7 '+(pct>=50?'<span class="ok">Pass</span>':'<span class="bad">Fail</span>')+'</span>';a='<button class="btn" data-as="review" data-at="'+t.id+'">View marked paper</button><button class="btn o" data-as="pdf" data-at="'+t.id+'">Download PDF</button>'}
+ else info="This closed on "+asmWhen(x.ends_at)+" and was not attempted.";
+ return'<div class="asc"><div class="asc-h"><div><b>'+esc(x.title)+'</b><div class="mute">'+esc(k)+(x.course?" \u00B7 "+esc(x.course):"")+'</div></div><span class="asp '+st+'">'+ASL[st]+'</span></div>'+
+  '<div class="asc-m"><span>'+x.questions+' question'+(x.questions===1?"":"s")+'</span><span>Total '+Number(x.marks)+' marks</span>'+(x.duration?'<span>'+x.duration+' minutes allowed</span>':"")+'</div><div>'+info+'</div>'+(a?'<div class="asc-a">'+a+'</div>':"")+'</div>'}
+function asmDraw(){var box=$("tA");if(!box)return;var pr={open:0,progress:0,upcoming:1,released:2,marked:3,submitted:3,missed:4},l=ASM.list.slice().sort(function(a,b){return(pr[asmState(a)]-pr[asmState(b)])||(new Date(b.starts_at)-new Date(a.starts_at))});
+ box.innerHTML='<p class="mute">Your tests, exams and assignments. When one is open you will enter your details, then answer the questions. Your answers are saved automatically, and submitted automatically when the time is up.</p>'+(l.length?l.map(asmCard).join(""):'<p class="mute">There is nothing for you here yet.</p>')}
+/* ---------- details form ---------- */
+function asmBegin(id){var x=ASM.list.filter(function(y){return y.id===id})[0];if(!x)return;var k=ASK[x.kind]||"Test",resume=x.attempt&&x.attempt.status==="in_progress";
+ asmOv('<div class="exbox"><h2>'+esc(x.title)+'</h2><p class="mute">'+esc(k)+(x.course?" \u00B7 "+esc(x.course):"")+'</p>'+
+ '<div class="exmeta"><div><small>Questions</small><b>'+x.questions+'</b></div><div><small>Total marks</small><b>'+Number(x.marks)+'</b></div><div><small>Time allowed</small><b>'+(x.duration?x.duration+" min":"Until it closes")+'</b></div><div><small>Closes</small><b>'+asmWhen(x.ends_at)+'</b></div></div>'+
+ (x.instructions?'<div class="exins"><b>Instructions</b><div>'+esc(x.instructions)+'</div></div>':"")+
+ '<div class="exrules"><b>Please note</b><ul><li>Your answers are saved automatically as you write.</li><li>When the time is up, what you have answered is submitted automatically.</li><li>You cannot see the questions until you have entered your details below.</li></ul></div>'+
+ '<h3>Candidate details</h3><p class="mute">'+(resume?"Enter your details again to continue where you stopped.":"Enter your details exactly as they are in your student record.")+'</p>'+
+ '<label for="ex_n">Full name</label><input id="ex_n" autocomplete="off"><label for="ex_s">Student number</label><input id="ex_s" autocomplete="off"><label for="ex_p">Programme</label><select id="ex_p"><option value="">Choose your programme</option><option>Certificate</option><option>Advanced Certificate</option></select><label for="ex_t">Phone or WhatsApp (optional)</label><input id="ex_t" inputmode="tel" autocomplete="off">'+
+ '<label class="exchk"><input type="checkbox" id="ex_d"> <span>I confirm that these details are mine and that the work I submit is my own.</span></label><div id="ex_m" class="msg"></div>'+
+ '<div class="exbtns"><button class="btn o" data-ex="close">Cancel</button><button class="btn" id="ex_go" data-ex="go" data-id="'+x.id+'">'+(resume?"Continue":"Begin")+'</button></div></div>')}
+function asmGo(id){var n=$("ex_n").value.trim(),s=$("ex_s").value.trim(),p=$("ex_p").value,t=$("ex_t").value.trim(),m=$("ex_m"),b=$("ex_go");m.className="msg";
+ if(!n||!s||!p){m.className="msg err";m.textContent="Enter your full name, student number and programme.";return}
+ if(!$("ex_d").checked){m.className="msg err";m.textContent="Please tick the confirmation box.";return}
+ b.disabled=true;b.textContent="Please wait\u2026";
+ sb.rpc("bfs_assess_open",{p_id:id,p_name:n,p_number:s,p_programme:p,p_phone:t||null}).then(function(r){
+  if(r.error||!r.data){b.disabled=false;b.textContent="Begin";m.className="msg err";m.textContent=(r.error&&r.error.message)||"Could not start. Please try again.";return}
+  exStart(r.data)}).catch(function(){b.disabled=false;b.textContent="Begin";m.className="msg err";m.textContent="Could not reach the server. Check your internet and try again."})}
+/* ---------- the exam screen ---------- */
+function exQ(q,i){var inp="",o=q.options||[],nm="q_"+q.id,t=q.type;
+ if(t==="single"||t==="multi")inp=o.map(function(x,k){return'<label class="exopt"><input type="'+(t==="multi"?"checkbox":"radio")+'" name="'+nm+'" data-q="'+q.id+'" value="'+k+'"><span>'+esc(x)+'</span></label>'}).join("");
+ else if(t==="tf")inp=[["true","True"],["false","False"]].map(function(x){return'<label class="exopt"><input type="radio" name="'+nm+'" data-q="'+q.id+'" value="'+x[0]+'"><span>'+x[1]+'</span></label>'}).join("");
+ else if(t==="short")inp='<input type="text" class="exin" data-q="'+q.id+'" maxlength="300" autocomplete="off" placeholder="Type your answer">';
+ else if(t==="number")inp='<input type="text" inputmode="decimal" class="exin" data-q="'+q.id+'" maxlength="40" autocomplete="off" placeholder="Type a number">';
+ else if(t==="essay")inp='<textarea class="exta" data-q="'+q.id+'" rows="9" placeholder="Write your answer here"></textarea><div class="exwc" data-wc="'+q.id+'">0 words</div>';
+ else inp='<div class="exfile"><input type="file" data-q="'+q.id+'" data-file="1"><div class="exfn" data-fn="'+q.id+'">No file chosen</div></div>';
+ return'<section class="exqc" id="q_'+q.id+'"><div class="exqh"><b>Question '+(i+1)+'</b><span>'+Number(q.marks)+' mark'+(Number(q.marks)===1?"":"s")+'</span></div><div class="exqp">'+esc(q.prompt)+'</div>'+(t==="multi"?'<div class="exhint">Select all that apply.</div>':"")+inp+'</section>'}
+function exRead(q){var r=$("q_"+q.id),c;if(!r)return ASM.ex.ans[q.id];
+ if(q.type==="single"){c=r.querySelector("input:checked");return c?Number(c.value):null}
+ if(q.type==="multi")return[].map.call(r.querySelectorAll("input:checked"),function(x){return Number(x.value)}).sort(function(a,b){return a-b});
+ if(q.type==="tf"){c=r.querySelector("input:checked");return c?c.value==="true":null}
+ if(q.type==="short"||q.type==="number")return r.querySelector("input").value.trim();
+ if(q.type==="essay")return r.querySelector("textarea").value;
+ return ASM.ex.ans[q.id]||null}
+function exFill(q,a){var r=$("q_"+q.id);if(!r)return;
+ if(q.type==="file"){exFile(q);return}
+ if(asmEmpty(a))return;
+ if(q.type==="single")[].forEach.call(r.querySelectorAll("input"),function(x){x.checked=Number(x.value)===Number(a)});
+ else if(q.type==="multi")[].forEach.call(r.querySelectorAll("input"),function(x){x.checked=(Array.isArray(a)?a.map(Number):[]).indexOf(Number(x.value))>-1});
+ else if(q.type==="tf")[].forEach.call(r.querySelectorAll("input"),function(x){x.checked=x.value===String(a===true||a==="true")});
+ else if(q.type==="essay"){r.querySelector("textarea").value=a;exWc(q)}
+ else r.querySelector("input").value=a}
+function exWc(q){var el=document.querySelector('[data-wc="'+q.id+'"]'),v=$("q_"+q.id).querySelector("textarea").value.trim(),n=v?v.split(/\s+/).length:0;if(el)el.textContent=n+" word"+(n===1?"":"s")}
+function exFile(q){var e=ASM.ex,a=e.ans[q.id],el=document.querySelector('[data-fn="'+q.id+'"]');if(!el)return;
+ el.innerHTML=a&&a.name?'<span class="exok">Uploaded: '+esc(a.name)+'</span> <button type="button" class="btn o sm" data-ex="rmfile" data-q="'+q.id+'">Remove</button>':"No file chosen"}
+function exUpload(q,input){var e=ASM.ex,f=input.files&&input.files[0];if(!f)return;var el=document.querySelector('[data-fn="'+q.id+'"]');
+ if(f.size>15*1024*1024){el.textContent="That file is too large. The maximum is 15 MB.";input.value="";return}
+ el.textContent="Uploading\u2026 please wait";var path=e.id+"/"+q.id+"-"+Date.now()+"-"+f.name.replace(/[^A-Za-z0-9._-]/g,"_");
+ sb.storage.from("bfs-assessments").upload(path,f,{contentType:f.type||"application/octet-stream"}).then(function(r){
+  if(r.error){el.textContent="The upload failed. Check your internet and try again.";input.value="";return}
+  e.ans[q.id]={path:path,name:f.name,size:f.size};input.value="";exFile(q);exChanged(q)}).catch(function(){el.textContent="The upload failed. Try again."})}
+function exStat(t,bad){var el=$("ex_sv");if(el){el.textContent=t;el.className="exsave"+(bad?" bad":"")}}
+function exProg(){var e=ASM.ex,n=0;e.qs.forEach(function(q){var on=!asmEmpty(e.ans[q.id]);if(on)n++;var c=document.querySelector('.exchip[data-q="'+q.id+'"]');if(c)c.classList.toggle("on",on)});var el=$("ex_pr");if(el)el.textContent=n+" of "+e.qs.length+" answered"}
+function exChanged(q){var e=ASM.ex;e.dirty=true;try{localStorage.setItem("bfs_ex_"+e.id,JSON.stringify({a:e.ans,t:Date.now()}))}catch(x){}
+ if(q&&q.type==="essay")exWc(q);exProg();exStat("Unsaved changes\u2026");clearTimeout(ASM.deb);ASM.deb=setTimeout(exSave,1200)}
+function exSave(){var e=ASM.ex;if(!e||e.done||e.fin)return Promise.resolve();if(e.saving){e.again=true;return Promise.resolve()}
+ e.saving=true;e.dirty=false;exStat("Saving\u2026");
+ return sb.rpc("bfs_assess_save",{p_attempt:e.id,p_answers:e.ans}).then(function(r){e.saving=false;
+  if(r.error){e.dirty=true;exStat("Not saved. Check your internet. Retrying\u2026",1);return}
+  if(r.data&&r.data.closed){exFinish(true);return}
+  exStat("All answers saved at "+new Date().toLocaleTimeString("en-GB"));
+  if(e.again){e.again=false;return exSave()}}).catch(function(){e.saving=false;e.dirty=true;exStat("Not saved. Check your internet. Retrying\u2026",1)})}
+function exTick(){var e=ASM.ex;if(!e||e.fin)return;var left=e.deadline-(Date.now()+e.off),t=$("ex_tm");
+ if(left<=0){exFinish(true);return}
+ if(t){t.textContent=asmClock(left);t.className="extimer"+(left<60000?" bad":left<300000?" warn":"")}
+ var nt=$("ex_note"),w=left<=60000?60:left<=300000?300:left<=600000?600:0;
+ if(w&&!e.warned[w]&&nt){e.warned[w]=1;nt.textContent=w===60?"Less than one minute left. Your answers are saved automatically.":(w/60)+" minutes left. Your answers are saved automatically.";nt.classList.remove("hide");setTimeout(function(){nt.classList.add("hide")},9000)}}
+function exStart(d){var qs=d.questions||[],ans=Object.assign({},d.attempt.answers||{});
+ try{var lb=JSON.parse(localStorage.getItem("bfs_ex_"+d.attempt.id)||"null");if(lb&&lb.a)ans=Object.assign(ans,lb.a)}catch(x){}
+ var off=new Date(d.now).getTime()-Date.now();ASM.off=off;
+ var e=ASM.ex={id:d.attempt.id,title:d.assessment.title,kind:ASK[d.assessment.kind]||"Test",course:d.assessment.course,qs:qs,ans:ans,deadline:new Date(d.attempt.deadline_at).getTime(),off:off,dirty:false,saving:false,done:false,fin:false,warned:{}};
+ asmOv('<div class="exh"><div class="exht"><b>'+esc(e.title)+'</b><small>'+esc(e.course||e.kind)+'</small></div><div class="exhr"><span id="ex_tm" class="extimer">--:--</span><span id="ex_sv" class="exsave"></span></div></div><div id="ex_note" class="exnote hide"></div>'+
+  '<div class="exb"><aside class="exnav"><div class="exnt">Questions</div><div class="exchips">'+qs.map(function(q,i){return'<button type="button" class="exchip" data-ex="chip" data-q="'+q.id+'">'+(i+1)+'</button>'}).join("")+'</div><div id="ex_pr" class="exprog"></div><button type="button" class="btn full" data-ex="submit">Submit</button></aside>'+
+  '<main class="exq">'+qs.map(exQ).join("")+'<div class="exfoot"><button type="button" class="btn" data-ex="submit">Submit my '+esc(e.kind.toLowerCase())+'</button></div></main></div>','exam');
+ qs.forEach(function(q){exFill(q,ans[q.id])});exProg();exStat("All answers saved");exTick();
+ clearInterval(ASM.tick);clearInterval(ASM.beat);ASM.tick=setInterval(exTick,1000);ASM.beat=setInterval(function(){if(ASM.ex&&ASM.ex.dirty)exSave()},15000);
+ window.onbeforeunload=function(){return"Your work is in progress."}}
+function exModal(h){var m=$("ex_mod");if(!m){m=document.createElement("div");m.id="ex_mod";m.className="exmod";$("exov").appendChild(m)}m.innerHTML='<div class="exmb">'+h+'</div>'}
+function exModalClose(){var m=$("ex_mod");if(m)m.remove()}
+function exAsk(){var e=ASM.ex,un=e.qs.filter(function(q){return asmEmpty(e.ans[q.id])}).length;
+ exModal('<h3>Submit your '+esc(e.kind.toLowerCase())+'?</h3><p>'+(un?'You have <b>'+un+'</b> unanswered question'+(un===1?"":"s")+'.':'You have answered every question.')+' After you submit, you cannot change your answers.</p><div class="exbtns"><button class="btn o" data-ex="no">Go back</button><button class="btn" data-ex="yes">Submit now</button></div>')}
+function exFinish(auto){var e=ASM.ex;if(!e||e.fin)return;e.fin=true;clearInterval(ASM.tick);clearInterval(ASM.beat);clearTimeout(ASM.deb);window.onbeforeunload=null;
+ asmOv('<div class="exbox exc"><div class="exspin"></div><h3>'+(auto?"Time is up":"Submitting")+'</h3><p>'+(auto?"Saving and submitting what you have answered\u2026":"Submitting your answers\u2026")+'</p></div>');
+ var tries=0;(function go(){tries++;sb.rpc("bfs_assess_submit",{p_attempt:e.id,p_answers:e.ans,p_auto:!!auto}).then(function(r){
+  if(r.error){if(tries<6)setTimeout(go,2000);else exFail(auto);return}
+  e.done=true;try{localStorage.removeItem("bfs_ex_"+e.id)}catch(x){}
+  asmOv('<div class="exbox exc"><div class="exdone">&#10003;</div><h3>'+(auto?"Time is up. Your work was submitted":"Submitted successfully")+'</h3><p>'+(auto?"Everything you had answered was saved and submitted automatically.":"Your answers have been submitted.")+' Your marked paper will appear in this section when the administrator sends it to you.</p><button class="btn" data-ex="close">Close</button></div>')}).catch(function(){if(tries<6)setTimeout(go,2000);else exFail(auto)})})()}
+function exFail(auto){asmOv('<div class="exbox exc"><h3>We could not reach the server</h3><p>Your answers are safely stored on this device. Check your internet connection, keep this page open and try again.</p><button class="btn" data-ex="retry" data-auto="'+(auto?1:0)+'">Try again</button></div>')}
+/* ---------- the marked paper ---------- */
+function asmRevItems(d){return(d.items||[]).map(function(it,i){return{n:i+1,type:it.type,prompt:it.prompt,options:it.options,answer:it.answer,correct:it.correct,score:it.score!=null?Number(it.score):null,max:Number(it.marks),comment:it.comment||"",explanation:it.explanation||""}})}
+function asmPdfOut(d){var dt=d.details||{},p=asmPdf({logo:asmLogo(),kindLabel:ASK[d.assessment.kind]||"Paper",assessment:{title:d.assessment.title,course:d.assessment.course||""},student:{name:dt.name||me.full_name||"",number:dt.student_number||me.student_number||"",programme:dt.programme||me.programme||""},submitted:d.submitted_at?asmWhen(d.submitted_at):"",items:asmRevItems(d),total:Number(d.total),max:Number(d.max),feedback:d.feedback||""});
+ if(!p){alert("The PDF tool could not load. Check your internet connection and try again.");return}
+ p.save("Marked-"+String(d.assessment.title).replace(/[^A-Za-z0-9]+/g,"-")+".pdf")}
+function asmRvHtml(d){var pct=d.max>0?Math.round(d.total/d.max*1000)/10:0,pass=pct>=50;
+ return'<div class="exbox"><div class="exbtns top"><button class="btn o" data-ex="close">Close</button><button class="btn" data-ex="rvpdf">Download PDF</button></div><h2>'+esc(d.assessment.title)+'</h2><p class="mute">'+esc(ASK[d.assessment.kind]||"")+(d.assessment.course?" \u00B7 "+esc(d.assessment.course):"")+'</p>'+
+ '<div class="rvsum '+(pass?"pass":"fail")+'"><div><small>Your total</small><b>'+Number(d.total)+' / '+Number(d.max)+'</b></div><div class="rvp"><b>'+pct+'%</b><span>'+(pass?"Pass":"Fail")+'</span></div></div>'+
+ (d.feedback?'<div class="exins"><b>Feedback</b><div>'+esc(d.feedback)+'</div></div>':"")+
+ asmRevItems(d).map(function(it){var cl=it.score==null?"":(Number(it.score)>=it.max&&it.max>0)?" rok":Number(it.score)===0?" rbad":" rpart",ct=asmCorrectText(it);
+  return'<div class="rvq'+cl+'"><div class="exqh"><b>Question '+it.n+'</b><span>'+(it.score!=null?Number(it.score):"-")+' / '+it.max+'</span></div><div class="exqp">'+esc(it.prompt)+'</div><div class="amlab">Your answer</div><div class="rvans">'+esc(asmAnsText(it))+'</div>'+(ct?'<div class="amlab">Correct answer</div><div class="rvans key">'+esc(ct)+'</div>':"")+(it.comment?'<div class="amlab">Marker\'s comment</div><div class="rvans">'+esc(it.comment)+'</div>':"")+(it.explanation?'<div class="amlab">Explanation</div><div class="rvans">'+esc(it.explanation)+'</div>':"")+'</div>'}).join("")+'</div>'}
+function asmReview(at,pdfOnly){if(!pdfOnly)asmOv('<div class="exbox exc"><p class="mute">Loading your marked paper\u2026</p></div>');
+ sb.rpc("bfs_assess_review",{p_attempt:at}).then(function(r){if(r.error||!r.data){if(pdfOnly)alert("Could not load the paper.");else asmOv('<div class="exbox exc"><p>'+esc(r.error?r.error.message:"This paper is not available.")+'</p><button class="btn" data-ex="close">Close</button></div>');return}
+  ASM.rv=r.data;if(pdfOnly)asmPdfOut(r.data);else asmOv(asmRvHtml(r.data))})}
+/* ---------- events ---------- */
+document.addEventListener("click",function(e){var t=e.target,b=t.closest?t.closest("[data-as],[data-ex]"):null;if(!b)return;
+ var as=b.getAttribute("data-as"),ex=b.getAttribute("data-ex");
+ if(as==="begin")asmBegin(b.getAttribute("data-id"));else if(as==="review")asmReview(b.getAttribute("data-at"));else if(as==="pdf")asmReview(b.getAttribute("data-at"),true);
+ else if(ex==="close"){asmOvClose();if(ASM.ex&&ASM.ex.done){ASM.ex=null}loadAssess(true)}
+ else if(ex==="go")asmGo(b.getAttribute("data-id"));
+ else if(ex==="chip"){var q=$("q_"+b.getAttribute("data-q"));if(q)q.scrollIntoView({behavior:"smooth",block:"start"})}
+ else if(ex==="submit")exAsk();else if(ex==="no")exModalClose();else if(ex==="yes"){exModalClose();exFinish(false)}
+ else if(ex==="retry"){ASM.ex.fin=false;exFinish(b.getAttribute("data-auto")==="1")}
+ else if(ex==="rvpdf"&&ASM.rv)asmPdfOut(ASM.rv)
+ else if(ex==="rmfile"&&ASM.ex){var qq=b.getAttribute("data-q"),a=ASM.ex.ans[qq];delete ASM.ex.ans[qq];if(a&&a.path)sb.storage.from("bfs-assessments").remove([a.path]);exFile({id:qq});exChanged(null)}});
+function exEv(e){var x=ASM.ex,t=e.target;if(!x||x.fin||!t||!t.getAttribute||!$("exov")||!$("exov").contains(t))return;var qid=t.getAttribute("data-q");if(!qid)return;
+ var q=x.qs.filter(function(y){return y.id===qid})[0];if(!q)return;
+ if(t.getAttribute("data-file")){if(e.type==="change")exUpload(q,t);return}
+ var choice=t.type==="radio"||t.type==="checkbox";if(choice!==(e.type==="change"))return;
+ x.ans[q.id]=exRead(q);exChanged(q)}
+document.addEventListener("input",exEv);document.addEventListener("change",exEv);
+document.addEventListener("visibilitychange",function(){if(document.hidden&&ASM.ex&&ASM.ex.dirty)exSave()});
+
 function refreshPay(){if(!me||$("vApp").classList.contains("hide"))return;
  sb.from("receipts").select("*").then(function(r){if(!r||r.error)return;var rc=(r.data||[]).filter(function(x){return!x.deleted_at});if(paySig(rc)===PAYSIG)return;paintPay(rc)})}
 function startPay(){if(window.__payT)return;window.__payT=setInterval(refreshPay,30000);document.addEventListener("visibilitychange",function(){if(!document.hidden)refreshPay()});window.addEventListener("focus",refreshPay)}
