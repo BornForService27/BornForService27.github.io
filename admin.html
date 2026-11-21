@@ -96,6 +96,29 @@ label{display:block;font-weight:600;margin:12px 0 4px}
 .amsr label{grid-column:1/-1;margin:0}.amsr input{margin:0}@media(max-width:640px){.amsr{grid-template-columns:1fr}}
 .amopt{display:flex;gap:8px;align-items:center;font-weight:400;margin:4px 0}.amopt input{width:auto;margin:0}
 .amtot{font-size:1.1rem}.amtot b{font:600 1.5rem Lora,Georgia,serif;color:var(--head)}
+.amhead{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;margin:8px 0 12px}.amhead h2{margin:0 0 6px}
+.amsub{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.amchip{display:inline-block;padding:2px 10px;border-radius:12px;background:var(--alt);font-size:.78rem;font-weight:600;color:var(--mute)}.amchip.pub{background:#E2F5EC;color:#12703E}
+.amb.no{background:#EEF1F6;color:#5B6475}
+.amstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:12px 0}
+.amst{border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:#fff}.amst small{display:block;color:var(--mute);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;font-weight:600}.amst b{display:block;font:600 1.02rem Lora,Georgia,serif;color:var(--head);margin-top:2px}
+.amtb{display:flex;flex-wrap:wrap;border-bottom:2px solid var(--line);margin:18px 0 14px}
+.amtb button{background:none;border:0;border-bottom:3px solid transparent;border-radius:0;color:var(--mute);padding:10px 18px;margin-bottom:-2px;font-weight:600}
+.amtb button.on{color:var(--head);border-bottom-color:var(--teal)}
+.amgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 14px}
+.amseg{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 14px}.amseg button{padding:6px 14px;border-radius:20px;font-size:.85rem}.amseg button.on{background:var(--head);color:#fff;border-color:var(--head)}
+.amli{border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:6px;padding:12px 14px;margin:10px 0;background:#fff}
+.amli-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start}.amli-h .t{font-size:1.05rem}
+.amli-m{color:var(--mute);font-size:.86rem;margin:8px 0 10px}
+.amqa{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.amqa button,button.sm{padding:6px 12px;font-size:.82rem}
+button.dg{color:#B3261E;border-color:#B3261E;background:#fff}
+.amform{border:1px solid var(--teal);border-radius:6px;padding:14px 18px 16px;background:#F7FCFB;margin:12px 0}
+.amform h4{font:600 .95rem Lora,Georgia,serif;margin:16px 0 4px;color:var(--head)}.amform label{margin-top:8px}
+.amqi{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin:8px 0;background:#fff}
+.amqn{flex:0 0 32px;height:32px;border-radius:50%;background:var(--head);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+.amqb{flex:1;min-width:200px}.amqb .p{white-space:pre-wrap;word-break:break-word}
+.amempty{border:2px dashed var(--line);border-radius:8px;padding:24px;text-align:center;margin:10px 0}
+.amready ul{margin:6px 0 0;padding-left:0;list-style:none}
 </style>
 </head>
 <body>
@@ -1149,17 +1172,25 @@ function amRender(){return AM.page==="edit"?amEdit():AM.page==="subs"?amSubs():A
 V.asm=function(){return amRender()};
 function amFail(e){B.innerHTML='<div class="msg err">Could not load: '+pe(e.message)+'<br>If this says the table or function does not exist, run assessments-upgrade.sql in Supabase first.</div>'}
 /* ---------- list ---------- */
+function amState(x){if(x.status!=="published")return{t:"Draft",c:"wait"};var n=Date.now(),a=new Date(x.starts_at).getTime(),e=new Date(x.ends_at).getTime();return n<a?{t:"Opens later",c:"ok2"}:n>e?{t:"Closed",c:"no"}:{t:"Open now",c:"ok"}}
 function amList(){AM.page="list";AM.id=null;
  return Promise.all([rest("bfs_assessments?select=*&order=created_at.desc"),rest("bfs_questions?select=assessment_id,marks"),rest("bfs_attempts?select=assessment_id,status,released_at"),rest("bfs_courses?select=id,title&order=sort")]).then(function(r){
   var qn={},qm={},an={},mk={};(r[1]||[]).forEach(function(x){qn[x.assessment_id]=(qn[x.assessment_id]||0)+1;qm[x.assessment_id]=(qm[x.assessment_id]||0)+Number(x.marks||0)});
   (r[2]||[]).forEach(function(x){an[x.assessment_id]=(an[x.assessment_id]||0)+1;if(x.status==="marked")mk[x.assessment_id]=(mk[x.assessment_id]||0)+1});
-  B.innerHTML='<div class="card"><h3 style="margin-top:0">New test, exam or assignment</h3><p class="mute">Create it, add the questions, set when it opens and closes, then publish it. Students write it in their portal; you mark it here.</p>'+
-  '<div class="pg"><input id="am_t" placeholder="Title, for example Hermeneutics Test 1"><select id="am_k"><option value="test">Test</option><option value="exam">Exam</option><option value="assignment">Assignment</option></select>'+
-  '<select id="am_c"><option value="">Course (optional)</option>'+(r[3]||[]).map(function(c){return'<option value="'+pe(c.id)+'">'+pe(c.title)+'</option>'}).join("")+'</select>'+
-  '<select id="am_p"><option value="all">For all students</option><option value="Certificate">Certificate students only</option><option value="Advanced Certificate">Advanced Certificate students only</option></select></div>'+
-  '<p><button data-a="amcreate">Create and add questions</button></p><div id="pnote" class="msg" hidden></div></div><h3>Tests, exams and assignments</h3>'+
-  ((r[0]||[]).length?r[0].map(function(x){return'<div class="cr2"><div class="t"><b>'+pe(x.title)+'</b><div class="mute">'+AMK[x.kind]+' \u00B7 '+amAud(x.programme)+' \u00B7 '+(x.status==="published"?"Published":"Draft (students cannot see it)")+' \u00B7 '+(qn[x.id]||0)+' question'+((qn[x.id]||0)===1?"":"s")+' \u00B7 '+(qm[x.id]||0)+' marks<br>Opens '+amWhen(x.starts_at)+' \u00B7 Closes '+amWhen(x.ends_at)+(x.duration_minutes?' \u00B7 '+x.duration_minutes+' minutes allowed':'')+' \u00B7 '+(an[x.id]||0)+' attempt'+((an[x.id]||0)===1?"":"s")+', '+(mk[x.id]||0)+' marked</div></div><button data-a="amedit" data-id="'+x.id+'">Edit</button><button data-a="amsubs" data-id="'+x.id+'">Submissions</button><button class="o" data-a="amqpdf" data-id="'+x.id+'">Question paper (PDF)</button><button data-a="amdel" data-id="'+x.id+'">Delete</button></div>'}).join(""):'<p class="mute">Nothing here yet. Create your first one above.</p>')
- }).catch(amFail)}
+  AM.list=(r[0]||[]).map(function(x){x._q=qn[x.id]||0;x._m=qm[x.id]||0;x._a=an[x.id]||0;x._k=mk[x.id]||0;return x});AM.courses=r[3]||[];amListDraw()}).catch(amFail)}
+function amItem(x){var st=amState(x);
+ return'<div class="amli"><div class="amli-h"><div><b class="t">'+pe(x.title)+'</b><div class="amsub" style="margin-top:6px"><span class="amchip">'+AMK[x.kind]+'</span><span class="amb '+st.c+'">'+st.t+'</span><span class="amchip">'+amAud(x.programme)+'</span>'+(x.course_title?'<span class="amchip">'+pe(x.course_title)+'</span>':"")+'</div></div></div>'+
+ '<div class="amli-m">'+x._q+' question'+(x._q===1?"":"s")+' \u00B7 '+x._m+' marks \u00B7 Opens '+amWhen(x.starts_at)+' \u00B7 Closes '+amWhen(x.ends_at)+(x.duration_minutes?' \u00B7 '+x.duration_minutes+' minutes allowed':'')+' \u00B7 '+x._a+' attempt'+(x._a===1?"":"s")+', '+x._k+' marked</div>'+
+ '<div class="amqa"><button data-a="amedit" data-id="'+x.id+'">Open and edit</button><button class="o" data-a="amsubs" data-id="'+x.id+'">Submissions</button><button class="o" data-a="amqpdf" data-id="'+x.id+'">Question paper (PDF)</button><button class="o dg sm" data-a="amdel" data-id="'+x.id+'">Delete</button></div></div>'}
+function amListDraw(){var L=AM.list||[],f=AM.f||"all",cnt={all:L.length,test:0,exam:0,assignment:0,draft:0};
+ L.forEach(function(x){cnt[x.kind]=(cnt[x.kind]||0)+1;if(x.status!=="published")cnt.draft++});
+ var lab={all:"All",test:"Tests",exam:"Exams",assignment:"Assignments",draft:"Drafts"},
+ shown=L.filter(function(x){return f==="all"||(f==="draft"?x.status!=="published":x.kind===f)}),
+ cs=(AM.courses||[]).map(function(c){return'<option value="'+pe(c.id)+'">'+pe(c.title)+'</option>'}).join("");
+ B.innerHTML='<div class="amhead"><div><h2>Tests, exams and assignments</h2><p class="mute" style="margin:0">Create one, add the questions, set the time, then publish it. Students write it in their portal and you mark it here.</p></div><button data-a="amnewtoggle">'+(AM.newOpen?"Close":"+ New")+'</button></div>'+
+ (AM.newOpen?'<div class="amform"><h3 style="margin:0 0 4px">New test, exam or assignment</h3><div class="amgrid"><div><label for="am_t">Title</label><input id="am_t" placeholder="For example Hermeneutics Test 1"></div><div><label for="am_k">Type</label><select id="am_k"><option value="test">Test</option><option value="exam">Exam</option><option value="assignment">Assignment</option></select></div><div><label for="am_c">Course (optional)</label><select id="am_c"><option value="">None</option>'+cs+'</select></div><div><label for="am_p">For</label><select id="am_p"><option value="all">All students</option><option value="Certificate">Certificate students only</option><option value="Advanced Certificate">Advanced Certificate students only</option></select></div></div><p style="margin:14px 0 0"><button data-a="amcreate">Create and add questions</button></p><div id="pnote" class="msg" hidden></div></div>':'<div id="pnote" class="msg" hidden></div>')+
+ '<div class="amseg">'+Object.keys(lab).map(function(k){return'<button class="o'+(f===k?" on":"")+'" data-a="amfilter" data-id="'+k+'">'+lab[k]+' ('+(cnt[k]||0)+')</button>'}).join("")+'</div>'+
+ (shown.length?shown.map(amItem).join(""):'<div class="amempty"><b>'+(L.length?"Nothing in this view":"Nothing here yet")+'</b><p class="mute" style="margin:4px 0 0">'+(L.length?"Choose another filter above.":"Press + New to create your first test, exam or assignment.")+'</p></div>')}
 /* ---------- editor ---------- */
 function amQx(t,q){q=q||{};
  if(t==="single"||t==="multi"){var o=q.options&&q.options.length?q.options:["",""];return'<label>Answer options (one per line, at least two)</label><textarea id="am_qo" rows="5">'+pe(o.join("\n"))+'</textarea><label>'+(t==="multi"?"Correct answers (tick every correct option)":"Correct answer")+'</label><div id="am_qc">'+amQc(t,o.filter(function(s){return String(s).trim()}),q.answer)+'</div>'}
@@ -1171,12 +1202,14 @@ function amQx(t,q){q=q||{};
 function amQc(t,o,ans){var h="";o.forEach(function(x,i){var ck=t==="multi"?(Array.isArray(ans)&&ans.map(Number).indexOf(i)>-1):(ans!=null&&!Array.isArray(ans)&&Number(ans)===i);
  h+='<label class="amopt"><input type="'+(t==="multi"?"checkbox":"radio")+'" name="am_qk" value="'+i+'"'+(ck?" checked":"")+'><span>'+asmL(i)+'. '+pe(x)+'</span></label>'});
  return h||'<p class="mute">Type the options above, then choose the correct one here.</p>'}
-function amQForm(q){q=q||{qtype:"single",prompt:"",options:["",""],answer:null,marks:1,explanation:""};AM.qe=q.id||null;var t=q.qtype;
- return'<label>Question type</label><select id="am_qt">'+Object.keys(ASM_TYPES).map(function(k){return'<option value="'+k+'"'+(k===t?" selected":"")+'>'+ASM_TYPES[k]+'</option>'}).join("")+'</select>'+
- '<label>Question</label><textarea id="am_qp" rows="3" placeholder="Type the question here">'+pe(q.prompt)+'</textarea><div id="am_qx">'+amQx(t,q)+'</div>'+
- '<div class="pg"><div><label>Marks for this question</label><input id="am_qm" type="number" min="0" step="0.5" value="'+(q.marks!=null?q.marks:1)+'"></div></div>'+
- '<label>Explanation shown to the student after marking (optional)</label><textarea id="am_qe" rows="2">'+pe(q.explanation||"")+'</textarea>'+
- '<p><button data-a="amqsave">'+(q.id?"Save question":"Add question")+'</button>'+(q.id?' <button class="o" data-a="amqcancel">Cancel</button>':"")+'</p><div id="am_qn" class="msg" hidden></div>'}
+function amQForm(q){var nw=!q;q=q||{qtype:"single",prompt:"",options:["",""],answer:null,marks:1,explanation:""};AM.qe=q.id||null;var t=q.qtype;
+ return'<div class="amform" id="am_qcard"><h3 style="margin:0">'+(nw?"New question":"Edit question")+'</h3>'+
+ '<h4>1. Type of question</h4><select id="am_qt">'+Object.keys(ASM_TYPES).map(function(k){return'<option value="'+k+'"'+(k===t?" selected":"")+'>'+ASM_TYPES[k]+'</option>'}).join("")+'</select>'+
+ '<h4>2. The question</h4><textarea id="am_qp" rows="3" placeholder="Type the question here">'+pe(q.prompt)+'</textarea>'+
+ '<h4>3. The answer</h4><div id="am_qx">'+amQx(t,q)+'</div>'+
+ '<h4>4. Marks</h4><div class="amgrid"><div><label for="am_qm">Marks for this question</label><input id="am_qm" type="number" min="0" step="0.5" value="'+(q.marks!=null?q.marks:1)+'"></div></div>'+
+ '<h4>5. Explanation (optional)</h4><p class="mute" style="margin:0 0 4px">Shown to the student after marking.</p><textarea id="am_qe" rows="2">'+pe(q.explanation||"")+'</textarea>'+
+ '<p style="margin:16px 0 0"><button data-a="amqsave">'+(nw?"Save question":"Save changes")+'</button> '+(nw?'<button class="o" data-a="amqsave2">Save and add another</button> ':'')+'<button class="o" data-a="amqcancel">Cancel</button></p><div id="am_qn" class="msg" hidden></div></div>'}
 function amQRead(){var t=amById("am_qt").value,p=amById("am_qp").value.trim(),m=Number(amById("am_qm").value),ex=amById("am_qe").value.trim();
  if(!p)throw new Error("Type the question.");if(!isFinite(m)||m<0)throw new Error("Enter the marks for this question.");
  var o=null,ans=null,tr=function(s){return s.trim()};
@@ -1188,22 +1221,37 @@ function amQRead(){var t=amById("am_qt").value,p=amById("am_qp").value.trim(),m=
  else if(t==="number"){var v=amById("am_qa").value;if(v===""||!isFinite(Number(v)))throw new Error("Enter the correct number.");ans={value:Number(v),tolerance:Number(amById("am_qtol").value)||0}}
  else if(t==="essay")ans=amById("am_qa").value.trim()||null;
  return{qtype:t,prompt:p,options:o,answer:ans,marks:m,explanation:ex||null}}
+function amReady(a,nq){var ok=function(v,t){return'<li>'+(v?'<span class="amk">\u2713</span> ':'<span class="amw">\u2717</span> ')+t+'</li>'};
+ return'<div class="msg amready"><b>Before you publish</b><ul>'+ok(nq>0,"Add the questions ("+nq+" so far)")+ok(new Date(a.ends_at).getTime()>Date.now(),"Set a closing time that is still in the future (Timing tab)")+ok(!!a.instructions,"Write instructions for the students (Details tab, optional)")+'</ul></div>'}
+function amQPane(){var qs=AM.qs,h="";
+ if(AM.form){var q=AM.form==="new"?null:(qs.filter(function(x){return x.id===AM.form})[0]||null);h+=amQForm(q)}
+ if(!qs.length)return h+(AM.form?"":'<div class="amempty"><b>No questions yet</b><p class="mute" style="margin:4px 0 0">Press <b>+ Add question</b> to write the first one.</p></div>');
+ return h+qs.map(function(q,i){var ct="";if(["single","multi","tf","short","number"].indexOf(q.qtype)>-1){try{ct=asmCorrectText({type:q.qtype,options:q.options,correct:q.answer})}catch(e){}}
+  var pr=String(q.prompt);
+  return'<div class="amqi"><div class="amqn">'+(i+1)+'</div><div class="amqb"><div class="p">'+pe(pr.slice(0,220))+(pr.length>220?"\u2026":"")+'</div><div class="amsub" style="margin-top:6px"><span class="amchip">'+ASM_TYPES[q.qtype]+'</span><span class="amchip">'+Number(q.marks)+' mark'+(Number(q.marks)===1?"":"s")+'</span>'+(ct?'<span class="amchip pub">Answer: '+pe(String(ct).slice(0,60))+'</span>':"")+'</div></div>'+
+  '<div class="amqa"><button class="o sm" data-a="amqup" data-id="'+q.id+'" title="Move up">\u2191</button><button class="o sm" data-a="amqdn" data-id="'+q.id+'" title="Move down">\u2193</button><button class="sm" data-a="amqedit" data-id="'+q.id+'">Edit</button><button class="o dg sm" data-a="amqdel" data-id="'+q.id+'">Delete</button></div></div>'}).join("")}
+function amQRefresh(){var el=amById("am_qpane");if(!el)return;el.innerHTML=amQPane();var f=amById("am_qcard");if(f)f.scrollIntoView({behavior:"smooth",block:"center"})}
 function amEdit(){AM.page="edit";
  return Promise.all([rest("bfs_assessments?select=*&id=eq."+AM.id),rest("bfs_questions?select=*&assessment_id=eq."+AM.id+"&order=position.asc,created_at.asc"),rest("bfs_attempts?select=id&assessment_id=eq."+AM.id),rest("bfs_courses?select=id,title&order=sort")]).then(function(r){
-  AM.a=(r[0]||[])[0];if(!AM.a){return amList()}AM.qs=r[1]||[];var a=AM.a,na=(r[2]||[]).length,tm=0;AM.qs.forEach(function(q){tm+=Number(q.marks)||0});
-  B.innerHTML='<p><button data-a="amback">&larr; All assessments</button> <button class="o" data-a="amsubs" data-id="'+a.id+'">Submissions and marking</button> <button class="o" data-a="amqpdf" data-id="'+a.id+'">Download question paper (PDF)</button> <button class="o" data-a="amkey" data-id="'+a.id+'">Marking scheme (PDF)</button></p>'+amDueCard(a)+
-  '<div class="card"><h3 style="margin-top:0">'+pe(a.title)+'</h3><p class="mute">'+AMK[a.kind]+' \u00B7 '+(a.status==="published"?"Published. Students can see it.":"Draft. Students cannot see it yet.")+(na?' \u00B7 '+na+' student attempt'+(na===1?"":"s")+' so far':"")+'</p>'+
-  '<label for="am_title">Title</label><input id="am_title" value="'+pe(a.title)+'">'+
-  '<div class="pg"><div><label>Type</label><select id="am_kind">'+Object.keys(AMK).map(function(k){return'<option value="'+k+'"'+(a.kind===k?" selected":"")+'>'+AMK[k]+'</option>'}).join("")+'</select></div>'+
-  '<div><label>Course</label><select id="am_course"><option value="">None</option>'+(r[3]||[]).map(function(c){return'<option value="'+pe(c.id)+'"'+(String(a.course_id)===String(c.id)?" selected":"")+'>'+pe(c.title)+'</option>'}).join("")+'</select></div>'+
-  '<div><label>For</label><select id="am_prog"><option value="all"'+(a.programme==="all"?" selected":"")+'>All students</option><option value="Certificate"'+(a.programme==="Certificate"?" selected":"")+'>Certificate students only</option><option value="Advanced Certificate"'+(a.programme==="Advanced Certificate"?" selected":"")+'>Advanced Certificate students only</option></select></div></div>'+
-  '<label for="am_ins">Instructions shown to students before they begin</label><textarea id="am_ins" rows="4" placeholder="For example: Answer all questions. You may not use notes.">'+pe(a.instructions||"")+'</textarea>'+
-  '<div class="pg"><div><label>Opens</label><input id="am_st" type="datetime-local" value="'+amLocal(a.starts_at)+'"></div><div><label>Closes</label><input id="am_en" type="datetime-local" value="'+amLocal(a.ends_at)+'"></div><div><label>Time allowed in minutes (optional)</label><input id="am_dur" type="number" min="1" step="1" value="'+(a.duration_minutes||"")+'"></div></div>'+
-  '<p class="mute">Students can only start between <b>Opens</b> and <b>Closes</b>. If you set the time allowed, each student gets that many minutes from the moment they begin, but never past the closing time. When time runs out, whatever they have answered is saved and submitted automatically.</p>'+
-  '<p><button data-a="amsave">Save details</button> <button class="'+(a.status==="published"?"o":"")+'" data-a="ampub">'+(a.status==="published"?"Unpublish":"Publish to students")+'</button></p><div id="pnote" class="msg" hidden></div></div>'+
-  '<h3>Questions ('+AM.qs.length+' \u00B7 '+tm+' marks in total)</h3>'+
-  (AM.qs.length?AM.qs.map(function(q,i){return'<div class="cr2"><div class="t"><b>'+(i+1)+'.</b> '+pe(String(q.prompt).slice(0,140))+(String(q.prompt).length>140?"\u2026":"")+'<div class="mute">'+ASM_TYPES[q.qtype]+' \u00B7 '+Number(q.marks)+' mark'+(Number(q.marks)===1?"":"s")+'</div></div><button class="o" data-a="amqup" data-id="'+q.id+'" title="Move up">\u2191</button><button class="o" data-a="amqdn" data-id="'+q.id+'" title="Move down">\u2193</button><button data-a="amqedit" data-id="'+q.id+'">Edit</button><button data-a="amqdel" data-id="'+q.id+'">Delete</button></div>'}).join(""):'<p class="mute">No questions yet. Add the first one below.</p>')+
-  '<div class="card" id="am_qcard"><h3 style="margin-top:0" id="am_qh">Add a question</h3><div id="am_qf">'+amQForm(null)+'</div></div>'}).catch(amFail)}
+  AM.a=(r[0]||[])[0];if(!AM.a)return amList();AM.qs=r[1]||[];AM.na=(r[2]||[]).length;AM.courses=r[3]||[];amEditDraw()}).catch(amFail)}
+function amEditDraw(){var a=AM.a,qs=AM.qs,tm=0,pub=a.status==="published",tab=AM.tab||"qs",st=amState(a),opt=function(v,l,cur){return'<option value="'+pe(v)+'"'+(String(cur)===String(v)?" selected":"")+'>'+l+'</option>'};
+ qs.forEach(function(q){tm+=Number(q.marks)||0});
+ var tabs=[["det","1. Details"],["qs","2. Questions ("+qs.length+")"],["time","3. Timing"]];
+ B.innerHTML='<p><button class="o sm" data-a="amback">&larr; All assessments</button></p>'+
+ '<div class="amhead"><div><h2>'+pe(a.title)+'</h2><div class="amsub"><span class="amchip">'+AMK[a.kind]+'</span><span class="amb '+st.c+'">'+st.t+'</span><span class="amchip">'+amAud(a.programme)+'</span>'+(a.course_title?'<span class="amchip">'+pe(a.course_title)+'</span>':"")+'</div></div>'+
+ '<div class="amqa"><button class="'+(pub?"o":"")+'" data-a="ampub">'+(pub?"Unpublish":"Publish to students")+'</button><button class="o" data-a="amsubs" data-id="'+a.id+'">Submissions'+(AM.na?" ("+AM.na+")":"")+'</button><button class="o" data-a="amqpdf" data-id="'+a.id+'">Question paper (PDF)</button><button class="o" data-a="amkey" data-id="'+a.id+'">Marking scheme (PDF)</button></div></div>'+
+ '<div id="pnote" class="msg" hidden></div>'+(pub?'<div class="msg">Published. Students can see it'+(AM.na?', and '+AM.na+' attempt'+(AM.na===1?" has":"s have")+' been started':"")+'. Changing questions now can affect students who are writing.</div>':amReady(a,qs.length))+
+ '<div class="amstats">'+[["Questions",qs.length],["Total marks",tm],["Opens",amWhen(a.starts_at)],["Closes",amWhen(a.ends_at)],["Time allowed",a.duration_minutes?a.duration_minutes+" minutes":"Until it closes"]].map(function(x){return'<div class="amst"><small>'+x[0]+'</small><b>'+x[1]+'</b></div>'}).join("")+'</div>'+
+ '<div class="amtb">'+tabs.map(function(t){return'<button class="'+(t[0]===tab?"on":"")+'" data-a="amtab" data-id="'+t[0]+'">'+t[1]+'</button>'}).join("")+'</div>'+
+ '<div class="amsec" id="am_s_det"'+(tab==="det"?"":" hidden")+'><div class="card"><div class="amgrid"><div style="grid-column:1/-1"><label for="am_title">Title</label><input id="am_title" value="'+pe(a.title)+'"></div>'+
+ '<div><label for="am_kind">Type</label><select id="am_kind">'+Object.keys(AMK).map(function(k){return opt(k,AMK[k],a.kind)}).join("")+'</select></div>'+
+ '<div><label for="am_course">Course</label><select id="am_course"><option value="">None</option>'+(AM.courses||[]).map(function(c){return opt(c.id,pe(c.title),a.course_id)}).join("")+'</select></div>'+
+ '<div><label for="am_prog">For</label><select id="am_prog">'+opt("all","All students",a.programme)+opt("Certificate","Certificate students only",a.programme)+opt("Advanced Certificate","Advanced Certificate students only",a.programme)+'</select></div></div>'+
+ '<label for="am_ins">Instructions shown to students before they begin</label><textarea id="am_ins" rows="4" placeholder="For example: Answer all questions. You may not use notes.">'+pe(a.instructions||"")+'</textarea>'+
+ '<p><button data-a="amsave">Save changes</button></p></div></div>'+
+ '<div class="amsec" id="am_s_qs"'+(tab==="qs"?"":" hidden")+'><div class="amhead" style="margin-top:0"><div><h3 style="margin:0">Questions</h3><p class="mute" style="margin:0">'+qs.length+' question'+(qs.length===1?"":"s")+' \u00B7 '+tm+' marks in total</p></div><button data-a="amqnew">+ Add question</button></div><div id="am_qpane">'+amQPane()+'</div></div>'+
+ '<div class="amsec" id="am_s_time"'+(tab==="time"?"":" hidden")+'><div class="card"><h3 style="margin-top:0">Schedule</h3><div class="amgrid"><div><label for="am_st">Opens</label><input id="am_st" type="datetime-local" value="'+amLocal(a.starts_at)+'"></div><div><label for="am_en">Closes</label><input id="am_en" type="datetime-local" value="'+amLocal(a.ends_at)+'"></div><div><label for="am_dur">Time allowed in minutes (optional)</label><input id="am_dur" type="number" min="1" step="1" value="'+(a.duration_minutes||"")+'"></div></div>'+
+ '<p class="mute">Students can only start between <b>Opens</b> and <b>Closes</b>. If you set the time allowed, each student gets that many minutes from the moment they begin, but never past the closing time. When time runs out, their answers are submitted automatically. Students who never start get 0.</p><p><button data-a="amsave">Save changes</button></p></div>'+amDueCard(a,true)+'</div>'}
 /* ---------- submissions ---------- */
 function amClose(){return rest("bfs_attempts?assessment_id=eq."+AM.id+"&status=eq.in_progress&deadline_at=lt."+encodeURIComponent(new Date(Date.now()-15000).toISOString()),{method:"PATCH",body:JSON.stringify({status:"submitted",submitted_at:new Date().toISOString(),auto_submitted:true})})}
 function amAutoSave(qs,at){var p=Promise.resolve();at.forEach(function(x){if(x.status!=="submitted")return;var r=amAutoAll(qs,x.answers,x.scores);
@@ -1216,11 +1264,12 @@ function amSubs(){AM.page="subs";
    var live=at.filter(function(x){return x.status==="in_progress"}).length,sub=at.filter(function(x){return x.status==="submitted"}).length,mk=at.filter(function(x){return x.status==="marked"}).length,sent=at.filter(function(x){return x.released_at}).length;
    var absent=ST.filter(function(s){return(a.programme==="all"||s.programme===a.programme)&&!at.some(function(x){return x.student_id===s.id})});
    var blocked=live?live+" student"+(live===1?" is":"s are")+" still writing.":sub?sub+" paper"+(sub===1?" is":"s are")+" not marked yet.":!mk?"There is nothing marked yet.":"";var closed=new Date(a.ends_at).getTime()<Date.now();amZeroSync(a,absent,closed);
-   B.innerHTML='<p><button data-a="amback">&larr; All assessments</button> <button class="o" data-a="amedit" data-id="'+a.id+'">Edit questions</button> <button class="o" data-a="amqpdf" data-id="'+a.id+'">Download question paper (PDF)</button></p>'+amDueCard(a)+
-   '<div class="card"><h3 style="margin-top:0">'+pe(a.title)+'</h3><p class="mute">'+AMK[a.kind]+' \u00B7 out of '+mx+' \u00B7 '+amAud(a.programme)+' \u00B7 Opens '+amWhen(a.starts_at)+' \u00B7 Closes '+amWhen(a.ends_at)+'</p>'+
-   '<p><b>'+at.length+'</b> attempt'+(at.length===1?"":"s")+' \u00B7 <b>'+live+'</b> writing now \u00B7 <b>'+sub+'</b> waiting to be marked \u00B7 <b>'+mk+'</b> marked \u00B7 <b>'+sent+'</b> sent to students</p>'+
-   '<p><button class="o" data-a="amrefresh">Refresh</button> <button class="o" data-a="amauto">Auto-mark all</button></p><div id="pnote" class="msg" hidden></div></div>'+
-   (at.length?'<div style="overflow-x:auto"><table><tr><th>Student</th><th>Submitted</th><th>Status</th><th>Marks</th><th>Needs your marking</th><th></th></tr>'+at.map(function(x){var d=x.details||{},rr=amAutoAll(qs,x.answers,x.scores),tt=amTotals(qs,rr.scores),pend=x.status==="submitted"?rr.pending:0;
+   B.innerHTML='<p><button class="o sm" data-a="amback">&larr; All assessments</button></p>'+
+   '<div class="amhead"><div><h2>'+pe(a.title)+'</h2><div class="amsub"><span class="amchip">'+AMK[a.kind]+'</span><span class="amchip">Out of '+mx+'</span><span class="amchip">'+amAud(a.programme)+'</span><span class="amchip">Opens '+amWhen(a.starts_at)+'</span><span class="amchip">Closes '+amWhen(a.ends_at)+'</span></div></div><div class="amqa"><button class="o" data-a="amedit" data-id="'+a.id+'">Edit questions</button><button class="o" data-a="amqpdf" data-id="'+a.id+'">Question paper (PDF)</button><button class="o" data-a="amrefresh">Refresh</button></div></div><div id="pnote" class="msg" hidden></div>'+
+   '<div class="amstats">'+[["Writing now",live],["Waiting to mark",sub],["Marked",mk],["Sent to students",sent],[closed?"Did not attempt":"Not started yet",absent.length]].map(function(x){return'<div class="amst"><small>'+x[0]+'</small><b>'+x[1]+'</b></div>'}).join("")+'</div>'+
+   amDueCard(a)+
+   '<div class="amhead" style="margin-bottom:6px"><h3 style="margin:0">Submissions ('+at.length+')</h3>'+(at.length?'<button class="o" data-a="amauto">Auto-mark all</button>':"")+'</div>'+
+   (at.length?'<div class="fxw"><table class="fxt"><tr><th>Student</th><th>Submitted</th><th>Status</th><th>Marks</th><th>Needs your marking</th><th></th></tr>'+at.map(function(x){var d=x.details||{},rr=amAutoAll(qs,x.answers,x.scores),tt=amTotals(qs,rr.scores),pend=x.status==="submitted"?rr.pending:0;
     return'<tr><td><b>'+pe(d.name||"")+'</b><br><small class="mute">'+pe(d.student_number||"")+'</small></td><td>'+(x.submitted_at?amWhen(x.submitted_at):"\u2014")+'</td><td>'+amBadge(x)+'</td><td>'+(x.status==="marked"?'<b>'+(x.total_score!=null?Number(x.total_score):tt.total)+'</b> / '+mx:(x.status==="submitted"?tt.total+' / '+mx+' so far':"\u2014"))+'</td><td>'+(x.status==="submitted"?(pend?pend+" question"+(pend===1?"":"s"):"None. Ready to complete"):"\u2014")+'</td><td style="white-space:nowrap">'+(x.status!=="in_progress"||new Date(x.deadline_at).getTime()<Date.now()?'<button data-a="ammark" data-id="'+x.id+'">'+(x.status==="marked"?"View":"Mark")+'</button> ':"")+(x.status==="marked"&&!x.released_at?'<button class="o" data-a="amsend" data-id="'+x.id+'">Send paper</button> ':"")+'<button class="o" data-a="amreset" data-id="'+x.id+'">Reset</button></td></tr>'}).join("")+'</table></div>':'<p class="mute">No student has started yet.</p>')+
    (absent.length?(closed?'<div class="card" style="margin-top:12px"><h3 style="margin-top:0">Did not attempt ('+absent.length+')</h3><p class="mute">The due time has passed. These students did not write it, so each one gets <b>0 / '+mx+'</b>. The zeros are recorded in Grades when you publish the results.</p><p>'+absent.map(function(s){return pe(s.full_name)}).join(", ")+'</p></div>':'<details style="margin-top:12px"><summary>Not started yet ('+absent.length+')</summary><p class="mute">'+absent.map(function(s){return pe(s.full_name)}).join(", ")+'</p></details>'):"")+
    '<div class="card" style="margin-top:16px"><h3 style="margin-top:0">Publish results</h3><p class="mute">When every paper is marked, one button will: <b>send each marked paper</b> (with the correct answers and the total) to its student\'s portal, <b>record the marks in Grades</b>, and <b>post the results on the timeline</b>.'+(a.results_published_at?' Results were first published on '+amWhen(a.results_published_at)+'. Pressing the button again sends newly marked papers and updates the marks without posting to the timeline again.':'')+'</p>'+
@@ -1262,10 +1311,10 @@ function amPaperData(x){var d=x.details||{},sc=x.scores||{},tt=amTotals(AM.qs,sc
   items:AM.qs.map(function(q,i){var s=sc[q.id]||{};return{n:i+1,type:q.qtype,prompt:q.prompt,options:q.options,answer:(x.answers||{})[q.id],correct:q.answer,score:s.score!=null?s.score:null,max:Number(q.marks),comment:s.comment||"",explanation:q.explanation||""}}),
   total:x.total_score!=null?Number(x.total_score):tt.total,max:x.max_score!=null?Number(x.max_score):tt.max,feedback:x.feedback||""}}
 /* ---------- due time, zero marks, question paper PDF ---------- */
-function amDueCard(a){var ended=new Date(a.ends_at).getTime()<Date.now();
- return'<div class="card"><h3 style="margin-top:0">Due time</h3><p class="mute">Closes <b>'+amWhen(a.ends_at)+'</b>'+(ended?' (already closed)':'')+'. You can change it at any time, even while students are writing. Students who are writing see the change on their screen within about 20 seconds. The + buttons give extra time to everyone writing and add it to the time allowed.</p>'+
- '<div class="row"><span class="mute">Give more time:</span>'+[5,10,15,30,60].map(function(m){return'<button class="o" data-a="amext" data-id="'+m+'">+'+m+' min</button>'}).join("")+'</div>'+
- '<div class="row"><input id="am_nend" type="datetime-local" value="'+amLocal(a.ends_at)+'" style="max-width:240px"><button data-a="amsetend">Set new closing time</button></div></div>'}
+function amDueCard(a,simple){var ended=new Date(a.ends_at).getTime()<Date.now();
+ return'<div class="card"><h3 style="margin-top:0">'+(simple?"Give students more time":"Due time")+'</h3><p class="mute">Closes <b>'+amWhen(a.ends_at)+'</b>'+(ended?' (already closed)':'')+'. You can change it at any time, even while students are writing. Students who are writing see the change on their screen within about 20 seconds. The + buttons give extra time to everyone writing and add it to the time allowed.</p>'+
+ '<div class="row"><span class="mute">Add:</span>'+[5,10,15,30,60].map(function(m){return'<button class="o sm" data-a="amext" data-id="'+m+'">+'+m+' min</button>'}).join("")+'</div>'+
+ (simple?'':'<div class="row"><input id="am_nend" type="datetime-local" value="'+amLocal(a.ends_at)+'" style="max-width:240px"><button data-a="amsetend">Set new closing time</button></div>')+'</div>'}
 function amShiftLive(id,delta,ne){return rest("bfs_attempts?select=id,deadline_at&assessment_id=eq."+id+"&status=eq.in_progress").then(function(rs){var now=Date.now(),p=Promise.resolve(),n=0;
  (rs||[]).forEach(function(x){var d=new Date(x.deadline_at).getTime();if(d+15000<now)return;var nd=Math.min(d+delta,ne);n++;p=p.then(function(){return rest("bfs_attempts?id=eq."+x.id,{method:"PATCH",body:JSON.stringify({deadline_at:new Date(nd).toISOString()})})})});
  return p.then(function(){return n})})}
@@ -1300,7 +1349,7 @@ function amQPaper(a,qs,key){var J=window.jspdf;if(!J)return null;
  P.setDrawColor(120,120,120);P.setLineWidth(.25);
  rows.forEach(function(r){var vl=wr(r[1],W-64,11.5,"normal"),h=Math.max(8,vl.length*5.4+2.6);P.setFillColor(243,246,244);P.rect(L,y,58,h,"FD");P.rect(L+58,y,W-58,h);tx(r[0],L+3,y+5.5,11.5,"bold");vl.forEach(function(l,k){tx(l,L+61,y+5.5+k*5.4,11.5,"normal")});y+=h});
  y+=9;tx("CANDIDATE DETAILS",L,y,12,"bold",{},T);y+=3;
- if(!key)["Full name:","Student number:","Programme:","Signature:"].forEach(function(f){y+=11;tx(f,L,y,11.5,"bold");P.setDrawColor(80,80,80);P.setLineWidth(.25);P.line(L+38,y+1,R,y+1)});
+ if(!key)["Full name:","Student number:","Programme:"].forEach(function(f){y+=11;tx(f,L,y,11.5,"bold");P.setDrawColor(80,80,80);P.setLineWidth(.25);P.line(L+38,y+1,R,y+1)});
  else{y+=8;tx("For the examiner only. Not for candidates.",L,y,11.5,"italic")}
  tx(key?"CONFIDENTIAL":"DO NOT TURN OVER THIS PAGE UNTIL YOU ARE TOLD TO DO SO.",105,272,11,"bold",{align:"center"});
  /* instructions */
@@ -1340,7 +1389,10 @@ function amPaperFor(i,key){var id=i||AM.id;if(!id)return;
   p.save((key?"Marking-Scheme-":"Question-Paper-")+String(a.title).replace(/[^A-Za-z0-9]+/g,"-")+".pdf");note("The PDF was downloaded.")}).catch(amErr)}
 /* ---------- actions ---------- */
 Object.assign(A,{
-amback:function(){AM.page="list";amList()},
+amback:function(){AM.page="list";AM.form=null;amList()},
+amnewtoggle:function(){AM.newOpen=!AM.newOpen;amListDraw()},amfilter:function(f){AM.f=f||"all";amListDraw()},
+amtab:function(t){AM.tab=t;["det","qs","time"].forEach(function(k){var e=amById("am_s_"+k);if(e)e.hidden=k!==t});[].forEach.call(document.querySelectorAll(".amtb button"),function(b){b.classList.toggle("on",b.getAttribute("data-id")===t)})},
+amqnew:function(){AM.form="new";amQRefresh()},amqsave2:function(){A.amqsave("more")},
 amqpdf:function(i){amPaperFor(i,false)},amkey:function(i){amPaperFor(i,true)},
 amext:function(m){m=Number(m);var a=AM.a;if(!a||!m)return;var old=new Date(a.ends_at).getTime(),ne=Math.max(old,Date.now())+m*60000,b={ends_at:new Date(ne).toISOString()};if(a.duration_minutes)b.duration_minutes=Number(a.duration_minutes)+m;amApplyEnd(a,b,m*60000,ne)},
 amsetend:function(){var a=AM.a,v=amById("am_nend").value,ne=new Date(v).getTime(),old=new Date(a.ends_at).getTime();
@@ -1350,8 +1402,8 @@ amsetend:function(){var a=AM.a,v=amById("am_nend").value,ne=new Date(v).getTime(
  amApplyEnd(a,{ends_at:new Date(ne).toISOString()},ne-old,ne)},
 amcreate:function(){var t=amById("am_t").value.trim();if(!t)return note("Enter a title.",1);
  var c=amById("am_c"),st=new Date();st.setDate(st.getDate()+1);st.setHours(8,0,0,0);var en=new Date(st.getTime()+2*3600000);
- rest("bfs_assessments",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({title:t,kind:amById("am_k").value,programme:amById("am_p").value,course_id:c.value||null,course_title:c.value?c.options[c.selectedIndex].text:null,starts_at:st.toISOString(),ends_at:en.toISOString()})}).then(function(r){AM.id=r[0].id;return amEdit()}).catch(amErr)},
-amedit:function(i){if(i)AM.id=i;AM.qe=null;amEdit()},
+ rest("bfs_assessments",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({title:t,kind:amById("am_k").value,programme:amById("am_p").value,course_id:c.value||null,course_title:c.value?c.options[c.selectedIndex].text:null,starts_at:st.toISOString(),ends_at:en.toISOString()})}).then(function(r){AM.id=r[0].id;AM.tab="qs";AM.form="new";AM.newOpen=false;return amEdit()}).catch(amErr)},
+amedit:function(i){if(i&&i!==AM.id)AM.tab="qs";if(i)AM.id=i;AM.qe=null;AM.form=null;amEdit()},
 amsubs:function(i){if(i)AM.id=i;amSubs()},
 amrefresh:function(){amSubs()},
 amdel:function(i){if(!confirm("Delete this assessment with all its questions and every student's attempt? This cannot be undone."))return;rest("bfs_assessments?id=eq."+i,{method:"DELETE"}).then(amList).catch(amErr)},
@@ -1363,11 +1415,11 @@ ampub:function(){var pub=AM.a.status==="published";
  if(!pub){if(!AM.qs.length)return note("Add at least one question before publishing.",1);if(new Date(AM.a.ends_at)<=new Date())return note("The closing time has already passed. Change it first.",1)}
  else if(!confirm("Unpublish? Students will no longer see it. Anyone already writing keeps their saved answers."))return;
  rest("bfs_assessments?id=eq."+AM.id,{method:"PATCH",body:JSON.stringify({status:pub?"draft":"published"})}).then(function(){return amEdit()}).then(function(){note(pub?"Unpublished.":"Published. Students can see it now and start when it opens.")}).catch(amErr)},
-amqsave:function(){var n=amById("am_qn"),q;try{q=amQRead()}catch(e){n.hidden=false;n.className="msg err";n.textContent=e.message;return}
+amqsave:function(more){var n=amById("am_qn"),q;try{q=amQRead()}catch(e){n.hidden=false;n.className="msg err";n.textContent=e.message;return}
  var p=AM.qe?rest("bfs_questions?id=eq."+AM.qe,{method:"PATCH",body:JSON.stringify(q)}):(q.assessment_id=AM.id,q.position=AM.qs.length,post("bfs_questions",q));
- p.then(function(){AM.qe=null;return amEdit()}).catch(function(e){n.hidden=false;n.className="msg err";n.textContent=e.message})},
-amqedit:function(i){var q=AM.qs.filter(function(x){return x.id===i})[0];if(!q)return;amById("am_qf").innerHTML=amQForm(q);amById("am_qh").textContent="Edit question";amById("am_qcard").scrollIntoView({behavior:"smooth",block:"center"})},
-amqcancel:function(){amById("am_qf").innerHTML=amQForm(null);amById("am_qh").textContent="Add a question"},
+ p.then(function(){AM.qe=null;AM.form=more==="more"?"new":null;AM.tab="qs";return amEdit()}).catch(function(e){n.hidden=false;n.className="msg err";n.textContent=e.message})},
+amqedit:function(i){AM.form=i;amQRefresh()},
+amqcancel:function(){AM.form=null;amQRefresh()},
 amqdel:function(i){if(!confirm("Delete this question?"))return;rest("bfs_questions?id=eq."+i,{method:"DELETE"}).then(function(){return amEdit()}).catch(amErr)},
 amqup:function(i){amMove(i,-1)},amqdn:function(i){amMove(i,1)},
 amfile:function(path){sb.storage.from("bfs-assessments").createSignedUrl(path,300).then(function(r){if(r.error||!r.data)return note("Could not open the file.",1);window.open(r.data.signedUrl,"_blank")})},
