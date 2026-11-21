@@ -176,6 +176,7 @@ label{display:block;font-weight:600;margin:12px 0 4px}
 <div id="lw" hidden><div class="lbar"><button id="lprint">Print or save as PDF</button><button class="o" id="lclose">Close</button></div><div class="paper" id="lt"></div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>window.properName=function(s){return String(s==null?"":s).replace(/\s+/g," ").trim().split(" ").map(function(w){return w.replace(/[^\-'\u2019.]+/g,function(p){return/^Mc[A-Z]/.test(p)?p:p.charAt(0).toUpperCase()+p.slice(1).toLowerCase()})}).join(" ")};</script>
 <script>
 /* BFS settings: paste your Supabase Project URL and anon public key between the quotes. See the setup guide. */
 var BFS_URL="https://qbttclxxyxliiuvyyyqj.supabase.co";
@@ -405,12 +406,16 @@ window.addEventListener("error",function(ev){if(!$("login").hidden)show("lmsg","
 $("out").onclick=function(){sb.auth.signOut().then(function(){location.reload()})};
 
 function backToLogin(msg){$("app").hidden=true;$("out").hidden=true;$("login").hidden=false;show("lmsg",msg,1);if(sb)sb.auth.signOut()}
+function bfsFixNames(){if(window.__nmFixed)return;window.__nmFixed=1;
+ [["students","full_name"],["applications","full_name"],["receipts","student_name"]].forEach(function(t){
+  sb.from(t[0]).select("id,"+t[1]).then(function(r){if(!r||r.error||!r.data)return;
+   r.data.forEach(function(x){var v=x[t[1]],n=properName(v);if(v&&n!==v){var u={};u[t[1]]=n;sb.from(t[0]).update(u).eq("id",x.id).then(function(){})}})}).catch(function(){})})}
 function enter(){
   sb.from("admins").select("user_id").then(function(r){
     if(r.error){backToLogin("Something went wrong. Please try again.");return}
     if(!r.data||!r.data.length){backToLogin("Email or password is not correct.");return}
     $("login").hidden=true;$("app").hidden=false;$("out").hidden=false;show("lmsg","");
-    loadApps().then(loadReceipts).then(loadStudents)
+    loadApps().then(loadReceipts).then(loadStudents).then(bfsFixNames)
   }).catch(function(){backToLogin("Could not connect. Please check your internet connection and try again.")})
 }
 function loadApps(){
@@ -420,7 +425,7 @@ function loadApps(){
   })
 }
 function loadReceipts(){
-  return sb.from("receipts").select("*").order("paid_at",{ascending:false}).then(function(r){var all=r.data||[];binReceipts=all.filter(function(x){return x.deleted_at});receipts=all.filter(act);renderReceipts();renderBin()})
+  return sb.from("receipts").select("*").order("paid_at",{ascending:false}).then(function(r){var all=r.data||[];all.forEach(function(x){if(x.student_name)x.student_name=properName(x.student_name)});binReceipts=all.filter(function(x){return x.deleted_at});receipts=all.filter(act);renderReceipts();renderBin()})
 }
 var LABEL={submitted:"New",under_review:"Under review",accepted:"Accepted",declined:"Declined"};
 function render(){
@@ -504,7 +509,7 @@ $("list").addEventListener("click",function(e){var id=e.target.getAttribute&&e.t
 document.addEventListener("click",function(e){var el=e.target.closest&&e.target.closest("[data-mail]");if(!el)return;
   var p=el.getAttribute("data-mail").split(":"),list=p[0]==="s"?(stuRows||[]):apps,x=list.filter(function(i){return i.id===p[1]})[0];
   if(!x||!(p[0]==="s"?x.status==="verified":x.status==="accepted"))return;e.preventDefault();emailLetter(x)});
-function normA(a){var m=String(a.reason||"").split("\n\nHow I heard about BFS: ");if(m.length>1&&!a.heard_about){a.reason=m[0];a.heard_about=m.slice(1).join("\n\n")}return a}
+function normA(a){if(a&&a.full_name)a.full_name=properName(a.full_name);var m=String(a.reason||"").split("\n\nHow I heard about BFS: ");if(m.length>1&&!a.heard_about){a.reason=m[0];a.heard_about=m.slice(1).join("\n\n")}return a}
 function snap(a){return{application_id:a.id,source:"application",status:"verified",intake_year:new Date(a.admitted_at||a.created_at).getFullYear(),student_number:a.student_number,full_name:a.full_name,date_of_birth:a.date_of_birth||null,gender:a.gender||null,marital_status:a.marital_status||null,nationality:a.nationality||null,nrc_number:a.nrc_number||null,passport_number:a.passport_number||null,phone:a.phone||null,whatsapp:a.whatsapp||null,email:a.email||null,address:a.address||null,district:a.district||null,province:a.province||null,church:a.church||null,education:a.education||null,programme:a.programme||null,reason:a.reason||null,heard_about:a.heard_about||null,nrc_path:a.nrc_path||null,admitted_at:a.admitted_at||a.created_at,letter_emailed_at:a.letter_emailed_at||null}}
 var SQLMSG="Run the latest students-setup.sql in the Supabase SQL Editor (it adds the Recycle bin), then refresh this page.";
 function softDel(table,id,col,cb){var u={};u[col]=new Date().toISOString();sb.from(table).update(u).eq("id",id).then(function(r){if(r.error){alert("Could not move this to the Recycle bin. "+SQLMSG);return}cb()})}
@@ -808,7 +813,7 @@ function call(url,o){return tok().then(function(t){o.headers=Object.assign({apik
 function rest(p,o){return call(BFS_URL+"/rest/v1/"+p,o||{})}
 function post(p,b,h){return rest(p,{method:"POST",body:JSON.stringify(b),headers:Object.assign({Prefer:"return=minimal"},h||{})})}
 function note(t,e){var m=document.getElementById("pnote");if(m){m.hidden=false;m.className="msg"+(e?" err":"");m.textContent=t}}
-function stu(){return ST.length?Promise.resolve():rest("students?select=id,student_number,full_name,email,programme,user_id,application_id,photo_path&status=eq.verified&order=full_name.asc").then(function(d){ST=d||[]})}
+function stu(){return ST.length?Promise.resolve():rest("students?select=id,student_number,full_name,email,programme,user_id,application_id,photo_path&status=eq.verified&order=full_name.asc").then(function(d){ST=(d||[]).map(function(s){s.full_name=properName(s.full_name);return s})})}
 function ass(){return rest("assessments?select=*&order=created_at.desc").then(function(d){AS=d||[]})}
 var V={
 tl:function(){return Promise.all([rest("timeline_posts?select=*&order=pinned.desc,created_at.desc&limit=60"),rest("timeline_comments?select=post_id"),rest("timeline_reactions?select=post_id")]).then(function(r){
@@ -1153,7 +1158,7 @@ function amList(){AM.page="list";AM.id=null;
   '<select id="am_c"><option value="">Course (optional)</option>'+(r[3]||[]).map(function(c){return'<option value="'+pe(c.id)+'">'+pe(c.title)+'</option>'}).join("")+'</select>'+
   '<select id="am_p"><option value="all">For all students</option><option value="Certificate">Certificate students only</option><option value="Advanced Certificate">Advanced Certificate students only</option></select></div>'+
   '<p><button data-a="amcreate">Create and add questions</button></p><div id="pnote" class="msg" hidden></div></div><h3>Tests, exams and assignments</h3>'+
-  ((r[0]||[]).length?r[0].map(function(x){return'<div class="cr2"><div class="t"><b>'+pe(x.title)+'</b><div class="mute">'+AMK[x.kind]+' \u00B7 '+amAud(x.programme)+' \u00B7 '+(x.status==="published"?"Published":"Draft (students cannot see it)")+' \u00B7 '+(qn[x.id]||0)+' question'+((qn[x.id]||0)===1?"":"s")+' \u00B7 '+(qm[x.id]||0)+' marks<br>Opens '+amWhen(x.starts_at)+' \u00B7 Closes '+amWhen(x.ends_at)+(x.duration_minutes?' \u00B7 '+x.duration_minutes+' minutes allowed':'')+' \u00B7 '+(an[x.id]||0)+' attempt'+((an[x.id]||0)===1?"":"s")+', '+(mk[x.id]||0)+' marked</div></div><button data-a="amedit" data-id="'+x.id+'">Edit</button><button data-a="amsubs" data-id="'+x.id+'">Submissions</button><button data-a="amdel" data-id="'+x.id+'">Delete</button></div>'}).join(""):'<p class="mute">Nothing here yet. Create your first one above.</p>')
+  ((r[0]||[]).length?r[0].map(function(x){return'<div class="cr2"><div class="t"><b>'+pe(x.title)+'</b><div class="mute">'+AMK[x.kind]+' \u00B7 '+amAud(x.programme)+' \u00B7 '+(x.status==="published"?"Published":"Draft (students cannot see it)")+' \u00B7 '+(qn[x.id]||0)+' question'+((qn[x.id]||0)===1?"":"s")+' \u00B7 '+(qm[x.id]||0)+' marks<br>Opens '+amWhen(x.starts_at)+' \u00B7 Closes '+amWhen(x.ends_at)+(x.duration_minutes?' \u00B7 '+x.duration_minutes+' minutes allowed':'')+' \u00B7 '+(an[x.id]||0)+' attempt'+((an[x.id]||0)===1?"":"s")+', '+(mk[x.id]||0)+' marked</div></div><button data-a="amedit" data-id="'+x.id+'">Edit</button><button data-a="amsubs" data-id="'+x.id+'">Submissions</button><button class="o" data-a="amqpdf" data-id="'+x.id+'">Question paper (PDF)</button><button data-a="amdel" data-id="'+x.id+'">Delete</button></div>'}).join(""):'<p class="mute">Nothing here yet. Create your first one above.</p>')
  }).catch(amFail)}
 /* ---------- editor ---------- */
 function amQx(t,q){q=q||{};
@@ -1186,7 +1191,7 @@ function amQRead(){var t=amById("am_qt").value,p=amById("am_qp").value.trim(),m=
 function amEdit(){AM.page="edit";
  return Promise.all([rest("bfs_assessments?select=*&id=eq."+AM.id),rest("bfs_questions?select=*&assessment_id=eq."+AM.id+"&order=position.asc,created_at.asc"),rest("bfs_attempts?select=id&assessment_id=eq."+AM.id),rest("bfs_courses?select=id,title&order=sort")]).then(function(r){
   AM.a=(r[0]||[])[0];if(!AM.a){return amList()}AM.qs=r[1]||[];var a=AM.a,na=(r[2]||[]).length,tm=0;AM.qs.forEach(function(q){tm+=Number(q.marks)||0});
-  B.innerHTML='<p><button data-a="amback">&larr; All assessments</button> <button class="o" data-a="amsubs" data-id="'+a.id+'">Submissions and marking</button></p>'+
+  B.innerHTML='<p><button data-a="amback">&larr; All assessments</button> <button class="o" data-a="amsubs" data-id="'+a.id+'">Submissions and marking</button> <button class="o" data-a="amqpdf" data-id="'+a.id+'">Download question paper (PDF)</button> <button class="o" data-a="amkey" data-id="'+a.id+'">Marking scheme (PDF)</button></p>'+amDueCard(a)+
   '<div class="card"><h3 style="margin-top:0">'+pe(a.title)+'</h3><p class="mute">'+AMK[a.kind]+' \u00B7 '+(a.status==="published"?"Published. Students can see it.":"Draft. Students cannot see it yet.")+(na?' \u00B7 '+na+' student attempt'+(na===1?"":"s")+' so far':"")+'</p>'+
   '<label for="am_title">Title</label><input id="am_title" value="'+pe(a.title)+'">'+
   '<div class="pg"><div><label>Type</label><select id="am_kind">'+Object.keys(AMK).map(function(k){return'<option value="'+k+'"'+(a.kind===k?" selected":"")+'>'+AMK[k]+'</option>'}).join("")+'</select></div>'+
@@ -1210,14 +1215,14 @@ function amSubs(){AM.page="subs";
    var a=AM.a,qs=AM.qs,at=AM.at,mx=0;qs.forEach(function(q){mx+=Number(q.marks)||0});AM.order=at.map(function(x){return x.id});
    var live=at.filter(function(x){return x.status==="in_progress"}).length,sub=at.filter(function(x){return x.status==="submitted"}).length,mk=at.filter(function(x){return x.status==="marked"}).length,sent=at.filter(function(x){return x.released_at}).length;
    var absent=ST.filter(function(s){return(a.programme==="all"||s.programme===a.programme)&&!at.some(function(x){return x.student_id===s.id})});
-   var blocked=live?live+" student"+(live===1?" is":"s are")+" still writing.":sub?sub+" paper"+(sub===1?" is":"s are")+" not marked yet.":!mk?"There is nothing marked yet.":"";
-   B.innerHTML='<p><button data-a="amback">&larr; All assessments</button> <button class="o" data-a="amedit" data-id="'+a.id+'">Edit questions</button></p>'+
+   var blocked=live?live+" student"+(live===1?" is":"s are")+" still writing.":sub?sub+" paper"+(sub===1?" is":"s are")+" not marked yet.":!mk?"There is nothing marked yet.":"";var closed=new Date(a.ends_at).getTime()<Date.now();amZeroSync(a,absent,closed);
+   B.innerHTML='<p><button data-a="amback">&larr; All assessments</button> <button class="o" data-a="amedit" data-id="'+a.id+'">Edit questions</button> <button class="o" data-a="amqpdf" data-id="'+a.id+'">Download question paper (PDF)</button></p>'+amDueCard(a)+
    '<div class="card"><h3 style="margin-top:0">'+pe(a.title)+'</h3><p class="mute">'+AMK[a.kind]+' \u00B7 out of '+mx+' \u00B7 '+amAud(a.programme)+' \u00B7 Opens '+amWhen(a.starts_at)+' \u00B7 Closes '+amWhen(a.ends_at)+'</p>'+
    '<p><b>'+at.length+'</b> attempt'+(at.length===1?"":"s")+' \u00B7 <b>'+live+'</b> writing now \u00B7 <b>'+sub+'</b> waiting to be marked \u00B7 <b>'+mk+'</b> marked \u00B7 <b>'+sent+'</b> sent to students</p>'+
    '<p><button class="o" data-a="amrefresh">Refresh</button> <button class="o" data-a="amauto">Auto-mark all</button></p><div id="pnote" class="msg" hidden></div></div>'+
    (at.length?'<div style="overflow-x:auto"><table><tr><th>Student</th><th>Submitted</th><th>Status</th><th>Marks</th><th>Needs your marking</th><th></th></tr>'+at.map(function(x){var d=x.details||{},rr=amAutoAll(qs,x.answers,x.scores),tt=amTotals(qs,rr.scores),pend=x.status==="submitted"?rr.pending:0;
     return'<tr><td><b>'+pe(d.name||"")+'</b><br><small class="mute">'+pe(d.student_number||"")+'</small></td><td>'+(x.submitted_at?amWhen(x.submitted_at):"\u2014")+'</td><td>'+amBadge(x)+'</td><td>'+(x.status==="marked"?'<b>'+(x.total_score!=null?Number(x.total_score):tt.total)+'</b> / '+mx:(x.status==="submitted"?tt.total+' / '+mx+' so far':"\u2014"))+'</td><td>'+(x.status==="submitted"?(pend?pend+" question"+(pend===1?"":"s"):"None. Ready to complete"):"\u2014")+'</td><td style="white-space:nowrap">'+(x.status!=="in_progress"||new Date(x.deadline_at).getTime()<Date.now()?'<button data-a="ammark" data-id="'+x.id+'">'+(x.status==="marked"?"View":"Mark")+'</button> ':"")+(x.status==="marked"&&!x.released_at?'<button class="o" data-a="amsend" data-id="'+x.id+'">Send paper</button> ':"")+'<button class="o" data-a="amreset" data-id="'+x.id+'">Reset</button></td></tr>'}).join("")+'</table></div>':'<p class="mute">No student has started yet.</p>')+
-   (absent.length?'<details style="margin-top:12px"><summary>Did not attempt ('+absent.length+')</summary><p class="mute">'+absent.map(function(s){return pe(s.full_name)}).join(", ")+'</p></details>':"")+
+   (absent.length?(closed?'<div class="card" style="margin-top:12px"><h3 style="margin-top:0">Did not attempt ('+absent.length+')</h3><p class="mute">The due time has passed. These students did not write it, so each one gets <b>0 / '+mx+'</b>. The zeros are recorded in Grades when you publish the results.</p><p>'+absent.map(function(s){return pe(s.full_name)}).join(", ")+'</p></div>':'<details style="margin-top:12px"><summary>Not started yet ('+absent.length+')</summary><p class="mute">'+absent.map(function(s){return pe(s.full_name)}).join(", ")+'</p></details>'):"")+
    '<div class="card" style="margin-top:16px"><h3 style="margin-top:0">Publish results</h3><p class="mute">When every paper is marked, one button will: <b>send each marked paper</b> (with the correct answers and the total) to its student\'s portal, <b>record the marks in Grades</b>, and <b>post the results on the timeline</b>.'+(a.results_published_at?' Results were first published on '+amWhen(a.results_published_at)+'. Pressing the button again sends newly marked papers and updates the marks without posting to the timeline again.':'')+'</p>'+
    (blocked?'<p class="amwarn">'+blocked+'</p>':"")+'<p><button data-a="ampubres"'+(blocked?" disabled":"")+'>'+(a.results_published_at?"Send papers and update marks":"Publish results and send all papers")+'</button></p></div>'})}).catch(amFail)}
 /* ---------- marking ---------- */
@@ -1256,9 +1261,93 @@ function amPaperData(x){var d=x.details||{},sc=x.scores||{},tt=amTotals(AM.qs,sc
  return{logo:LOGO,kindLabel:AMK[AM.a.kind]||"Paper",assessment:{title:AM.a.title,course:AM.a.course_title||""},student:{name:d.name||"",number:d.student_number||"",programme:d.programme||""},submitted:x.submitted_at?amWhen(x.submitted_at):"",
   items:AM.qs.map(function(q,i){var s=sc[q.id]||{};return{n:i+1,type:q.qtype,prompt:q.prompt,options:q.options,answer:(x.answers||{})[q.id],correct:q.answer,score:s.score!=null?s.score:null,max:Number(q.marks),comment:s.comment||"",explanation:q.explanation||""}}),
   total:x.total_score!=null?Number(x.total_score):tt.total,max:x.max_score!=null?Number(x.max_score):tt.max,feedback:x.feedback||""}}
+/* ---------- due time, zero marks, question paper PDF ---------- */
+function amDueCard(a){var ended=new Date(a.ends_at).getTime()<Date.now();
+ return'<div class="card"><h3 style="margin-top:0">Due time</h3><p class="mute">Closes <b>'+amWhen(a.ends_at)+'</b>'+(ended?' (already closed)':'')+'. You can change it at any time, even while students are writing. Students who are writing see the change on their screen within about 20 seconds. The + buttons give extra time to everyone writing and add it to the time allowed.</p>'+
+ '<div class="row"><span class="mute">Give more time:</span>'+[5,10,15,30,60].map(function(m){return'<button class="o" data-a="amext" data-id="'+m+'">+'+m+' min</button>'}).join("")+'</div>'+
+ '<div class="row"><input id="am_nend" type="datetime-local" value="'+amLocal(a.ends_at)+'" style="max-width:240px"><button data-a="amsetend">Set new closing time</button></div></div>'}
+function amShiftLive(id,delta,ne){return rest("bfs_attempts?select=id,deadline_at&assessment_id=eq."+id+"&status=eq.in_progress").then(function(rs){var now=Date.now(),p=Promise.resolve(),n=0;
+ (rs||[]).forEach(function(x){var d=new Date(x.deadline_at).getTime();if(d+15000<now)return;var nd=Math.min(d+delta,ne);n++;p=p.then(function(){return rest("bfs_attempts?id=eq."+x.id,{method:"PATCH",body:JSON.stringify({deadline_at:new Date(nd).toISOString()})})})});
+ return p.then(function(){return n})})}
+function amApplyEnd(a,body,delta,ne){rest("bfs_assessments?id=eq."+a.id,{method:"PATCH",body:JSON.stringify(body)}).then(function(){return amShiftLive(a.id,delta,ne)}).then(function(n){return(AM.page==="edit"?amEdit():amSubs()).then(function(){note("Due time changed to "+amWhen(new Date(ne).toISOString())+"."+(n?" "+n+" student"+(n===1?"":"s")+" writing now "+(n===1?"has":"have")+" the new time.":""))})}).catch(amErr)}
+function amZeroSync(a,absent,closed){if(!closed||!a.grade_sheet_id||!absent.length)return;
+ post("bfs_grade_entries?on_conflict=sheet_id,student_id",absent.map(function(s){return{sheet_id:a.grade_sheet_id,student_id:s.id,mark:0,comment:null}}),{Prefer:"resolution=ignore-duplicates,return=minimal"}).catch(function(){})}
+function amQPaper(a,qs,key){var J=window.jspdf;if(!J)return null;
+ var P=new J.jsPDF({unit:"mm",format:"a4"}),T=[15,143,134],L=20,R=190,W=R-L,F="times",y=0,kind=AMK[a.kind]||"Test",total=0;
+ qs.forEach(function(q){total+=Number(q.marks)||0});
+ var title=asmClean(a.title||""),mm=/^data:image\/(png|jpe?g)/i.exec(LOGO||""),lf=mm&&mm[1].toLowerCase()==="png"?"PNG":"JPEG";
+ function tx(t,x,yy,sz,st,o,col){P.setFont(F,st||"normal");P.setFontSize(sz);P.setTextColor.apply(P,col||[0,0,0]);P.text(asmClean(t),x,yy,o||{})}
+ function wr(t,w,sz,st){P.setFont(F,st||"normal");P.setFontSize(sz);return P.splitTextToSize(asmClean(t),w)}
+ function head(){tx("Born For Service School of Ministry",L,14,9.5,"italic",{},[90,90,90]);tx(title.length>62?title.slice(0,59)+"...":title,R,14,9.5,"italic",{align:"right"},[90,90,90]);P.setDrawColor(T[0],T[1],T[2]);P.setLineWidth(.4);P.line(L,16.5,R,16.5);y=25}
+ function need(h){if(y+h>276){P.addPage();head()}}
+ function ln(arr,x,sz,st,col){arr.forEach(function(l){need(5.6);tx(l,x,y,sz,st,{},col);y+=5.4})}
+ var D=function(d){return new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})},H=function(d){return new Date(d).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})};
+ /* cover page */
+ P.setDrawColor(T[0],T[1],T[2]);P.setLineWidth(1);P.rect(10,10,190,277);P.setLineWidth(.25);P.rect(12.5,12.5,185,272);
+ try{if(LOGO)P.addImage(LOGO,lf,93,20,24,24)}catch(e){}
+ tx("BORN FOR SERVICE",105,57,26,"bold",{align:"center"},T);
+ tx("SCHOOL OF MINISTRY",105,65,13,"normal",{align:"center",charSpace:1.8},[80,80,80]);
+ tx("Growing Into Full Manifestation",105,72,11,"italic",{align:"center"},[60,60,60]);
+ tx("Lusaka, Zambia  |  Bornforservice27@gmail.com",105,78,10,"normal",{align:"center"},[90,90,90]);
+ P.setLineWidth(.6);P.line(L,83,R,83);
+ y=96;tx(kind.toUpperCase()+(key?" MARKING SCHEME":" QUESTION PAPER"),105,y,21,"bold",{align:"center"});y+=3;
+ wr(title,W,16,"bold").forEach(function(l){y+=8;tx(l,105,y,16,"bold",{align:"center"})});
+ if(a.course_title){y+=8;tx(a.course_title,105,y,13,"italic",{align:"center"},[60,60,60])}
+ y+=8;
+ var rows=[["Assessment",kind],["Programme",amAud(a.programme)]];
+ if(a.course_title)rows.push(["Course",a.course_title]);
+ rows.push(["Date",D(a.starts_at)],["Time",H(a.starts_at)+" to "+H(a.ends_at)],["Duration",a.duration_minutes?a.duration_minutes+" minutes":"Until the closing time"],["Total marks",String(total)],["Number of questions",String(qs.length)]);
+ P.setDrawColor(120,120,120);P.setLineWidth(.25);
+ rows.forEach(function(r){var vl=wr(r[1],W-64,11.5,"normal"),h=Math.max(8,vl.length*5.4+2.6);P.setFillColor(243,246,244);P.rect(L,y,58,h,"FD");P.rect(L+58,y,W-58,h);tx(r[0],L+3,y+5.5,11.5,"bold");vl.forEach(function(l,k){tx(l,L+61,y+5.5+k*5.4,11.5,"normal")});y+=h});
+ y+=9;tx("CANDIDATE DETAILS",L,y,12,"bold",{},T);y+=3;
+ if(!key)["Full name:","Student number:","Programme:","Signature:"].forEach(function(f){y+=11;tx(f,L,y,11.5,"bold");P.setDrawColor(80,80,80);P.setLineWidth(.25);P.line(L+38,y+1,R,y+1)});
+ else{y+=8;tx("For the examiner only. Not for candidates.",L,y,11.5,"italic")}
+ tx(key?"CONFIDENTIAL":"DO NOT TURN OVER THIS PAGE UNTIL YOU ARE TOLD TO DO SO.",105,272,11,"bold",{align:"center"});
+ /* instructions */
+ P.addPage();head();
+ if(!key){tx("INSTRUCTIONS TO CANDIDATES",105,y,13,"bold",{align:"center"});y+=3;P.setDrawColor(T[0],T[1],T[2]);P.setLineWidth(.5);P.line(70,y,140,y);y+=8;
+  ["Write your full name and student number in the spaces on the cover page.","Read every question carefully before you answer.","Answer ALL the questions.","The marks for each question are shown in brackets at the end of the question.","This paper has "+qs.length+" question"+(qs.length===1?"":"s")+" and carries a total of "+total+" marks."+(a.duration_minutes?" You have "+a.duration_minutes+" minutes.":""),"Write clearly and neatly. Work that cannot be read cannot be marked."].forEach(function(t,i){var l=wr(t,W-9,11.5,"normal");tx((i+1)+".",L,y,11.5,"bold");ln(l,L+9,11.5,"normal");y+=1.2});
+  if(a.instructions){y+=2;tx("Special instructions",L,y,11.5,"bold");y+=5.6;ln(wr(a.instructions,W-9,11.5,"normal"),L+9,11.5,"normal")}
+  y+=4;P.setDrawColor(120,120,120);P.setLineWidth(.3);P.line(L,y,R,y);y+=9}
+ else{tx("MARKING SCHEME",105,y,13,"bold",{align:"center"});y+=10}
+ /* questions */
+ qs.forEach(function(q,i){var t=q.qtype,mk=Number(q.marks)||0,o=q.options||[],pl=wr(q.prompt,W-34,11.5,"normal"),
+   hint=t==="multi"?"(Choose ALL the correct answers.)":t==="single"?"(Choose ONE answer.)":t==="tf"?"(Circle TRUE or FALSE.)":"",
+   ol=[];if(t==="single"||t==="multi")o.forEach(function(x,k){ol.push(wr(asmL(k)+".  "+x,W-22,11.5,"normal"))});
+   var nl=Math.max(5,Math.min(14,Math.round(mk*2))),
+   h=pl.length*5.4+(hint?5.4:0)+ol.reduce(function(sm,l){return sm+l.length*5.4+1.2},0)+(key?14:t==="essay"?nl*8:12)+6;
+   need(Math.min(h,60));
+   tx((i+1)+".",L,y,11.5,"bold");tx("["+asmFmtMark(mk)+" mark"+(mk===1?"":"s")+"]",R,y,10.5,"bolditalic",{align:"right"});
+   ln(pl,L+9,11.5,"normal");
+   if(hint&&!key){tx(hint,L+9,y,10,"italic",{},[90,90,90]);y+=5.4}
+   ol.forEach(function(l){ln(l,L+14,11.5,"normal");y+=1.2});
+   if(key){var ct=t==="essay"?(typeof q.answer==="string"?q.answer:""):t==="file"?"Marked by the examiner from the uploaded file.":asmCorrectText({type:t,options:o,correct:q.answer});
+    ln(wr("Answer: "+(ct||"Marked by the examiner."),W-9,11,"bold"),L+9,11,"bold",[20,110,60]);
+    if(q.explanation)ln(wr("Note: "+q.explanation,W-9,10.5,"italic"),L+9,10.5,"italic",[70,70,70])}
+   else if(t==="tf"){need(8);tx("TRUE",L+16,y+2,11.5,"bold");tx("FALSE",L+46,y+2,11.5,"bold");P.setDrawColor(60,60,60);P.setLineWidth(.3);P.circle(L+12.5,y+.9,2.2);P.circle(L+42.5,y+.9,2.2);y+=8}
+   else if(t==="short"||t==="number"){need(10);tx("Answer:",L+9,y+4,11.5,"bold");P.setDrawColor(80,80,80);P.setLineWidth(.25);P.line(L+28,y+5,R,y+5);y+=10}
+   else if(t==="essay"){P.setDrawColor(150,150,150);P.setLineWidth(.2);for(var k=0;k<nl;k++){need(8);y+=7;P.line(L+9,y,R,y);y+=1}y+=2}
+   else if(t==="file"){need(8);tx("Submit your work as an uploaded file.",L+9,y+2,10.5,"italic",{},[90,90,90]);y+=8}
+   y+=4});
+ need(16);y+=2;P.setDrawColor(T[0],T[1],T[2]);P.setLineWidth(.5);P.line(L,y,R,y);
+ tx("END OF "+(key?"MARKING SCHEME":"QUESTION PAPER"),105,y+7,11,"bold",{align:"center"});tx("Total: "+total+" marks",105,y+13,10.5,"italic",{align:"center"},[60,60,60]);
+ var n=P.getNumberOfPages();for(var pg=2;pg<=n;pg++){P.setPage(pg);P.setDrawColor(180,180,180);P.setLineWidth(.2);P.line(L,281,R,281);tx("Page "+pg+" of "+n,105,287,9.5,"normal",{align:"center"},[90,90,90])}
+ return P}
+function amPaperFor(i,key){var id=i||AM.id;if(!id)return;
+ Promise.all([rest("bfs_assessments?select=*&id=eq."+id),rest("bfs_questions?select=*&assessment_id=eq."+id+"&order=position.asc,created_at.asc")]).then(function(r){
+  var a=(r[0]||[])[0],qs=r[1]||[];if(!a)throw new Error("Could not find it.");if(!qs.length)throw new Error("Add at least one question first.");
+  var p=amQPaper(a,qs,key);if(!p)throw new Error("The PDF tool did not load. Check your internet connection and refresh.");
+  p.save((key?"Marking-Scheme-":"Question-Paper-")+String(a.title).replace(/[^A-Za-z0-9]+/g,"-")+".pdf");note("The PDF was downloaded.")}).catch(amErr)}
 /* ---------- actions ---------- */
 Object.assign(A,{
 amback:function(){AM.page="list";amList()},
+amqpdf:function(i){amPaperFor(i,false)},amkey:function(i){amPaperFor(i,true)},
+amext:function(m){m=Number(m);var a=AM.a;if(!a||!m)return;var old=new Date(a.ends_at).getTime(),ne=Math.max(old,Date.now())+m*60000,b={ends_at:new Date(ne).toISOString()};if(a.duration_minutes)b.duration_minutes=Number(a.duration_minutes)+m;amApplyEnd(a,b,m*60000,ne)},
+amsetend:function(){var a=AM.a,v=amById("am_nend").value,ne=new Date(v).getTime(),old=new Date(a.ends_at).getTime();
+ if(!v||isNaN(ne))return note("Choose the new closing time.",1);if(ne===old)return note("That is already the closing time.",1);
+ if(ne<=new Date(a.starts_at).getTime())return note("The closing time must be after the opening time.",1);
+ if(ne<old&&!confirm("This is earlier than the current closing time. Students who are writing will lose time. Continue?"))return;
+ amApplyEnd(a,{ends_at:new Date(ne).toISOString()},ne-old,ne)},
 amcreate:function(){var t=amById("am_t").value.trim();if(!t)return note("Enter a title.",1);
  var c=amById("am_c"),st=new Date();st.setDate(st.getDate()+1);st.setHours(8,0,0,0);var en=new Date(st.getTime()+2*3600000);
  rest("bfs_assessments",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({title:t,kind:amById("am_k").value,programme:amById("am_p").value,course_id:c.value||null,course_title:c.value?c.options[c.selectedIndex].text:null,starts_at:st.toISOString(),ends_at:en.toISOString()})}).then(function(r){AM.id=r[0].id;return amEdit()}).catch(amErr)},
@@ -1269,7 +1358,7 @@ amdel:function(i){if(!confirm("Delete this assessment with all its questions and
 amsave:function(){var st=new Date(amById("am_st").value),en=new Date(amById("am_en").value),du=amById("am_dur").value.trim(),t=amById("am_title").value.trim(),c=amById("am_course");
  if(!t)return note("Enter a title.",1);if(isNaN(st)||isNaN(en))return note("Set when it opens and closes.",1);if(en<=st)return note("It must close after it opens.",1);
  if(du!==""&&!(Number(du)>0&&Math.floor(Number(du))===Number(du)))return note("Time allowed must be a whole number of minutes.",1);
- rest("bfs_assessments?id=eq."+AM.id,{method:"PATCH",body:JSON.stringify({title:t,kind:amById("am_kind").value,programme:amById("am_prog").value,course_id:c.value||null,course_title:c.value?c.options[c.selectedIndex].text:null,instructions:amById("am_ins").value.trim()||null,starts_at:st.toISOString(),ends_at:en.toISOString(),duration_minutes:du===""?null:Number(du)})}).then(function(){return amEdit()}).then(function(){note("Saved.")}).catch(amErr)},
+ rest("bfs_assessments?id=eq."+AM.id,{method:"PATCH",body:JSON.stringify({title:t,kind:amById("am_kind").value,programme:amById("am_prog").value,course_id:c.value||null,course_title:c.value?c.options[c.selectedIndex].text:null,instructions:amById("am_ins").value.trim()||null,starts_at:st.toISOString(),ends_at:en.toISOString(),duration_minutes:du===""?null:Number(du)})}).then(function(){var dl=en.getTime()-new Date(AM.a.ends_at).getTime();return dl?amShiftLive(AM.id,dl,en.getTime()):0}).then(function(){return amEdit()}).then(function(){note("Saved.")}).catch(amErr)},
 ampub:function(){var pub=AM.a.status==="published";
  if(!pub){if(!AM.qs.length)return note("Add at least one question before publishing.",1);if(new Date(AM.a.ends_at)<=new Date())return note("The closing time has already passed. Change it first.",1)}
  else if(!confirm("Unpublish? Students will no longer see it. Anyone already writing keeps their saved answers."))return;
@@ -1293,8 +1382,10 @@ amreset:function(i){if(!confirm("Reset this attempt? The student's answers and m
 amauto:function(){var p=Promise.resolve(),n=0;AM.at.forEach(function(x){if(x.status!=="submitted")return;var r=amAutoAll(AM.qs,x.answers,{});n++;p=p.then(function(){return rest("bfs_attempts?id=eq."+x.id,{method:"PATCH",body:JSON.stringify({scores:r.scores})})})});p.then(amSubs).then(function(){note("Auto-marked "+n+" paper"+(n===1?"":"s")+". Essays and uploaded files still need your marks.")}).catch(amErr)},
 ampubres:function(){var a=AM.a,at=AM.at.filter(function(x){return x.status==="marked"}),first=!a.results_published_at,mx=0;AM.qs.forEach(function(q){mx+=Number(q.marks)||0});if(!at.length)return note("Nothing is marked yet.",1);
  if(!confirm((first?"This will send "+at.length+" marked paper"+(at.length===1?"":"s")+" to the students' portals, record the marks in Grades and post the results on the timeline.":"This will send newly marked papers and update the marks in Grades.")+"\n\nContinue?"))return;
- var rows=at.map(function(x){return{student_id:x.student_id,mark:Number(x.total_score)}}),sheet=null;
- note("Recording the marks...");
+ var rows=at.map(function(x){return{student_id:x.student_id,mark:Number(x.total_score)}}),sheet=null,zr=[];
+ if(new Date(a.ends_at).getTime()<Date.now())zr=ST.filter(function(s){return(a.programme==="all"||s.programme===a.programme)&&!AM.at.some(function(x){return x.student_id===s.id})}).map(function(s){return{student_id:s.id,mark:0}});
+ rows=rows.concat(zr);
+ note("Recording the marks"+(zr.length?" (including "+zr.length+" zero"+(zr.length===1?"":"s")+" for students who did not attempt)":"")+"...");
  stu().then(function(){return a.grade_sheet_id?rest("bfs_grade_sheets?select=*&id=eq."+a.grade_sheet_id).then(function(r){return r&&r[0]}):null}).then(function(sh){if(sh)return sh;return rest("bfs_grade_sheets",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({title:a.title,kind:a.kind,max_mark:mx})}).then(function(r){return r[0]})})
  .then(function(sh){sheet=sh;GS=sh;GCUR=sh.id;return post("bfs_grade_entries?on_conflict=sheet_id,student_id",rows.map(function(r){return{sheet_id:sh.id,student_id:r.student_id,mark:r.mark,comment:null}}),{Prefer:"resolution=merge-duplicates,return=minimal"})})
  .then(function(){return rest("bfs_assessments?id=eq."+a.id,{method:"PATCH",body:JSON.stringify({grade_sheet_id:String(sheet.id)})})})
