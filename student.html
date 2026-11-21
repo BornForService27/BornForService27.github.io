@@ -812,8 +812,8 @@ function exUpload(q,input){var e=ASM.ex,f=input.files&&input.files[0];if(!f)retu
  if(f.size>15*1024*1024){el.textContent="That file is too large. The maximum is 15 MB.";input.value="";return}
  el.textContent="Uploading\u2026 please wait";var path=e.id+"/"+q.id+"-"+Date.now()+"-"+f.name.replace(/[^A-Za-z0-9._-]/g,"_");
  sb.storage.from("bfs-assessments").upload(path,f,{contentType:f.type||"application/octet-stream"}).then(function(r){
-  if(r.error){el.textContent="The upload failed. Check your internet and try again.";input.value="";return}
-  e.ans[q.id]={path:path,name:f.name,size:f.size};input.value="";exFile(q);exChanged(q)}).catch(function(){el.textContent="The upload failed. Try again."})}
+  if(r.error){var em=String(r.error.message||r.error.error||"unknown error");el.textContent="The upload failed: "+(/bucket not found/i.test(em)?"the upload folder is not set up yet. Please tell the BFS office.":/row-level security|policy|not authorized|unauthorized|403/i.test(em)?"you are not allowed to upload yet. Please tell the BFS office.":/size|too large|payload/i.test(em)?"the file is too large.":/mime|type/i.test(em)?"this file type is not allowed.":em);input.value="";return}
+  e.ans[q.id]={path:path,name:f.name,size:f.size};input.value="";exFile(q);exChanged(q)}).catch(function(x){el.textContent="The upload failed: "+(x&&x.message?x.message:"could not reach the server. Check your internet and try again.")})}
 function exStat(t,bad){var el=$("ex_sv");if(el){el.textContent=t;el.className="exsave"+(bad?" bad":"")}}
 function exProg(){var e=ASM.ex,n=0;e.qs.forEach(function(q){var on=!asmEmpty(e.ans[q.id]);if(on)n++;var c=document.querySelector('.exchip[data-q="'+q.id+'"]');if(c)c.classList.toggle("on",on)});var el=$("ex_pr");if(el)el.textContent=n+" of "+e.qs.length+" answered"}
 function exChanged(q){var e=ASM.ex;e.dirty=true;try{localStorage.setItem("bfs_ex_"+e.id,JSON.stringify({a:e.ans,t:Date.now()}))}catch(x){}
