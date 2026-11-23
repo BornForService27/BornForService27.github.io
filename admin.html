@@ -1435,7 +1435,8 @@ amauto:function(){var p=Promise.resolve(),n=0;AM.at.forEach(function(x){if(x.sta
 ampubres:function(){var a=AM.a,at=AM.at.filter(function(x){return x.status==="marked"}),first=!a.results_published_at,mx=0;AM.qs.forEach(function(q){mx+=Number(q.marks)||0});if(!at.length)return note("Nothing is marked yet.",1);
  if(!confirm((first?"This will send "+at.length+" marked paper"+(at.length===1?"":"s")+" to the students' portals, record the marks in Grades and post the results on the timeline.":"This will send newly marked papers and update the marks in Grades.")+"\n\nContinue?"))return;
  var rows=at.map(function(x){return{student_id:x.student_id,mark:Number(x.total_score)}}),sheet=null,zr=[];
- if(new Date(a.ends_at).getTime()<Date.now())zr=ST.filter(function(s){return(a.programme==="all"||s.programme===a.programme)&&!AM.at.some(function(x){return x.student_id===s.id})}).map(function(s){return{student_id:s.id,mark:0}});
+ var ab=ST.filter(function(s){return(a.programme==="all"||s.programme===a.programme)&&!AM.at.some(function(x){return x.student_id===s.id})});
+ if(ab.length&&(new Date(a.ends_at).getTime()<Date.now()||confirm(ab.length+" student"+(ab.length===1?" has":"s have")+" not attempted it yet and the due time has not passed.\n\nOK = list them on the results with 0\nCancel = leave them out for now")))zr=ab.map(function(s){return{student_id:s.id,mark:0}});
  rows=rows.concat(zr);
  note("Recording the marks"+(zr.length?" (including "+zr.length+" zero"+(zr.length===1?"":"s")+" for students who did not attempt)":"")+"...");
  stu().then(function(){return a.grade_sheet_id?rest("bfs_grade_sheets?select=*&id=eq."+a.grade_sheet_id).then(function(r){return r&&r[0]}):null}).then(function(sh){if(sh)return sh;return rest("bfs_grade_sheets",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({title:a.title,kind:a.kind,max_mark:mx})}).then(function(r){return r[0]})})
