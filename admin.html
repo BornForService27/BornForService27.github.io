@@ -565,10 +565,17 @@ function viewStudent(x){
   keys.sort(function(p,q){var i=first.indexOf(p),j=first.indexOf(q);return(i<0?99:i)-(j<0?99:j)});
   var rows=keys.map(function(k){var v=x[k];if(k==="created_at"||k==="admitted_at"||k==="letter_emailed_at")v=fmtDate(v);
     var l=LBL[k]||(k.charAt(0).toUpperCase()+k.slice(1).replace(/_/g," "));return'<tr><td>'+esc(l)+'</td><td style="white-space:pre-wrap">'+(k==="email"?emailHtml(x,x._src==="a"?"a":"s"):esc(v))+'</td></tr>'}).join("");
-  $("sdt").innerHTML='<h3 style="margin-top:0">'+esc(x.full_name)+' <span class="pill">Student</span></h3><table>'+rows+'</table><p style="margin-top:14px"><button id="sdl">Download admission letter</button> <button id="sdm">Email admission letter</button></p>';
-  $("sdl").onclick=function(){downloadLetter(x)};$("sdm").onclick=function(){emailLetter(x)};
+  $("sdt").innerHTML='<h3 style="margin-top:0">'+esc(x.full_name)+' <span class="pill">Student</span></h3><table>'+rows+'</table><p style="margin-top:14px"><button id="sdl">Download admission letter</button> <button id="sdm">Email admission letter</button> <button class="o" id="sfz">'+(x.status==="frozen"?"Unfreeze account":"Freeze account")+'</button></p>';
+  $("sdl").onclick=function(){downloadLetter(x)};$("sdm").onclick=function(){emailLetter(x)};$("sfz").onclick=function(){freezeStudent(x)};
   $("sd").hidden=false;$("sd").scrollTop=0}
 $("sdclose").onclick=function(){$("sd").hidden=true};
+function freezeStudent(x){
+  if(x._src!=="s"){alert("This student must be saved in the Students register first. "+SQLMSG);return}
+  var fz=x.status==="frozen";
+  if(!confirm(fz?"Unfreeze "+x.full_name+" ("+x.student_number+")?\n\nThey will be able to log in again and will appear on results.":"Freeze "+x.full_name+" ("+x.student_number+")?\n\n- They will not be able to log in.\n- Their name will not appear on results.\n- Their records stay in the system.\n\nYou can unfreeze them at any time."))return;
+  sb.from("students").update({status:fz?"verified":"frozen"}).eq("id",x.id).then(function(r){
+    if(r.error){alert("Could not save the change. Run freeze-setup.sql in the Supabase SQL Editor, then try again.\n\n"+r.error.message);return}
+    ST=[];$("sd").hidden=true;loadStudents()})}
 function deleteStudent(x){
   if(x._src==="a"){alert("Before deleting this student, they must be saved in the Students register. "+SQLMSG);return}
   if(!confirm("Move "+x.full_name+" ("+x.student_number+") to the Recycle bin? You can restore them later."))return;
@@ -591,25 +598,26 @@ function renderStudents(){
     +'<br><b>Phone:</b> '+esc(s.phone||"-")+' &nbsp; <b>Date of birth:</b> '+esc(s.date_of_birth||"-")+' &nbsp; <b>Marital status:</b> '+esc(s.marital_status||"-")+'<br><b>Nationality:</b> '+esc(s.nationality||"-")+' &nbsp; <b>'+(s.passport_number?'Passport':'NRC')+' number:</b> '+esc(s.nrc_number||s.passport_number||"-")+'<br><b>Address:</b> '+esc(s.address||"-")+'<br><b>Location:</b> '+esc((s.district||"-")+", "+(s.province||"-"))+(s.church?' &nbsp; <b>Church:</b> '+esc(s.church):'')+(s.education?'<br><b>Education:</b> '+esc(s.education):'')+'<br><span class="mute">Submitted '+esc(fmtDate(s.created_at))+'</span></p>'
     +'<div class="row">'+btn+DEL(s.id)+'</div></div>'}).join(""):'<p class="mute">'+(f==="pending"?"No student registrations are waiting for verification.":"No registrations to show here.")+'</p>';
   var q=($("sq").value||"").toLowerCase(),sIds={};rows.forEach(function(s){if(s.application_id)sIds[s.application_id]=1});
-  var all=rows.filter(function(s){return s.status==="verified"&&act(s)}).map(function(s){s._src="s";s._yr=s.intake_year;return s})
+  var all=rows.filter(function(s){return(s.status==="verified"||s.status==="frozen")&&act(s)&&!s.reg_deleted_at}).map(function(s){s._src="s";s._yr=s.intake_year;return s})
    .concat(apps.filter(function(a){return act(a)&&a.status==="accepted"&&a.student_number&&!sIds[a.id]}).map(function(a){a._src="a";a._yr=new Date(a.admitted_at||a.created_at).getFullYear();return a}))
    .filter(function(x){return!q||(x.full_name||"").toLowerCase().indexOf(q)>=0||String(x.student_number||"").toLowerCase().indexOf(q)>=0});
-  var PG=["All","Certificate","Advanced Certificate"],cnt={};PG.forEach(function(p){cnt[p]=p==="All"?all.length:all.filter(function(x){return x.programme===p}).length});
+  var PG=["All","Certificate","Advanced Certificate","Frozen"],cnt={};PG.forEach(function(p){cnt[p]=p==="All"?all.length:p==="Frozen"?all.filter(function(x){return x.status==="frozen"}).length:all.filter(function(x){return x.programme===p}).length});
   $("sprog").innerHTML=PG.map(function(p){return'<button data-sp="'+p+'"'+(p===stuProg?' class="on"':'')+'>'+p+' ('+cnt[p]+')</button>'}).join("");
   each("[data-sp]",function(b){b.onclick=function(){stuProg=b.getAttribute("data-sp");renderStudents()}});
-  if(stuProg!=="All")all=all.filter(function(x){return x.programme===stuProg});
+  if(stuProg==="Frozen")all=all.filter(function(x){return x.status==="frozen"});else if(stuProg!=="All")all=all.filter(function(x){return x.programme===stuProg});
   var by={};all.forEach(function(x){(by[x._yr]=by[x._yr]||[]).push(x)});
   var yrs=Object.keys(by).sort(function(a,b){return b-a});
   $("scount").textContent=all.length+" student"+(all.length===1?"":"s");
   $("syears").innerHTML=yrs.length?'<h3>Student records by year</h3>'+yrs.map(function(y,i){
     var l=by[y].sort(function(a,b){return String(a.student_number||"").localeCompare(String(b.student_number||""))});
-    return '<details class="card"'+(i===0||q?' open':'')+'><summary style="cursor:pointer;font-size:1.05rem"><b>'+y+' students</b> <span class="mute">('+l.length+')</span></summary><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;margin-top:10px"><tr style="text-align:left"><th>Student no.</th><th>Name</th>'+(stuProg==="All"?'<th>Programme</th>':'')+'<th>WhatsApp</th><th></th></tr>'
-    +l.map(function(x){return '<tr style="border-top:1px solid var(--line)"><td>'+esc(x.student_number||"-")+'</td><td>'+esc(x.full_name)+'</td>'+(stuProg==="All"?'<td>'+esc(x.programme||"-")+'</td>':'')+'<td>'+esc(x.whatsapp||x.phone||"-")+'</td><td style="white-space:nowrap"><button class="o" data-stview="'+stuKey(x)+'">View</button> <button data-dl="'+stuKey(x)+'">Letter</button> <button class="o" data-stdel="'+stuKey(x)+'" style="color:#B3261E;border-color:#B3261E">Delete</button></td></tr>'}).join("")+'</table></div></details>'}).join(""):'<p class="mute">No '+(stuProg==="All"?"":stuProg+" ")+'students in the records yet.</p>';
+    return '<details class="card"'+(i===0||q?' open':'')+'><summary style="cursor:pointer;font-size:1.05rem"><b>'+y+' students</b> <span class="mute">('+l.length+')</span></summary><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;margin-top:10px"><tr style="text-align:left"><th>Student no.</th><th>Name</th>'+(stuProg==="All"||stuProg==="Frozen"?'<th>Programme</th>':'')+'<th>WhatsApp</th><th></th></tr>'
+    +l.map(function(x){return '<tr style="border-top:1px solid var(--line)"><td>'+esc(x.student_number||"-")+'</td><td>'+esc(x.full_name)+(x.status==="frozen"?' <span class="pill" style="background:#EEF1F6;color:#5B6475">Frozen</span>':'')+'</td>'+(stuProg==="All"||stuProg==="Frozen"?'<td>'+esc(x.programme||"-")+'</td>':'')+'<td>'+esc(x.whatsapp||x.phone||"-")+'</td><td style="white-space:nowrap"><button class="o" data-stview="'+stuKey(x)+'">View</button> <button data-dl="'+stuKey(x)+'">Letter</button> <button class="o" data-stfz="'+stuKey(x)+'">'+(x.status==="frozen"?"Unfreeze":"Freeze")+'</button> <button class="o" data-stdel="'+stuKey(x)+'" style="color:#B3261E;border-color:#B3261E">Delete</button></td></tr>'}).join("")+'</table></div></details>'}).join(""):'<p class="mute">'+(stuProg==="Frozen"?"No frozen students.":"No "+(stuProg==="All"?"":stuProg+" ")+"students in the records yet.")+'</p>';
   function find(k){var p=k.split(":");return(p[0]==="s"?rows:apps).filter(function(x){return x.id===p[1]})[0]}
   function each(sel,fn){Array.prototype.forEach.call(document.querySelectorAll(sel),fn)}
   each("[data-em]",function(b){b.onclick=function(){var x=find(b.getAttribute("data-em"));if(x)emailLetter(x)}});
   each("[data-dl]",function(b){b.onclick=function(){var x=find(b.getAttribute("data-dl"));if(x)downloadLetter(x)}});
   each("[data-stview]",function(b){b.onclick=function(){var x=find(b.getAttribute("data-stview"));if(x)viewStudent(x)}});
+  each("[data-stfz]",function(b){b.onclick=function(){var x=find(b.getAttribute("data-stfz"));if(x)freezeStudent(x)}});
   each("[data-stdel]",function(b){b.onclick=function(){var x=find(b.getAttribute("data-stdel"));if(x)deleteStudent(x)}});
   each("[data-rdel]",function(b){b.onclick=function(){var id=b.getAttribute("data-rdel"),s=rows.filter(function(x){return x.id===id})[0];
     if(!confirm("Move this registration to the Recycle bin?"+(s&&s.status==="verified"?"\n\nThe student stays in the Students register.":"")))return;softDel("students",id,"reg_deleted_at",loadStudents)}});
@@ -1434,7 +1442,7 @@ amreset:function(i){if(!confirm("Reset this attempt? The student's answers and m
 amauto:function(){var p=Promise.resolve(),n=0;AM.at.forEach(function(x){if(x.status!=="submitted")return;var r=amAutoAll(AM.qs,x.answers,{});n++;p=p.then(function(){return rest("bfs_attempts?id=eq."+x.id,{method:"PATCH",body:JSON.stringify({scores:r.scores})})})});p.then(amSubs).then(function(){note("Auto-marked "+n+" paper"+(n===1?"":"s")+". Essays and uploaded files still need your marks.")}).catch(amErr)},
 ampubres:function(){var a=AM.a,at=AM.at.filter(function(x){return x.status==="marked"}),first=!a.results_published_at,mx=0;AM.qs.forEach(function(q){mx+=Number(q.marks)||0});if(!at.length)return note("Nothing is marked yet.",1);
  if(!confirm((first?"This will send "+at.length+" marked paper"+(at.length===1?"":"s")+" to the students' portals, record the marks in Grades and post the results on the timeline.":"This will send newly marked papers and update the marks in Grades.")+"\n\nContinue?"))return;
- var rows=at.map(function(x){return{student_id:x.student_id,mark:Number(x.total_score)}}),sheet=null,zr=[];
+ var rows=at.filter(function(x){return ST.some(function(s){return s.id===x.student_id})}).map(function(x){return{student_id:x.student_id,mark:Number(x.total_score)}}),sheet=null,zr=[];
  var ab=ST.filter(function(s){return(a.programme==="all"||s.programme===a.programme)&&!AM.at.some(function(x){return x.student_id===s.id})});
  if(ab.length&&(new Date(a.ends_at).getTime()<Date.now()||confirm(ab.length+" student"+(ab.length===1?" has":"s have")+" not attempted it yet and the due time has not passed.\n\nOK = list them on the results with 0\nCancel = leave them out for now")))zr=ab.map(function(s){return{student_id:s.id,mark:0}});
  rows=rows.concat(zr);
